@@ -17,7 +17,20 @@ public class Scanner : IScanner
 
     private int BufferIndex { get; set; } = 0;
 
+    private int LineNumber { get; set; } = 1;
 
+    private static readonly char[] Alphabet = {
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
+        'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
+        't', 'u', 'v', 'x', 'z', 'w', 'y', 'k', 'A',
+        'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+        'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+        'U', 'V', 'X', 'Z', 'W', 'Y', 'K', '0', '1',
+        '2', '3', '4', '5', '6', '7', '8', '9', '=',
+        '+', '-', '*', '/', '!', '>', '<', '&', '|',
+        '(', ')', '{', '}', '[', ']', ';', ',', '.',
+        ':','_'
+        };
 
     /// <summary>
     /// Initializes a new instance of the Scanner class with the specified source code.
@@ -44,6 +57,8 @@ public class Scanner : IScanner
 
     public Token NextToken()
     {
+
+        
         throw new NotImplementedException();
     }
 
@@ -91,6 +106,9 @@ public class Scanner : IScanner
 
     }
 
+    /// <summary>
+    /// Prints the contents of the buffer, replacing special characters with their escape sequences.
+    /// </summary>
     public void PrintBuffer()
     {
         foreach (char c in Buffer)
