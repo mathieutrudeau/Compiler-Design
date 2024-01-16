@@ -2,8 +2,19 @@ namespace Scanner;
 
 public class Token
 {
+    /// <summary>
+    /// An element of the lexical definition of the language.
+    /// </summary>
     public TokenType Type { get; set; }
-    public string Lexeme { get; set; } ="";
+
+    /// <summary>
+    /// A sequence of characters in the source program that matches the pattern for a token and is identified by the lexical analyzer as an instance of that token.
+    /// </summary>
+    public string Lexeme { get; set; } = "";
+
+    /// <summary>
+    /// The line number in the source program where the token was found.
+    /// </summary>
     public int Location { get; set; } = 0;
 }
 
