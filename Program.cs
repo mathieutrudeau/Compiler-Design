@@ -1,4 +1,5 @@
-﻿
+﻿using Scanner;
+using static Scanner.ScannerDriver;
 
 namespace Compiler_Design;
 
@@ -6,6 +7,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        GenerateTokens("TestFiles/lexpositivegrading.src");
+
     }
 }

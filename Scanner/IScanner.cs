@@ -10,4 +10,9 @@ public interface IScanner
     /// </summary>
     /// <returns>The next token in the source code.</returns>
     public Token NextToken();
+
+    /// <summary>
+    /// Shows the contents of the buffer.
+    /// </summary>
+    public void PrintBuffer();
 }
