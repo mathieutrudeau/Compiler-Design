@@ -14,5 +14,10 @@ public static class ScannerDriver
         Scanner scanner = new (source);
 
         scanner.PrintBuffer();
+
+        Token token = scanner.NextToken();
+
+        WriteLine("Token: " + token.ToString());
+
     }
 }

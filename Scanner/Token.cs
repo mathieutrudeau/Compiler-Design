@@ -16,6 +16,13 @@ public class Token
     /// The line number in the source program where the token was found.
     /// </summary>
     public int Location { get; set; } = 0;
+
+
+    public override string ToString()
+    {
+        return $"Type: {Type}, Lexeme: {Lexeme}, Location: {Location}";
+    }
+
 }
 
 public enum TokenType

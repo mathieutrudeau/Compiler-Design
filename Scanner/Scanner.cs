@@ -1,12 +1,11 @@
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 
 namespace Scanner;
 
 /// <summary>
 /// Represents a scanner that tokenizes source code.
 /// </summary>
-public class Scanner : IScanner
+public partial class Scanner : IScanner
 {
     /// <summary>
     /// Gets or sets the source code to be scanned.
@@ -18,6 +17,35 @@ public class Scanner : IScanner
     private int BufferIndex { get; set; } = 0;
 
     private int LineNumber { get; set; } = 1;
+
+
+    #region Regular Expressions
+
+    [GeneratedRegex("^[1-9]$")]
+    private static partial Regex NonZeroDigit();
+
+    [GeneratedRegex("^[0-9]$")]
+    private static partial Regex Digit();
+
+    [GeneratedRegex("^[a-zA-Z]$")]
+    private static partial Regex Letter();
+
+    [GeneratedRegex("^([a-zA-Z]|[0-9]|_)$")]
+    private static partial Regex Alphanumeric();
+
+    [GeneratedRegex("^([a-zA-Z])([a-zA-Z]|[0-9]|_)*$")]
+    private static partial Regex Identifier();
+
+    [GeneratedRegex("^([1-9][0-9]*)|0$")]
+    private static partial Regex Integer();
+
+    [GeneratedRegex("^(.[0-9]*[1-9])|.0$")]
+    private static partial Regex Fraction();
+
+
+
+    #endregion Regular Expressions
+
 
     private static readonly char[] Alphabet = {
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
@@ -57,8 +85,6 @@ public class Scanner : IScanner
 
     public Token NextToken()
     {
-
-        
         throw new NotImplementedException();
     }
 
@@ -130,4 +156,16 @@ public class Scanner : IScanner
             }
         }
     }
+
+
+    public static void TestRegex()
+    {
+        Console.WriteLine("Testing Regex...");
+        Console.WriteLine("NonZeroDigit: " + NonZeroDigit().ToString());
+        Console.WriteLine("Digit: " + Digit().ToString());
+        Console.WriteLine("Letter: " + Letter().ToString());
+        Console.WriteLine("Alphanumeric: " + Alphanumeric().ToString());
+        Console.WriteLine("Identifier: " + Identifier().ToString());
+    }
+
 }
