@@ -15,4 +15,9 @@ public interface IScanner
     /// Shows the contents of the buffer.
     /// </summary>
     public void PrintBuffer();
+
+    /// <summary>
+    /// True if there are more tokens in the buffer. False otherwise.
+    /// </summary>
+    public bool HasTokenLeft();
 }

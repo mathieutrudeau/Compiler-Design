@@ -1,4 +1,6 @@
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using static System.Console;
 
 namespace Scanner;
 
@@ -39,9 +41,23 @@ public partial class Scanner : IScanner
     [GeneratedRegex("^([1-9][0-9]*)|0$")]
     private static partial Regex Integer();
 
-    [GeneratedRegex("^(.[0-9]*[1-9])|.0$")]
+    [GeneratedRegex("^((\\.)[0-9]*[1-9])|(\\.)0$")]
     private static partial Regex Fraction();
 
+    [GeneratedRegex("^(([1-9][0-9]*)|0)(e(\\+|-)?(([1-9][0-9]*)|0))?$")]
+    private static partial Regex Float();
+
+    [GeneratedRegex("^if|then|else|integer|float|void|public|private|func|var|struct|while|read|write|return|self|inherits|let|impl$")]
+    private static partial Regex ReservedWord();
+
+    [GeneratedRegex("^==|=|<>|<|>|<=|>=|\\+|-|\\*|/|=|\\||&|!$")]
+    private static partial Regex Operator();
+
+    [GeneratedRegex("^\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->$")]
+    private static partial Regex Punctuation();
+
+    [GeneratedRegex("^//$")]
+    private static partial Regex Comment();
 
 
     #endregion Regular Expressions
@@ -58,6 +74,10 @@ public partial class Scanner : IScanner
         '+', '-', '*', '/', '!', '>', '<', '&', '|',
         '(', ')', '{', '}', '[', ']', ';', ',', '.',
         ':','_'
+        };
+
+    private static readonly char[] SpecialCharacters = {
+        '\n', '\r', '\t', '\0', ' '
         };
 
     /// <summary>
@@ -85,7 +105,54 @@ public partial class Scanner : IScanner
 
     public Token NextToken()
     {
-        throw new NotImplementedException();
+        WriteLine(".............................................");
+        WriteLine("Fetching Next Token");
+        WriteLine(".............................................");
+
+        char currentChar = char.MinValue;
+        string currentLexeme = string.Empty;
+
+        do
+        {
+            // Get the next character from the buffer.
+            currentChar = NextChar();
+
+            // Skip special characters if they are located at the start of the lexeme
+            while(SpecialCharacters.Contains(currentChar) && currentLexeme == string.Empty)
+            {
+                currentChar = NextChar();
+            }
+            
+            // Make sure the character is part of the alphabet.
+            if (!Alphabet.Contains(currentChar) && !SpecialCharacters.Contains(currentChar))
+            {
+                // Maybe throw an error here
+                WriteLine("Error: Invalid character");
+            }
+
+            
+            // Add the character to the current lexeme if its not a special character.
+            if (!SpecialCharacters.Contains(currentChar))
+            {
+                currentLexeme += currentChar;
+                WriteLine("Current Char: " + currentChar);
+            }
+
+        }
+        while (!SpecialCharacters.Contains(currentChar));
+
+        WriteLine("Current Lexeme: " + currentLexeme);
+
+        // Check if the current lexeme is a final state.
+        if (IsFinalState(currentLexeme))
+        {
+            WriteLine("Final State");
+        }
+
+
+        return CreateToken(currentLexeme);
+
+
     }
 
     /// <summary>
@@ -120,17 +187,59 @@ public partial class Scanner : IScanner
         }
     }
 
-    private bool IsFinalState()
+    private static bool IsFinalState(string currentLexeme)
     {
-        throw new NotImplementedException();
+        MatchCollection matches = ReservedWord().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Operator().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Punctuation().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Identifier().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Integer().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Float().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Comment().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Letter().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Digit().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = NonZeroDigit().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Alphanumeric().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = Fraction().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        return false;    
     }
 
 
-    private Token? CreateToken()
+    private Token CreateToken(string currentLexeme)
     {
-        throw new NotImplementedException();
-
+        return new Token()
+        {
+            Lexeme = currentLexeme,
+            Type = TokenType.Identifier,
+            Location = LineNumber
+        };
     }
+
+    
 
     /// <summary>
     /// Prints the contents of the buffer, replacing special characters with their escape sequences.
@@ -158,14 +267,29 @@ public partial class Scanner : IScanner
     }
 
 
-    public static void TestRegex()
+    /// <summary>
+    /// Checks if there are any tokens left in the input stream.
+    /// </summary>
+    /// <returns>True if there are tokens left, false otherwise.</returns>
+    public bool HasTokenLeft()
     {
-        Console.WriteLine("Testing Regex...");
-        Console.WriteLine("NonZeroDigit: " + NonZeroDigit().ToString());
-        Console.WriteLine("Digit: " + Digit().ToString());
-        Console.WriteLine("Letter: " + Letter().ToString());
-        Console.WriteLine("Alphanumeric: " + Alphanumeric().ToString());
-        Console.WriteLine("Identifier: " + Identifier().ToString());
-    }
+        int count=1;
+        char currentChar = NextChar();
 
+        while(SpecialCharacters.Contains(currentChar))
+        {
+            currentChar = NextChar();
+            count++;
+            if(currentChar == '\0')
+            {
+                return false;
+            }
+        }
+
+        for(int i=0; i<count; i++)
+        {
+            BackupChar();
+        }
+        return true;
+    }
 }

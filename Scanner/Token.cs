@@ -20,11 +20,85 @@ public class Token
 
     public override string ToString()
     {
-        return $"Type: {Type}, Lexeme: {Lexeme}, Location: {Location}";
+        return $"[Type: {Type}, Lexeme: {Lexeme}, Location: {Location}]";
     }
 
-}
 
+    public static string ConvertTokenTypeToString(TokenType tokenType)
+    {
+        return tokenType switch
+        {
+            TokenType.Identifier => "Identifier",
+            TokenType.Alphanumeric => "Alphanumeric",
+            TokenType.Integer => "Integer",
+            TokenType.Float => "Float",
+            TokenType.Fraction => "Fraction",
+            TokenType.Letter => "Letter",
+            TokenType.Digit => "Digit",
+            TokenType.NonZeroDigit => "NonZeroDigit",
+            TokenType.EqualEqual => "EqualEqual",
+            TokenType.NotEqual => "NotEqual",
+            TokenType.LessEqual => "LessEqual",
+            TokenType.GreaterEqual => "GreaterEqual",
+            TokenType.Less => "Less",
+            TokenType.Greater => "Greater",
+            TokenType.Plus => "Plus",
+            TokenType.Minus => "Minus",
+            TokenType.Star => "Star",
+            TokenType.ForwardSlash => "ForwardSlash",
+            TokenType.Equal => "Equal",
+            TokenType.Separator => "Separator",
+            TokenType.Ampersand => "Ampersand",
+            TokenType.Exclamation => "Exclamation",
+            TokenType.LeftParen => "LeftParen",
+            TokenType.RightParen => "RightParen",
+            TokenType.LeftBrace => "LeftBrace",
+            TokenType.RightBrace => "RightBrace",
+            TokenType.LeftSquareBracket => "LeftSquareBracket",
+            TokenType.RightSquareBracket => "RightSquareBracket",
+            TokenType.Comma => "Comma",
+            TokenType.Dot => "Dot",
+            TokenType.Semicolon => "Semicolon",
+            TokenType.DotDot => "DotDot",
+            TokenType.RightPointer => "RightPointer",
+            TokenType.IfKeyword => "IfKeyword",
+            TokenType.ThenKeyword => "ThenKeyword",
+            TokenType.ElseKeyword => "ElseKeyword",
+            TokenType.IntegerKeyword => "IntegerKeyword",
+            TokenType.FloatKeyword => "FloatKeyword",
+            TokenType.VoidKeyword => "VoidKeyword",
+            TokenType.PublicKeyword => "PublicKeyword",
+            TokenType.PrivateKeyword => "PrivateKeyword",
+            TokenType.FuncKeyword => "FuncKeyword",
+            TokenType.VarKeyword => "VarKeyword",
+            TokenType.StructKeyword => "StructKeyword",
+            TokenType.WhileKeyword => "WhileKeyword",
+            TokenType.ReadKeyword => "ReadKeyword",
+            TokenType.WriteKeyword => "WriteKeyword",
+            TokenType.ReturnKeyword => "ReturnKeyword",
+            TokenType.SelfKeyword => "SelfKeyword",
+            TokenType.InheritsKeyword => "InheritsKeyword",
+            TokenType.LetKeyword => "LetKeyword",
+            TokenType.ImplKeyword => "ImplKeyword",
+            _ => "Error",
+        };
+    }
+
+    public static TokenType ConvertStringToTokenType(string tokenTypeString)
+    {
+        if (Enum.TryParse(tokenTypeString, out TokenType tokenType))
+        {
+            return tokenType;
+        }
+        else
+        {
+            throw new ArgumentException($"Invalid token type string {tokenTypeString}");
+        }
+    }
+
+
+
+}
 public enum TokenType
 {
     // Atoms
@@ -47,4 +121,3 @@ public enum TokenType
     ReadKeyword,WriteKeyword,ReturnKeyword,SelfKeyword,InheritsKeyword,LetKeyword,ImplKeyword
 }
 
-    
