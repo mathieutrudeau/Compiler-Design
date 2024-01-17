@@ -1,7 +1,13 @@
+using System.Text.RegularExpressions;
+using static System.Console;
+
 namespace Scanner;
 
-public class Token
+public partial class Token
 {
+
+    #region Token Instance Properties
+
     /// <summary>
     /// An element of the lexical definition of the language.
     /// </summary>
@@ -17,107 +23,222 @@ public class Token
     /// </summary>
     public int Location { get; set; } = 0;
 
+    #endregion Token Instance Properties
+
+    #region Regular Expressions
+
+    [GeneratedRegex("^[1-9]$")]
+    public static partial Regex NonZeroDigit();
+
+    [GeneratedRegex("^[0-9]$")]
+    public static partial Regex Digit();
+
+    [GeneratedRegex("^[a-zA-Z]$")]
+    public static partial Regex Letter();
+
+    [GeneratedRegex("^([a-zA-Z]|[0-9]|_)$")]
+    public static partial Regex Alphanumeric();
+
+    [GeneratedRegex("^([a-zA-Z])([a-zA-Z]|[0-9]|_)*$")]
+    public static partial Regex Identifier();
+
+    [GeneratedRegex("^([1-9][0-9]*)|0$")]
+    public static partial Regex Integer();
+
+    [GeneratedRegex("^(\\.[0-9]*[1-9])|(\\.0)$")]
+    public static partial Regex Fraction();
+
+    [GeneratedRegex("^(([1-9][0-9]*)|0)((\\.[0-9]*[1-9])|(\\.0))(e(\\+|-)??(([1-9][0-9]*)|0))??$")]
+    public static partial Regex Float();
+
+    [GeneratedRegex("^if|then|else|integer|float|void|public|private|func|var|struct|while|read|write|return|self|inherits|let|impl$")]
+    public static partial Regex ReservedWord();
+
+    [GeneratedRegex("^(==|=|<>|<|>|<=|>=|\\+|-|\\*|/|=|\\||&|!)$")]
+    public static partial Regex Operator();
+
+    [GeneratedRegex("^(\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->)$")]
+    public static partial Regex Punctuation();
+
+    [GeneratedRegex("^//.*$")]
+    public static partial Regex Comment();
+
+    [GeneratedRegex("^/\\*.*$")]
+    public static partial Regex MultilineCommentStart();
+
+    [GeneratedRegex(".*\\*/$")]
+    public static partial Regex MultilineCommentEnd();
+
+    #endregion Regular Expressions
 
     public override string ToString()
     {
-        return string.Format("[Type: {0}, Lexeme: {1}, Location: {2}]", Type.ToString(), Lexeme.ToString(), Location.ToString());
+        return string.Format("[{0}, {1}, {2}]", Type.ToString().ToLower(), Lexeme.ToString().Replace(Environment.NewLine, "\\n").Replace("\r",""), Location.ToString());
     }
 
-
-    public static string ConvertTokenTypeToString(TokenType tokenType)
+    public static TokenType StringToTokenType(string value)
     {
-        return tokenType switch
+        if(ReservedWord().IsMatch(value))
         {
-            TokenType.Identifier => "Identifier",
-            TokenType.Alphanumeric => "Alphanumeric",
-            TokenType.Integer => "Integer",
-            TokenType.Float => "Float",
-            TokenType.Fraction => "Fraction",
-            TokenType.Letter => "Letter",
-            TokenType.Digit => "Digit",
-            TokenType.NonZeroDigit => "NonZeroDigit",
-            TokenType.EqualEqual => "EqualEqual",
-            TokenType.NotEqual => "NotEqual",
-            TokenType.LessEqual => "LessEqual",
-            TokenType.GreaterEqual => "GreaterEqual",
-            TokenType.Less => "Less",
-            TokenType.Greater => "Greater",
-            TokenType.Plus => "Plus",
-            TokenType.Minus => "Minus",
-            TokenType.Star => "Star",
-            TokenType.ForwardSlash => "ForwardSlash",
-            TokenType.Equal => "Equal",
-            TokenType.Separator => "Separator",
-            TokenType.Ampersand => "Ampersand",
-            TokenType.Exclamation => "Exclamation",
-            TokenType.LeftParen => "LeftParen",
-            TokenType.RightParen => "RightParen",
-            TokenType.LeftBrace => "LeftBrace",
-            TokenType.RightBrace => "RightBrace",
-            TokenType.LeftSquareBracket => "LeftSquareBracket",
-            TokenType.RightSquareBracket => "RightSquareBracket",
-            TokenType.Comma => "Comma",
-            TokenType.Dot => "Dot",
-            TokenType.Semicolon => "Semicolon",
-            TokenType.DotDot => "DotDot",
-            TokenType.RightPointer => "RightPointer",
-            TokenType.IfKeyword => "IfKeyword",
-            TokenType.ThenKeyword => "ThenKeyword",
-            TokenType.ElseKeyword => "ElseKeyword",
-            TokenType.IntegerKeyword => "IntegerKeyword",
-            TokenType.FloatKeyword => "FloatKeyword",
-            TokenType.VoidKeyword => "VoidKeyword",
-            TokenType.PublicKeyword => "PublicKeyword",
-            TokenType.PrivateKeyword => "PrivateKeyword",
-            TokenType.FuncKeyword => "FuncKeyword",
-            TokenType.VarKeyword => "VarKeyword",
-            TokenType.StructKeyword => "StructKeyword",
-            TokenType.WhileKeyword => "WhileKeyword",
-            TokenType.ReadKeyword => "ReadKeyword",
-            TokenType.WriteKeyword => "WriteKeyword",
-            TokenType.ReturnKeyword => "ReturnKeyword",
-            TokenType.SelfKeyword => "SelfKeyword",
-            TokenType.InheritsKeyword => "InheritsKeyword",
-            TokenType.LetKeyword => "LetKeyword",
-            TokenType.ImplKeyword => "ImplKeyword",
-            _ => "Error",
-        };
-    }
-
-    public static TokenType ConvertStringToTokenType(string tokenTypeString)
-    {
-        if (Enum.TryParse(tokenTypeString, out TokenType tokenType))
+            return value switch
+            {
+                "if" => TokenType.If,
+                "then" => TokenType.Then,
+                "else" => TokenType.Else,
+                "integer" => TokenType.Integer,
+                "float" => TokenType.Float,
+                "void" => TokenType.Void,
+                "public" => TokenType.Public,
+                "private" => TokenType.Private,
+                "func" => TokenType.Func,
+                "var" => TokenType.Var,
+                "struct" => TokenType.Struct,
+                "while" => TokenType.While,
+                "read" => TokenType.Read,
+                "write" => TokenType.Write,
+                "return" => TokenType.Return,
+                "self" => TokenType.Self,
+                "inherits" => TokenType.Inherits,
+                "let" => TokenType.Let,
+                "impl" => TokenType.Impl,
+                _ => TokenType.Invalidid,
+            };
+        }
+        else if(Punctuation().IsMatch(value))
         {
-            return tokenType;
+            //WriteLine("Punctuation: "+value);
+            return value switch
+            {
+                "(" => TokenType.Openpar,
+                ")" => TokenType.Closepar,
+                "{" => TokenType.Opencubr,
+                "}" => TokenType.Closecubr,
+                "[" => TokenType.Opensqbr,
+                "]" => TokenType.Closesqbr,
+                ";" => TokenType.Semi,
+                "," => TokenType.Comma,
+                "." => TokenType.Dot,
+                ":" => TokenType.Colon,
+                "::" => TokenType.Coloncolon,
+                "->" => TokenType.Arrow,
+                _ => TokenType.Invalidchar,
+            };
+        }
+        else if(Operator().IsMatch(value))
+        {
+            //WriteLine("Operator: "+value);
+            return value switch
+            {
+                "==" => TokenType.Eq,
+                "=" => TokenType.Assign,
+                "<>" => TokenType.Noteq,
+                "<" => TokenType.Lt,
+                ">" => TokenType.Gt,
+                "<=" => TokenType.Leq,
+                ">=" => TokenType.Geq,
+                "+" => TokenType.Plus,
+                "-" => TokenType.Minus,
+                "*" => TokenType.Mult,
+                "/" => TokenType.Div,
+                "|" => TokenType.Or,
+                "&" => TokenType.And,
+                "!" => TokenType.Not,
+                _ => TokenType.Invalidchar,
+            };
+        }
+        else if(Comment().IsMatch(value))
+        {
+            return TokenType.Inlinecmt;
+        }
+        else if(MultilineCommentStart().IsMatch(value)||MultilineCommentEnd().IsMatch(value))
+        {
+            return TokenType.Blockcmt;
+        }
+        else if(Float().IsMatch(value))
+        {
+            return TokenType.Floatnum;
+        }
+        else if(Integer().IsMatch(value))
+        {
+            return TokenType.Intnum;
+        }
+        else if(Identifier().IsMatch(value))
+        {
+            return TokenType.Id;
+        }
+        else if(Letter().IsMatch(value))
+        {
+            return TokenType.Letter;
+        }
+        else if(Digit().IsMatch(value))
+        {
+            return TokenType.Digit;
+        }
+        else if(NonZeroDigit().IsMatch(value))
+        {
+            return TokenType.Nonzerodigit;
+        }
+        else if(Fraction().IsMatch(value))
+        {
+            return TokenType.Fraction;
+        }
+        else if(Alphanumeric().IsMatch(value))
+        {
+            return TokenType.Alphanumeric;
         }
         else
-        {
-            throw new ArgumentException($"Invalid token type string {tokenTypeString}");
-        }
+           return TokenType.Invalidnum;
     }
 
-
-
+    public static Regex[] Regexes()
+    {
+        return new Regex[] {
+            NonZeroDigit(),
+            Digit(),
+            Letter(),
+            Alphanumeric(),
+            Identifier(),
+            Integer(),
+            Fraction(),
+            Float(),
+            ReservedWord(),
+            Operator(),
+            Punctuation(),
+            Comment(),
+            MultilineCommentStart(),
+            MultilineCommentEnd()
+        };
+    }
 }
+
+/// <summary>
+/// Represents the different types of tokens in the scanner.
+/// </summary>
 public enum TokenType
 {
     // Atoms
-    Identifier, Alphanumeric, Integer, Float,
-    Fraction, Letter, Digit, NonZeroDigit,
+    Id, Alphanumeric, Intnum, Floatnum,
+    Fraction, Letter, Digit, Nonzerodigit,
 
     // Operators
-    EqualEqual, NotEqual, LessEqual, GreaterEqual,
-    Less, Greater, Plus, Minus, Star, ForwardSlash, Equal,
-    Separator, Ampersand, Exclamation,
+    Eq, Noteq, Leq, Geq,
+    Lt, Gt, Plus, Minus, Mult, Div, Assign,
+    Or, And, Not,
     
     // Punctuation
-    LeftParen, RightParen, LeftBrace, RightBrace,
-    LeftSquareBracket, RightSquareBracket, Comma, Dot, Semicolon,
-    DotDot, RightPointer,
+    Openpar, Closepar, Opencubr, Closecubr,
+    Opensqbr, Closesqbr, Comma, Dot, Semi,
+    Colon, Arrow, Coloncolon,
 
     // Reserved Words
-    IfKeyword,ThenKeyword,ElseKeyword,IntegerKeyword,FloatKeyword,VoidKeyword,
-    PublicKeyword,PrivateKeyword,FuncKeyword,VarKeyword,StructKeyword,WhileKeyword,
-    ReadKeyword,WriteKeyword,ReturnKeyword,SelfKeyword,InheritsKeyword,LetKeyword,ImplKeyword
+    If,Then,Else,Integer,Float,Void,
+    Public,Private,Func,Var,Struct,While,
+    Read,Write,Return,Self,Inherits,Let,Impl,
+
+    // Comment
+    Inlinecmt, Blockcmt,
+
+    // Errors
+    Invalidchar, Invalidnum, Invalidid
 }
 

@@ -10,7 +10,6 @@ public static class ScannerDriver
         WriteLine("Running Scanner Driver...");
         WriteLine("Source: " + source);
 
-
         Scanner scanner = new (source);
 
         scanner.PrintBuffer();

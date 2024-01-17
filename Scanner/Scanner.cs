@@ -1,6 +1,6 @@
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using static System.Console;
+using static Scanner.Token;
 
 namespace Scanner;
 
@@ -9,6 +9,9 @@ namespace Scanner;
 /// </summary>
 public partial class Scanner : IScanner
 {
+
+    #region Properties
+
     /// <summary>
     /// Gets or sets the source code to be scanned.
     /// </summary>
@@ -20,51 +23,12 @@ public partial class Scanner : IScanner
 
     private int LineNumber { get; set; } = 1;
 
+    private int LexemeStartLineNumber { get; set; } = 1;
+
+    #endregion Properties
 
 
     #region Regular Expressions
-
-    [GeneratedRegex("^[1-9]$")]
-    private static partial Regex NonZeroDigit();
-
-    [GeneratedRegex("^[0-9]$")]
-    private static partial Regex Digit();
-
-    [GeneratedRegex("^[a-zA-Z]$")]
-    private static partial Regex Letter();
-
-    [GeneratedRegex("^([a-zA-Z]|[0-9]|_)$")]
-    private static partial Regex Alphanumeric();
-
-    [GeneratedRegex("^([a-zA-Z])([a-zA-Z]|[0-9]|_)*$")]
-    private static partial Regex Identifier();
-
-    [GeneratedRegex("^([1-9][0-9]*)|0$")]
-    private static partial Regex Integer();
-
-    [GeneratedRegex("^((\\.)[0-9]*[1-9])|(\\.)0$")]
-    private static partial Regex Fraction();
-
-    [GeneratedRegex("^(([1-9][0-9]*)|0)(e(\\+|-)?(([1-9][0-9]*)|0))?$")]
-    private static partial Regex Float();
-
-    [GeneratedRegex("^if|then|else|integer|float|void|public|private|func|var|struct|while|read|write|return|self|inherits|let|impl$")]
-    private static partial Regex ReservedWord();
-
-    [GeneratedRegex("^==|=|<>|<|>|<=|>=|\\+|-|\\*|/|=|\\||&|!$")]
-    private static partial Regex Operator();
-
-    [GeneratedRegex("^\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->$")]
-    private static partial Regex Punctuation();
-
-    [GeneratedRegex("^//.*$")]
-    private static partial Regex Comment();
-
-    [GeneratedRegex("^/\\*.*$")]
-    private static partial Regex MultilineCommentStart();
-
-    [GeneratedRegex(".*\\*/$")]
-    private static partial Regex MultilineCommentEnd();
 
     [GeneratedRegex("/\\*")]
     private static partial Regex MultilineCommentStartRegex();
@@ -75,6 +39,11 @@ public partial class Scanner : IScanner
     #endregion Regular Expressions
 
 
+    #region Constants
+
+    /// <summary>
+    /// Represents the alphabet used by the scanner.
+    /// </summary>
     private static readonly char[] Alphabet = {
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
         'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
@@ -88,9 +57,14 @@ public partial class Scanner : IScanner
         ':','_'
         };
 
+    /// <summary>
+    /// Array of special characters used in the scanner.
+    /// </summary>
     private static readonly char[] SpecialCharacters = {
         '\n', '\r', '\t', '\0', ' '
         };
+
+    #endregion Constants
 
     /// <summary>
     /// Initializes a new instance of the Scanner class with the specified source code.
@@ -146,19 +120,20 @@ public partial class Scanner : IScanner
             // Add the character to the current lexeme if its not a special character.
             if (!SpecialCharacters.Contains(currentChar))
             {
+                LexemeStartLineNumber = LineNumber;
                 currentLexeme += currentChar;
-                WriteLine("Current Char: " + currentChar);
+                //WriteLine("Current Char: " + currentChar);
             }
 
         }
         while (!SpecialCharacters.Contains(currentChar));
 
-        WriteLine("Current Lexeme: " + currentLexeme);
+        //WriteLine("Current Lexeme: " + currentLexeme);
 
         // Check if the current lexeme is a final state.
         if (IsFinalState(currentLexeme))
         {
-            WriteLine("Final State");
+            //WriteLine("Final State");
 
             // Check if the current lexeme is a comment.
             if (Comment().IsMatch(currentLexeme))
@@ -180,11 +155,8 @@ public partial class Scanner : IScanner
                     currentLexeme += currentChar;
                     currentChar = NextChar();
                 }
-            }
-            
+            }            
         }
-
-
 
         return CreateToken(currentLexeme);
     }
@@ -244,61 +216,23 @@ public partial class Scanner : IScanner
         }
     }
 
+
     private static bool IsFinalState(string currentLexeme)
     {
-        MatchCollection matches = ReservedWord().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Operator().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Punctuation().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Identifier().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Integer().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Float().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Comment().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = MultilineCommentStart().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = MultilineCommentEnd().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Letter().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Digit().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = NonZeroDigit().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Alphanumeric().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
-        matches = Fraction().Matches(currentLexeme);
-        if (matches.Count > 0)
-            return true;
+        // Check if the current lexeme reaches a final state for any of the regular expressions.
+        foreach (Regex regex in Regexes())
+            if (regex.IsMatch(currentLexeme))
+                return true;
         return false;    
     }
-
 
     private Token CreateToken(string currentLexeme)
     {
         return new Token()
         {
             Lexeme = currentLexeme,
-            Type = TokenType.Identifier,
-            Location = LineNumber
+            Type = StringToTokenType(currentLexeme),
+            Location = LexemeStartLineNumber
         };
     }
 
