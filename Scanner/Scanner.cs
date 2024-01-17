@@ -21,6 +21,7 @@ public partial class Scanner : IScanner
     private int LineNumber { get; set; } = 1;
 
 
+
     #region Regular Expressions
 
     [GeneratedRegex("^[1-9]$")]
@@ -56,9 +57,20 @@ public partial class Scanner : IScanner
     [GeneratedRegex("^\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->$")]
     private static partial Regex Punctuation();
 
-    [GeneratedRegex("^//$")]
+    [GeneratedRegex("^//.*$")]
     private static partial Regex Comment();
 
+    [GeneratedRegex("^/\\*.*$")]
+    private static partial Regex MultilineCommentStart();
+
+    [GeneratedRegex(".*\\*/$")]
+    private static partial Regex MultilineCommentEnd();
+
+    [GeneratedRegex("/\\*")]
+    private static partial Regex MultilineCommentStartRegex();
+
+    [GeneratedRegex("\\*/")]
+    private static partial Regex MultilineCommentEndRegex();
 
     #endregion Regular Expressions
 
@@ -108,21 +120,22 @@ public partial class Scanner : IScanner
         WriteLine(".............................................");
         WriteLine("Fetching Next Token");
         WriteLine(".............................................");
-
-        char currentChar = char.MinValue;
+        
         string currentLexeme = string.Empty;
 
+
+        char currentChar;
         do
         {
             // Get the next character from the buffer.
             currentChar = NextChar();
 
             // Skip special characters if they are located at the start of the lexeme
-            while(SpecialCharacters.Contains(currentChar) && currentLexeme == string.Empty)
+            while (SpecialCharacters.Contains(currentChar) && currentLexeme == string.Empty)
             {
                 currentChar = NextChar();
             }
-            
+
             // Make sure the character is part of the alphabet.
             if (!Alphabet.Contains(currentChar) && !SpecialCharacters.Contains(currentChar))
             {
@@ -130,7 +143,6 @@ public partial class Scanner : IScanner
                 WriteLine("Error: Invalid character");
             }
 
-            
             // Add the character to the current lexeme if its not a special character.
             if (!SpecialCharacters.Contains(currentChar))
             {
@@ -147,13 +159,45 @@ public partial class Scanner : IScanner
         if (IsFinalState(currentLexeme))
         {
             WriteLine("Final State");
+
+            // Check if the current lexeme is a comment.
+            if (Comment().IsMatch(currentLexeme))
+            {
+                // Skip the rest of the line.
+                while (currentChar != '\n')
+                {
+                    currentLexeme += currentChar;
+                    currentChar = NextChar();
+                }
+            }
+
+            // Check if the current lexeme is a multiline comment.
+            if (MultilineCommentStart().IsMatch(currentLexeme))
+            {
+                // Skip the rest of the multiline comment.
+                while (!MultilineCommentEnd().IsMatch(currentLexeme) || !IsMultilineCommentDone(currentLexeme))
+                {                    
+                    currentLexeme += currentChar;
+                    currentChar = NextChar();
+                }
+            }
+            
         }
 
 
+
         return CreateToken(currentLexeme);
-
-
     }
+
+
+    private static bool IsMultilineCommentDone(string currentLexeme)
+    {
+        MatchCollection matches = MultilineCommentStartRegex().Matches(currentLexeme);
+        MatchCollection matches2 = MultilineCommentEndRegex().Matches(currentLexeme);
+
+        return matches.Count == matches2.Count;
+    }
+
 
     /// <summary>
     /// Retrieves the next character from the buffer.
@@ -164,6 +208,13 @@ public partial class Scanner : IScanner
         // Check if the buffer is not empty.
         if (BufferIndex < Buffer.Count)
         {
+            // Check if the current character is a new line character.
+            if (Buffer[BufferIndex] == '\n')
+            {
+                // Increment the line number.
+                LineNumber++;
+            }
+
             // Return the next character in the buffer.
             return Buffer[BufferIndex++];
         }
@@ -182,6 +233,12 @@ public partial class Scanner : IScanner
         // Check if the buffer is not empty.
         if (BufferIndex > 0)
         {
+            // Check if the current character is a new line character.
+            if (Buffer[BufferIndex-1] == '\n')
+            {
+                // Decrement the line number.
+                LineNumber--;
+            }
             // Backup the buffer index.
             BufferIndex--;
         }
@@ -208,6 +265,12 @@ public partial class Scanner : IScanner
         if (matches.Count > 0)
             return true;
         matches = Comment().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = MultilineCommentStart().Matches(currentLexeme);
+        if (matches.Count > 0)
+            return true;
+        matches = MultilineCommentEnd().Matches(currentLexeme);
         if (matches.Count > 0)
             return true;
         matches = Letter().Matches(currentLexeme);
@@ -266,13 +329,13 @@ public partial class Scanner : IScanner
         }
     }
 
-
     /// <summary>
     /// Checks if there are any tokens left in the input stream.
     /// </summary>
     /// <returns>True if there are tokens left, false otherwise.</returns>
     public bool HasTokenLeft()
     {
+        // Skip all special characters until we find a non-special character.
         int count=1;
         char currentChar = NextChar();
 
@@ -280,16 +343,17 @@ public partial class Scanner : IScanner
         {
             currentChar = NextChar();
             count++;
+
+            // If we reach the end of the file, return false.
             if(currentChar == '\0')
-            {
                 return false;
-            }
         }
 
+        // Backup the buffer index, so we don't lose the character(s) we just read.
         for(int i=0; i<count; i++)
-        {
             BackupChar();
-        }
+        
+        // If we reach this point, there are still tokens left.
         return true;
     }
 }

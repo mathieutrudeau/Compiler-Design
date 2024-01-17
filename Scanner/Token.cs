@@ -20,7 +20,7 @@ public class Token
 
     public override string ToString()
     {
-        return $"[Type: {Type}, Lexeme: {Lexeme}, Location: {Location}]";
+        return string.Format("[Type: {0}, Lexeme: {1}, Location: {2}]", Type.ToString(), Lexeme.ToString(), Location.ToString());
     }
 
 
