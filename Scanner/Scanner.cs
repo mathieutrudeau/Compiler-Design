@@ -44,7 +44,7 @@ public partial class Scanner : IScanner
     /// <summary>
     /// Represents the alphabet used by the scanner.
     /// </summary>
-    private static readonly char[] Alphabet = {
+    public static readonly char[] Alphabet = {
         'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
         'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
         't', 'u', 'v', 'x', 'z', 'w', 'y', 'k', 'A',
@@ -74,14 +74,13 @@ public partial class Scanner : IScanner
     {
         try
         {
+            // Set the source code.
             Source = source;
 
             // Read the source code into the buffer.
             using StreamReader reader = new(Source);
             while (!reader.EndOfStream)
-            {
                 Buffer.Add((char)reader.Read());
-            }
         }
         catch (Exception e)
         {
@@ -91,14 +90,13 @@ public partial class Scanner : IScanner
 
     public Token NextToken()
     {
-        WriteLine(".............................................");
-        WriteLine("Fetching Next Token");
-        WriteLine(".............................................");
-        
+
+        // The current lexeme being read.
         string currentLexeme = string.Empty;
-
-
+        
+        // The current character being read.
         char currentChar;
+
         do
         {
             // Get the next character from the buffer.
@@ -106,15 +104,18 @@ public partial class Scanner : IScanner
 
             // Skip special characters if they are located at the start of the lexeme
             while (SpecialCharacters.Contains(currentChar) && currentLexeme == string.Empty)
-            {
                 currentChar = NextChar();
-            }
 
             // Make sure the character is part of the alphabet.
             if (!Alphabet.Contains(currentChar) && !SpecialCharacters.Contains(currentChar))
-            {
-                // Maybe throw an error here
-                WriteLine("Error: Invalid character");
+            {   
+                if(currentLexeme == string.Empty)
+                    return CreateToken(currentChar.ToString());
+                else
+                {
+                    BackupChar();
+                    break;
+                }
             }
 
             // Add the character to the current lexeme if its not a special character.
@@ -125,21 +126,42 @@ public partial class Scanner : IScanner
                 //WriteLine("Current Char: " + currentChar);
             }
 
+
+            //WriteLine("Current Lexeme: " + currentLexeme);
         }
         while (!SpecialCharacters.Contains(currentChar));
 
-        //WriteLine("Current Lexeme: " + currentLexeme);
+        //WriteLine("Exiting Loop");
+
+        // It is possible that no special characters and/or spaces are used to separate tokens in the source code.
+        // In this case, we need to backtrack until we find the first token that reaches a final state.
+        if (!IsFinalState(currentLexeme))
+        {
+            // Make sure that we don't lose the character(s) we just read.
+            BackupChar();
+
+            while (!IsFinalState(currentLexeme) && currentLexeme.Length > 1)
+            {
+                
+                // Remove the last character from the current lexeme.
+                currentLexeme = currentLexeme[..^1];
+
+                // Backup the buffer index, so we don't lose the character(s) we just read.
+                BackupChar();
+            }
+
+            if(IsFinalState(currentLexeme))
+                BufferIndex++;
+        }
 
         // Check if the current lexeme is a final state.
         if (IsFinalState(currentLexeme))
         {
-            //WriteLine("Final State");
-
             // Check if the current lexeme is a comment.
             if (Comment().IsMatch(currentLexeme))
             {
-                // Skip the rest of the line.
-                while (currentChar != '\n')
+                // Skip the rest of the line. Until either a new line character or the end of the file is reached.
+                while (currentChar != '\n' && currentChar != '\0')
                 {
                     currentLexeme += currentChar;
                     currentChar = NextChar();
@@ -154,7 +176,16 @@ public partial class Scanner : IScanner
                 {                    
                     currentLexeme += currentChar;
                     currentChar = NextChar();
+
+                    //WriteLine("Current Lexeme: " + currentLexeme);
+                    //WriteLine("Current Char: " + currentChar);
+
+                    if(currentChar == '\0' && !IsMultilineCommentDone(currentLexeme))
+                        break;
                 }
+
+                if(currentChar != '\0')
+                    BackupChar();
             }            
         }
 
@@ -162,14 +193,15 @@ public partial class Scanner : IScanner
     }
 
 
+    /// <summary>
+    /// Checks if a multiline comment is complete by comparing the number of start and end comment tags.
+    /// </summary>
+    /// <param name="currentLexeme">The current lexeme being checked.</param>
+    /// <returns>True if the multiline comment is complete, otherwise false.</returns>
     private static bool IsMultilineCommentDone(string currentLexeme)
     {
-        MatchCollection matches = MultilineCommentStartRegex().Matches(currentLexeme);
-        MatchCollection matches2 = MultilineCommentEndRegex().Matches(currentLexeme);
-
-        return matches.Count == matches2.Count;
+        return MultilineCommentStartRegex().Matches(currentLexeme).Count==MultilineCommentEndRegex().Matches(currentLexeme).Count;
     }
-
 
     /// <summary>
     /// Retrieves the next character from the buffer.
@@ -182,19 +214,13 @@ public partial class Scanner : IScanner
         {
             // Check if the current character is a new line character.
             if (Buffer[BufferIndex] == '\n')
-            {
-                // Increment the line number.
                 LineNumber++;
-            }
-
             // Return the next character in the buffer.
             return Buffer[BufferIndex++];
         }
+        // Return the end of file character if the buffer is empty.
         else
-        {
-            // Return the end of file character.
             return '\0';
-        }
     }
 
     /// <summary>
@@ -207,16 +233,18 @@ public partial class Scanner : IScanner
         {
             // Check if the current character is a new line character.
             if (Buffer[BufferIndex-1] == '\n')
-            {
                 // Decrement the line number.
                 LineNumber--;
-            }
             // Backup the buffer index.
             BufferIndex--;
         }
     }
 
-
+    /// <summary>
+    /// Checks if the current lexeme reaches a final state for any of the regular expressions.
+    /// </summary>
+    /// <param name="currentLexeme">The current lexeme to be checked.</param>
+    /// <returns>True if the current lexeme reaches a final state for any of the regular expressions, false otherwise.</returns>
     private static bool IsFinalState(string currentLexeme)
     {
         // Check if the current lexeme reaches a final state for any of the regular expressions.
@@ -226,6 +254,11 @@ public partial class Scanner : IScanner
         return false;    
     }
 
+    /// <summary>
+    /// Creates a token from the specified lexeme.
+    /// </summary>
+    /// <param name="currentLexeme">The lexeme to be tokenized.</param>
+    /// <returns>A token representing the specified lexeme.</returns>
     private Token CreateToken(string currentLexeme)
     {
         return new Token()
@@ -236,15 +269,12 @@ public partial class Scanner : IScanner
         };
     }
 
-    
-
     /// <summary>
     /// Prints the contents of the buffer, replacing special characters with their escape sequences.
     /// </summary>
     public void PrintBuffer()
     {
         foreach (char c in Buffer)
-        {
             switch(c)
             {
                 case '\n':
@@ -260,7 +290,6 @@ public partial class Scanner : IScanner
                     Console.Write(c);
                     break;
             }
-        }
     }
 
     /// <summary>
@@ -273,6 +302,7 @@ public partial class Scanner : IScanner
         int count=1;
         char currentChar = NextChar();
 
+        // Skip over all future special characters.
         while(SpecialCharacters.Contains(currentChar))
         {
             currentChar = NextChar();

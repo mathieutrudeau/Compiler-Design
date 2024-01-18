@@ -3,6 +3,9 @@ using static System.Console;
 
 namespace Scanner;
 
+/// <summary>
+/// Represents a token in the lexical analysis phase of a compiler.
+/// </summary>
 public partial class Token
 {
 
@@ -27,55 +30,128 @@ public partial class Token
 
     #region Regular Expressions
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching non-zero digits.
+    /// </summary>
     [GeneratedRegex("^[1-9]$")]
     public static partial Regex NonZeroDigit();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching digits.
+    /// </summary>
     [GeneratedRegex("^[0-9]$")]
     public static partial Regex Digit();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching letters.
+    /// </summary>
     [GeneratedRegex("^[a-zA-Z]$")]
     public static partial Regex Letter();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching alphanumeric characters.
+    /// </summary>
     [GeneratedRegex("^([a-zA-Z]|[0-9]|_)$")]
     public static partial Regex Alphanumeric();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching identifiers.
+    /// </summary>
     [GeneratedRegex("^([a-zA-Z])([a-zA-Z]|[0-9]|_)*$")]
     public static partial Regex Identifier();
 
-    [GeneratedRegex("^([1-9][0-9]*)|0$")]
+    /// <summary>
+    /// Represents a regular expression pattern used for matching integers.
+    /// </summary>
+    [GeneratedRegex("^(([1-9][0-9]*)|0)$")]
     public static partial Regex Integer();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching fractions.
+    /// </summary>
     [GeneratedRegex("^(\\.[0-9]*[1-9])|(\\.0)$")]
     public static partial Regex Fraction();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching floats.
+    /// </summary>
     [GeneratedRegex("^(([1-9][0-9]*)|0)((\\.[0-9]*[1-9])|(\\.0))(e(\\+|-)??(([1-9][0-9]*)|0))??$")]
     public static partial Regex Float();
 
-    [GeneratedRegex("^if|then|else|integer|float|void|public|private|func|var|struct|while|read|write|return|self|inherits|let|impl$")]
+    /// <summary>
+    /// Represents a regular expression pattern used for matching reserved words.
+    /// </summary>
+    [GeneratedRegex("^(if|then|else|integer|float|void|public|private|func|var|struct|while|read|write|return|self|inherits|let|impl)$")]
     public static partial Regex ReservedWord();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching operators.
+    /// </summary>
     [GeneratedRegex("^(==|=|<>|<|>|<=|>=|\\+|-|\\*|/|=|\\||&|!)$")]
     public static partial Regex Operator();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching punctuation.
+    /// </summary>
     [GeneratedRegex("^(\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->)$")]
     public static partial Regex Punctuation();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching comments.
+    /// </summary>
     [GeneratedRegex("^//.*$")]
     public static partial Regex Comment();
 
-    [GeneratedRegex("^/\\*.*$")]
+    /// <summary>
+    /// Represents a regular expression pattern used for matching multiline comments.
+    /// </summary>
+    [GeneratedRegex("^/\\*(.|\\n)*$")]
     public static partial Regex MultilineCommentStart();
 
+    /// <summary>
+    /// Represents a regular expression pattern used for matching multiline comments.
+    /// </summary>
     [GeneratedRegex(".*\\*/$")]
     public static partial Regex MultilineCommentEnd();
 
+    #region Invalid Regular Expressions
+
+    /// <summary>
+    /// Represents a regular expression pattern used for matching invalid integers.
+    /// </summary>
+    [GeneratedRegex("^0+((([1-9][0-9]*)|0))$")]
+    public static partial Regex InvalidInteger();
+
+    /// <summary>
+    /// Represents a regular expression pattern used for matching invalid floats.
+    /// </summary>
+    [GeneratedRegex("(^0+(([1-9][0-9]*)|0)((\\.[0-9]*[1-9])|(\\.0))(e(\\+|-)??(([1-9][0-9]*)|0))??$)|(^0*(([1-9][0-9]*)|0)((\\.[0-9]*[1-9])|(\\.0))(0+)(e(\\+|-)??(([1-9][0-9]*)|0))??$)|(^0*(([1-9][0-9]*)|0)((\\.[0-9]*[1-9])|(\\.0))(0*)(e(\\+|-)??(0+([1-9][0-9]*)|0))$)")]
+    public static partial Regex InvalidFloat();
+
+    /// <summary>
+    /// Represents a regular expression pattern used for matching invalid identifiers.
+    /// </summary>
+    [GeneratedRegex("^([0-9]|_)([a-zA-Z]|[0-9]|_)*$")]
+    public static partial Regex InvalidIdentifier();
+
+    #endregion Invalid Regular Expressions
+
     #endregion Regular Expressions
 
+    /// <summary>
+    /// Returns a string representation of the Token object.
+    /// </summary>
+    /// <returns>A string in the format "[type, lexeme, location]".</returns>
     public override string ToString()
     {
         return string.Format("[{0}, {1}, {2}]", Type.ToString().ToLower(), Lexeme.ToString().Replace(Environment.NewLine, "\\n").Replace("\r",""), Location.ToString());
     }
 
+    /// <summary>
+    /// Represents the type of a token.
+    /// </summary>
+    /// <param name="value">The string representation of the token.</param>
+    /// <returns>The type of the token.</returns>
     public static TokenType StringToTokenType(string value)
     {
         if(ReservedWord().IsMatch(value))
@@ -106,7 +182,6 @@ public partial class Token
         }
         else if(Punctuation().IsMatch(value))
         {
-            //WriteLine("Punctuation: "+value);
             return value switch
             {
                 "(" => TokenType.Openpar,
@@ -186,10 +261,26 @@ public partial class Token
         {
             return TokenType.Alphanumeric;
         }
+        else if(InvalidInteger().IsMatch(value))
+        {
+            return TokenType.Invalidnum;
+        }
+        else if(InvalidFloat().IsMatch(value))
+        {
+            return TokenType.Invalidnum;
+        }   
+        else if(InvalidIdentifier().IsMatch(value))
+        {
+            return TokenType.Invalidid;
+        }
         else
-           return TokenType.Invalidnum;
+           return TokenType.Invalidchar;
     }
 
+    /// <summary>
+    /// Returns an array of regular expressions used for token matching.
+    /// </summary>
+    /// <returns>An array of regular expressions.</returns>
     public static Regex[] Regexes()
     {
         return new Regex[] {
@@ -206,7 +297,9 @@ public partial class Token
             Punctuation(),
             Comment(),
             MultilineCommentStart(),
-            MultilineCommentEnd()
+            InvalidInteger(),
+            InvalidFloat(),
+            InvalidIdentifier()
         };
     }
 }
@@ -241,4 +334,6 @@ public enum TokenType
     // Errors
     Invalidchar, Invalidnum, Invalidid
 }
+
+
 

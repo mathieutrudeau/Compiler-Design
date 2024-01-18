@@ -15,9 +15,7 @@ public static class ScannerDriver
         scanner.PrintBuffer();
         WriteLine();
 
-        Token token = scanner.NextToken();
-
-        WriteLine("Token: " + token.ToString());
+        Token token;
 
         while (scanner.HasTokenLeft())
         {

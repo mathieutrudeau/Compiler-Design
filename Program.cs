@@ -7,7 +7,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        GenerateTokens("TestFiles/lexpositivegrading.src");
+        GenerateTokens("TestFiles/test1.src");
 
     }
 }
