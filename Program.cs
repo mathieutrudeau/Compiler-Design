@@ -7,7 +7,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        GenerateTokens("TestFiles/test1.src");
+        GenerateTokens("ScannerTestFiles");
 
     }
 }

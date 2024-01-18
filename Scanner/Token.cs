@@ -148,6 +148,21 @@ public partial class Token
     }
 
     /// <summary>
+    /// Generates an error message based on the token type, lexeme, and location.
+    /// </summary>
+    /// <returns>The error message.</returns>
+    public string ShowError()
+    {
+        return Type switch
+        {
+            TokenType.Invalidchar => string.Format("Lexical error: Invalid character: \"{0}\": line {1}.\n", Lexeme, Location),
+            TokenType.Invalidnum => string.Format("Lexical error: Invalid number: \"{0}\": line {1}.\n", Lexeme, Location),
+            TokenType.Invalidid => string.Format("Lexical error: Invalid identifier: \"{0}\": line {1}.\n", Lexeme, Location),
+            _ => ""
+        };
+    }
+
+    /// <summary>
     /// Represents the type of a token.
     /// </summary>
     /// <param name="value">The string representation of the token.</param>
@@ -334,6 +349,3 @@ public enum TokenType
     // Errors
     Invalidchar, Invalidnum, Invalidid
 }
-
-
-
