@@ -25,6 +25,11 @@ public partial class Scanner : IScanner
 
     private int LexemeStartLineNumber { get; set; } = 1;
 
+    private const string OUTLEX_TOKENS_EXTENSION = ".outlextokens";
+    private const string OUTLEX_ERRORS_EXTENSION = ".outlexerrors";
+
+    private string SourceName {get;set;} = "";
+
     #endregion Properties
 
 
@@ -77,6 +82,14 @@ public partial class Scanner : IScanner
             // Set the source code.
             Source = source;
 
+            SourceName = source.Replace(".src", "");
+
+            // Delete the output files if they exist.
+            if (File.Exists(SourceName + OUTLEX_TOKENS_EXTENSION))
+                File.Delete(SourceName + OUTLEX_TOKENS_EXTENSION);  
+            if (File.Exists(SourceName + OUTLEX_ERRORS_EXTENSION))
+                File.Delete(SourceName + OUTLEX_ERRORS_EXTENSION);
+
             // Read the source code into the buffer.
             using StreamReader reader = new(Source);
             while (!reader.EndOfStream)
@@ -88,19 +101,26 @@ public partial class Scanner : IScanner
         }
     }
 
+    #region Public Methods
+
+
     public Token NextToken()
     {
-
         // The current lexeme being read.
         string currentLexeme = string.Empty;
-        
+
         // The current character being read.
         char currentChar;
 
+        // Read the next character until a special character is reached.
+        // This loop might capture multiple tokens if they are not separated by special characters.
         do
         {
             // Get the next character from the buffer.
             currentChar = NextChar();
+            
+            WriteLine("Current Buffer: " + BufferIndex);
+            WriteLine("Current Char: " + currentChar);
 
             // Skip special characters if they are located at the start of the lexeme
             while (SpecialCharacters.Contains(currentChar) && currentLexeme == string.Empty)
@@ -108,8 +128,10 @@ public partial class Scanner : IScanner
 
             // Make sure the character is part of the alphabet.
             if (!Alphabet.Contains(currentChar) && !SpecialCharacters.Contains(currentChar))
-            {   
-                if(currentLexeme == string.Empty)
+            {
+                // If the current lexeme is empty, the character can be returned as an invalid char token.
+                // Otherwise, return the current lexeme and backup the buffer index. The character will be returned as an invalid char token on the next call.
+                if (currentLexeme == string.Empty)
                     return CreateToken(currentChar.ToString());
                 else
                 {
@@ -123,41 +145,41 @@ public partial class Scanner : IScanner
             {
                 LexemeStartLineNumber = LineNumber;
                 currentLexeme += currentChar;
-                //WriteLine("Current Char: " + currentChar);
             }
-
-
-            //WriteLine("Current Lexeme: " + currentLexeme);
         }
         while (!SpecialCharacters.Contains(currentChar));
-
-        //WriteLine("Exiting Loop");
 
         // It is possible that no special characters and/or spaces are used to separate tokens in the source code.
         // In this case, we need to backtrack until we find the first token that reaches a final state.
         if (!IsFinalState(currentLexeme))
         {
-            // Make sure that we don't lose the character(s) we just read.
-            BackupChar();
+            int lexemeCount = currentLexeme.Length;
 
-            while (!IsFinalState(currentLexeme) && currentLexeme.Length > 1)
+            if(currentChar != '\0')
+                BackupChar();
+
+            do
             {
-                
                 // Remove the last character from the current lexeme.
                 currentLexeme = currentLexeme[..^1];
-
-                // Backup the buffer index, so we don't lose the character(s) we just read.
-                BackupChar();
             }
+            while (!IsFinalState(currentLexeme) && currentLexeme.Length > 1);
 
-            if(IsFinalState(currentLexeme))
-                BufferIndex++;
+            for (int i = 0; i < (lexemeCount - currentLexeme.Length); i++)
+                BackupChar();
+            
+            //if (currentLexeme.Length > 1)
+            //    BufferIndex++;
+
+            WriteLine("Current Lexeme: " + currentLexeme);
+            WriteLine("Current Index: " + BufferIndex);
+
         }
 
         // Check if the current lexeme is a final state.
         if (IsFinalState(currentLexeme))
         {
-            // Check if the current lexeme is a comment.
+            // Check if the current lexeme is a line comment.
             if (Comment().IsMatch(currentLexeme))
             {
                 // Skip the rest of the line. Until either a new line character or the end of the file is reached.
@@ -173,35 +195,80 @@ public partial class Scanner : IScanner
             {
                 // Skip the rest of the multiline comment.
                 while (!MultilineCommentEnd().IsMatch(currentLexeme) || !IsMultilineCommentDone(currentLexeme))
-                {                    
+                {
                     currentLexeme += currentChar;
                     currentChar = NextChar();
 
                     //WriteLine("Current Lexeme: " + currentLexeme);
                     //WriteLine("Current Char: " + currentChar);
 
-                    if(currentChar == '\0' && !IsMultilineCommentDone(currentLexeme))
+                    if (currentChar == '\0' && !IsMultilineCommentDone(currentLexeme))
                         break;
                 }
 
-                if(currentChar != '\0')
+                if (currentChar != '\0')
                     BackupChar();
-            }            
+            }
         }
 
         return CreateToken(currentLexeme);
     }
 
+    /// <summary>
+    /// Prints the contents of the buffer, replacing special characters with their escape sequences.
+    /// </summary>
+    public void PrintBuffer()
+    {
+        foreach (char c in Buffer)
+            switch (c)
+            {
+                case '\n':
+                    Console.Write("\\n");
+                    break;
+                case '\r':
+                    Console.Write("\\r");
+                    break;
+                case '\t':
+                    Console.Write("\\t");
+                    break;
+                default:
+                    Console.Write(c);
+                    break;
+            }
+    }
 
     /// <summary>
-    /// Checks if a multiline comment is complete by comparing the number of start and end comment tags.
+    /// Checks if there are any tokens left in the input stream.
     /// </summary>
-    /// <param name="currentLexeme">The current lexeme being checked.</param>
-    /// <returns>True if the multiline comment is complete, otherwise false.</returns>
-    private static bool IsMultilineCommentDone(string currentLexeme)
+    /// <returns>True if there are tokens left, false otherwise.</returns>
+    public bool HasTokenLeft()
     {
-        return MultilineCommentStartRegex().Matches(currentLexeme).Count==MultilineCommentEndRegex().Matches(currentLexeme).Count;
+        // Skip all special characters until we find a non-special character.
+        int count = 1;
+        char currentChar = NextChar();
+
+        // Skip over all future special characters.
+        while (SpecialCharacters.Contains(currentChar))
+        {
+            currentChar = NextChar();
+            count++;
+
+            // If we reach the end of the file, return false.
+            if (currentChar == '\0')
+                return false;
+        }
+
+        // Backup the buffer index, so we don't lose the character(s) we just read.
+        for (int i = 0; i < count; i++)
+            BackupChar();
+
+        // If we reach this point, there are still tokens left.
+        return true;
     }
+
+    #endregion Public Methods
+
+    #region Private Methods
 
     /// <summary>
     /// Retrieves the next character from the buffer.
@@ -232,7 +299,7 @@ public partial class Scanner : IScanner
         if (BufferIndex > 0)
         {
             // Check if the current character is a new line character.
-            if (Buffer[BufferIndex-1] == '\n')
+            if (Buffer[BufferIndex - 1] == '\n')
                 // Decrement the line number.
                 LineNumber--;
             // Backup the buffer index.
@@ -251,73 +318,48 @@ public partial class Scanner : IScanner
         foreach (Regex regex in Regexes())
             if (regex.IsMatch(currentLexeme))
                 return true;
-        return false;    
+        return false;
     }
 
     /// <summary>
-    /// Creates a token from the specified lexeme.
+    /// Creates a token from the current lexeme.
     /// </summary>
-    /// <param name="currentLexeme">The lexeme to be tokenized.</param>
-    /// <returns>A token representing the specified lexeme.</returns>
+    /// <param name="currentLexeme">The current lexeme to be tokenized.</param>
+    /// <returns>A token representing the current lexeme.</returns>
     private Token CreateToken(string currentLexeme)
     {
-        return new Token()
+        // Create a token from the current lexeme.
+        Token token = new()
         {
             Lexeme = currentLexeme,
             Type = StringToTokenType(currentLexeme),
             Location = LexemeStartLineNumber
         };
-    }
 
-    /// <summary>
-    /// Prints the contents of the buffer, replacing special characters with their escape sequences.
-    /// </summary>
-    public void PrintBuffer()
-    {
-        foreach (char c in Buffer)
-            switch(c)
-            {
-                case '\n':
-                    Console.Write("\\n");
-                    break;
-                case '\r':
-                    Console.Write("\\r");
-                    break;
-                case '\t':
-                    Console.Write("\\t");
-                    break;
-                default:
-                    Console.Write(c);
-                    break;
-            }
-    }
+        // Write the token to the output file.
+        using StreamWriter sw = new(SourceName + OUTLEX_TOKENS_EXTENSION, true);
+        sw.WriteLine(token.ToString());
 
-    /// <summary>
-    /// Checks if there are any tokens left in the input stream.
-    /// </summary>
-    /// <returns>True if there are tokens left, false otherwise.</returns>
-    public bool HasTokenLeft()
-    {
-        // Skip all special characters until we find a non-special character.
-        int count=1;
-        char currentChar = NextChar();
-
-        // Skip over all future special characters.
-        while(SpecialCharacters.Contains(currentChar))
+        // Write the token to the error file if it is invalid.
+        if (token.Type.ToString().Contains("Invalid"))
         {
-            currentChar = NextChar();
-            count++;
-
-            // If we reach the end of the file, return false.
-            if(currentChar == '\0')
-                return false;
+            using StreamWriter sw1 = new(SourceName + OUTLEX_ERRORS_EXTENSION, true);
+            sw1.WriteLine(token.ShowError());
         }
-
-        // Backup the buffer index, so we don't lose the character(s) we just read.
-        for(int i=0; i<count; i++)
-            BackupChar();
         
-        // If we reach this point, there are still tokens left.
-        return true;
+        // Return the token.
+        return token;
     }
+
+    /// <summary>
+    /// Checks if a multiline comment is complete by comparing the number of start and end comment tags.
+    /// </summary>
+    /// <param name="currentLexeme">The current lexeme being checked.</param>
+    /// <returns>True if the multiline comment is complete, otherwise false.</returns>
+    private static bool IsMultilineCommentDone(string currentLexeme)
+    {
+        return MultilineCommentStartRegex().Matches(currentLexeme).Count == MultilineCommentEndRegex().Matches(currentLexeme).Count;
+    }
+
+    #endregion Private Methods
 }

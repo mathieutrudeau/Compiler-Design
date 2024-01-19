@@ -1,0 +1,27 @@
+// This is a inline comment
+
+// // This is a inline comment within a inline comment?
+
+//This is comment
+
+/*
+// This is a inline comment within a multiline comment?
+*/
+
+/**This is a comment**/
+
+/*/
+
+/**/
+
+/* This is a blockcomment 
+with an extra closing tag. That should be evaluated as a mult div. */
+*/
+
+/* This is a block comment with a missing ending tag
+
+This should consider anything following it as a comment until
+the end of file is reached
+
+
+if(integer0=3)>8.3;
