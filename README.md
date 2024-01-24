@@ -34,8 +34,26 @@ The following regular expressions were used to identify lexical errors:
 - invalid id: ^([0-9]|_)([a-zA-Z]|[0-9]|_)*$
 
 ### Finite State Automaton
+L: Letter from [a-zA-Z]
+D: Digit from [0-9]
+N: Non-zero Digit [1-9]
+I: Integer
+F: Float
 
-- integer: 
+id: <br/>
+![id](https://github.com/mathieutrudeau/Compiler-Design/assets/46968018/457c24a7-850a-4c85-9d8b-9f70c3336f97)
+
+integer: <br/>
+  ![int](https://github.com/mathieutrudeau/Compiler-Design/assets/46968018/ebe2d44a-76e6-4be9-85c0-73a2aceadea5)
+
+float: <br/>
+![float](https://github.com/mathieutrudeau/Compiler-Design/assets/46968018/70892278-1db4-4794-9d6a-0ac5ad4afe15)
+
+operator: <br/>
+![operator](https://github.com/mathieutrudeau/Compiler-Design/assets/46968018/0e18b97e-6859-4b0f-a494-70d369d8831a)
+
+punctuation: <br/>
+![punctuation](https://github.com/mathieutrudeau/Compiler-Design/assets/46968018/8da98861-78df-4711-a916-7d333ce65ca8)
 
 
 ### Design
