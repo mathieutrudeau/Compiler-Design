@@ -93,7 +93,7 @@ public partial class Token
     /// <summary>
     /// Represents a regular expression pattern used for matching punctuation.
     /// </summary>
-    [GeneratedRegex("^(\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->)$")]
+    [GeneratedRegex("^(\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|::|->)$")]
     public static partial Regex Punctuation();
 
     /// <summary>
