@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using static System.Console;
 
-namespace Scanner;
+namespace LexicalAnalyzer;
 
 /// <summary>
 /// Represents a token in the lexical analysis phase of a compiler.
@@ -69,7 +69,7 @@ public partial class Token
     /// <summary>
     /// Represents a regular expression pattern used for matching fractions.
     /// </summary>
-    [GeneratedRegex("^(\\.[0-9]*[1-9])|(\\.0)$")]
+    [GeneratedRegex("^((\\.[0-9]*[1-9])|(\\.0))$")]
     public static partial Regex Fraction();
 
     /// <summary>
@@ -113,6 +113,12 @@ public partial class Token
     /// </summary>
     [GeneratedRegex(".*\\*/$")]
     public static partial Regex MultilineCommentEnd();
+
+    /// <summary>
+    /// Represents a regular expression pattern used for matching characters not in the valid character set.
+    /// </summary>
+    [GeneratedRegex("^[^a-zA-Z0-9=+\\-*/!><&|(){}\\[\\];,\\.:_]$")]
+    public static partial Regex InvalidChar();
 
     #region Invalid Regular Expressions
 
@@ -288,6 +294,10 @@ public partial class Token
         {
             return TokenType.Invalidid;
         }
+        else if(InvalidChar().IsMatch(value))
+        {
+            return TokenType.Invalidchar;
+        }
         else
            return TokenType.Invalidchar;
     }
@@ -314,7 +324,8 @@ public partial class Token
             MultilineCommentStart(),
             InvalidInteger(),
             InvalidFloat(),
-            InvalidIdentifier()
+            InvalidIdentifier(),
+            InvalidChar()
         };
     }
 }

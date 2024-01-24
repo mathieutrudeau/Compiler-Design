@@ -1,8 +1,7 @@
 using static System.Console;
 using System.IO;
 
-namespace Scanner;
-
+namespace LexicalAnalyzer;
 
 public static class ScannerDriver
 {

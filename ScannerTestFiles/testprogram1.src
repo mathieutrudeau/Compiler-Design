@@ -1,0 +1,14 @@
+public func main() {
+    integer var i;
+    for i = 1; i <= 100; i = i + 1 {
+        if i % 3 == 0 && i % 5 == 0 {
+            write("FizzBuzz");
+        } else if i % 3 == 0 {
+            write("Fizz");
+        } else if i % 5 == 0 {
+            write("Buzz");
+        } else {
+            write(i);
+        }
+    }
+}

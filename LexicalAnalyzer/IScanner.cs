@@ -1,4 +1,4 @@
-namespace Scanner;
+namespace LexicalAnalyzer;
 
 /// <summary>
 /// Represents a scanner that reads source code and returns tokens.

@@ -1,8 +1,9 @@
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using static System.Console;
-using static Scanner.Token;
+using static LexicalAnalyzer.Token;
 
-namespace Scanner;
+namespace LexicalAnalyzer;
 
 /// <summary>
 /// Represents a scanner that tokenizes source code.
@@ -47,22 +48,6 @@ public partial class Scanner : IScanner
     #region Constants
 
     /// <summary>
-    /// Represents the alphabet used by the scanner.
-    /// </summary>
-    public static readonly char[] Alphabet = {
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-        'j', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
-        't', 'u', 'v', 'x', 'z', 'w', 'y', 'k', 'A',
-        'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-        'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-        'U', 'V', 'X', 'Z', 'W', 'Y', 'K', '0', '1',
-        '2', '3', '4', '5', '6', '7', '8', '9', '=',
-        '+', '-', '*', '/', '!', '>', '<', '&', '|',
-        '(', ')', '{', '}', '[', ']', ';', ',', '.',
-        ':','_'
-        };
-
-    /// <summary>
     /// Array of special characters used in the scanner.
     /// </summary>
     private static readonly char[] SpecialCharacters = {
@@ -103,9 +88,17 @@ public partial class Scanner : IScanner
 
     #region Public Methods
 
-
+    /// <summary>
+    /// Returns the next token from the source code.
+    /// </summary>
+    /// <returns>The next token from the source code.</returns>
+    /// <exception cref="Exception">Thrown when no more tokens are available.</exception>
     public Token NextToken()
     {
+        // Throw an exception if no further tokens are available.
+        if (!HasTokenLeft())
+            throw new Exception("No more tokens available.");
+
         // The current lexeme being read.
         string currentLexeme = string.Empty;
 
@@ -118,27 +111,10 @@ public partial class Scanner : IScanner
         {
             // Get the next character from the buffer.
             currentChar = NextChar();
-            
-            WriteLine("Current Buffer: " + BufferIndex);
-            WriteLine("Current Char: " + currentChar);
 
             // Skip special characters if they are located at the start of the lexeme
             while (SpecialCharacters.Contains(currentChar) && currentLexeme == string.Empty)
                 currentChar = NextChar();
-
-            // Make sure the character is part of the alphabet.
-            if (!Alphabet.Contains(currentChar) && !SpecialCharacters.Contains(currentChar))
-            {
-                // If the current lexeme is empty, the character can be returned as an invalid char token.
-                // Otherwise, return the current lexeme and backup the buffer index. The character will be returned as an invalid char token on the next call.
-                if (currentLexeme == string.Empty)
-                    return CreateToken(currentChar.ToString());
-                else
-                {
-                    BackupChar();
-                    break;
-                }
-            }
 
             // Add the character to the current lexeme if its not a special character.
             if (!SpecialCharacters.Contains(currentChar))
@@ -153,11 +129,16 @@ public partial class Scanner : IScanner
         // In this case, we need to backtrack until we find the first token that reaches a final state.
         if (!IsFinalState(currentLexeme))
         {
+
+
+            // Save the current lexeme length.
             int lexemeCount = currentLexeme.Length;
 
+            // Backup the buffer index to not lose the current character. if the end of the file is reached
             if(currentChar != '\0')
                 BackupChar();
 
+            // Loop until only one character is left in the current lexeme or the current lexeme reaches a final state.
             do
             {
                 // Remove the last character from the current lexeme.
@@ -165,15 +146,9 @@ public partial class Scanner : IScanner
             }
             while (!IsFinalState(currentLexeme) && currentLexeme.Length > 1);
 
+            // Restore the buffer index to the position after the current lexeme.
             for (int i = 0; i < (lexemeCount - currentLexeme.Length); i++)
-                BackupChar();
-            
-            //if (currentLexeme.Length > 1)
-            //    BufferIndex++;
-
-            WriteLine("Current Lexeme: " + currentLexeme);
-            WriteLine("Current Index: " + BufferIndex);
-
+               BackupChar();
         }
 
         // Check if the current lexeme is a final state.
@@ -199,18 +174,19 @@ public partial class Scanner : IScanner
                     currentLexeme += currentChar;
                     currentChar = NextChar();
 
-                    //WriteLine("Current Lexeme: " + currentLexeme);
-                    //WriteLine("Current Char: " + currentChar);
-
+                    // If the end of the file is reached, break out of the loop. 
+                    // The current lexeme will be returned as a multiline comment token.
                     if (currentChar == '\0' && !IsMultilineCommentDone(currentLexeme))
                         break;
                 }
 
+                // Unless the end of the file is reached, backup the buffer index.
                 if (currentChar != '\0')
                     BackupChar();
             }
         }
 
+        // Return the current lexeme as a token.
         return CreateToken(currentLexeme);
     }
 

@@ -1,0 +1,29 @@
+/* This is a sample program */
+public func main() {
+    integer var x = 42;
+    integer var y = 18;
+    
+    if x > y {
+        write(x is greater than y);
+    } else {
+        write(y is greater than or equal to x);
+    }
+    
+    let result = add(x, y);
+    write(The sum is: , result);
+    
+    let avg = average(x, y);
+    write(The average is: , avg);
+}
+
+func add(integer var a, integer var b) ->integer{
+    return a + b;
+}
+
+func average(integer var a, integer var b) -> float {
+    return float(a + b) / 2.0;
+}
+
+// This is an inline comment
+/* This is a block comment
+   that spans over multiple lines */
