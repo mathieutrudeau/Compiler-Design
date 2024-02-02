@@ -1,0 +1,107 @@
+<START>              -> <prog>
+<prog>               -> <structOrImplOrFuncList>
+<structOrImplOrFunc> -> <structDecl> | <implDef> | <funcDef>    
+<structOrImplOrFuncList> -> <structOrImplOrFunc> <structOrImplOrFuncList> | EPSILON
+<structDecl>         -> 'struct' 'id' <inheritsOpt> '{' <declList> '}' ';'
+<inheritsOpt>       -> 'inherits' 'id' <inheritsIdList> | EPSILON
+<inheritsIdList>    -> ',' 'id' <inheritsIdList> | EPSILON
+<declList>          -> <visibility> <memberDecl> <declList> | EPSILON
+<implDef>            -> 'impl' 'id' '{' <funcDefList> '}'
+<funcDefList>       -> <funcDef> <funcDefList> | EPSILON
+<funcDef>            -> <funcHead> <funcBody>  
+<visibility>         -> 'public' | 'private'  
+<memberDecl>         -> <funcDecl> | <varDecl>   
+<funcDecl>           -> <funcHead> ';'  
+<funcHead>           -> 'func' 'id' '(' <fParams> ')' '‐>' <returnType>  
+<funcBody>           -> '{' <varDeclOrStatList> '}'
+<varDeclOrStatList>  -> <varDeclOrStat> <varDeclOrStatList> | EPSILON
+<varDeclOrStat>      -> <varDecl> | <statement>
+<varDecl>            -> 'let' 'id' ':' <type> <arraySizeList> ';'
+<arraySizeList>     -> <arraySizeStart> <arraySizeList> | EPSILON
+
+<statement>          -> <assignStatOrFunctionCallStart> ';'
+                      |  'if'     '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'
+                      |  'while'  '(' <relExpr> ')' <statBlock> ';'
+                      |  'read'   '(' <variable> ')' ';'
+                      |  'write'  '(' <exprStart> ')' ';'
+                      |  'return' '(' <exprStart> ')' ';'
+
+
+<assignStatOrFunctionCallStart> -> <idnestList> 'id' <assignStatOrFunctionCallRest>
+<assignStatOrFunctionCallRest> -> <indiceList> <assignOp> <exprStart> | '(' <aParams> ')'
+
+
+<assignStat>         -> <variable> <assignOp> <exprStart>
+<statBlock>          -> '{' <statementList> '}' | <statement> | EPSILON   
+<statementList>     -> <statement> <statementList> | EPSILON
+
+
+<exprStart>         -> <arithExpr> 
+<exprRest>          -> <relOp> <arithExpr> | EPSILON
+
+<relExpr>            -> <arithExpr> <relOp> <arithExpr>
+
+
+<arithExpr>          -> <term> <addOp> <arithExpr> | <term>  
+
+
+<sign>               -> '+' | '‐'
+
+
+
+<term>              -> <factor> <multOp> <term> | <factor>
+
+
+
+
+
+<factor>             -> <variableOrFunctionStart>
+                      |  'intLit' | 'floatLit'
+                      |  '(' <arithExpr> ')'
+                      |  'not' <factor>
+                      |  <sign> <factor>
+
+
+
+<variableOrFunctionStart> -> <idnestList> 'id'
+<variableOrFunctionStartRest> -> <indiceList> | '(' <aParams> ')'
+                      
+<variable>           -> <idnestList> 'id' <indiceList>
+<functionCall>       -> <idnestList> 'id' '(' <aParams> ')'
+
+
+
+
+<idnestStart>             -> 'id' <idnest>
+
+<idnest>            -> <indiceList> '.' | '(' <aParams> ')' '.'
+
+
+<indiceList>        -> <indice> <idnestList> | EPSILON
+<idnestList>        -> <idnestStart> <idnestList> | EPSILON
+<indice>             -> '[' <arithExpr> ']'
+
+
+<arraySizeStart>          -> '[' <arraySizeRest>
+<arraySizeRest>         -> 'intNum' ']' | ']'
+
+
+<type>               -> 'integer' | 'float' | 'id'
+<returnType>         -> <type> |  'void'
+<fParams>            -> 'id' ':' <type> <arraySizeList> <fParamsTailList> | EPSILON   
+
+
+<aParams>            -> <exprStart> <aParamsTailList> | EPSILON  
+
+
+<fParamsTail>        -> ',' 'id' ':' <type> <arraySizeList>
+
+
+<fParamsTailList>   -> <fParamsTail> <fParamsTailList> | EPSILON
+<aParamsTailList>    -> <aParamsTail> <aParamsTailList> | EPSILON
+
+<aParamsTail>        -> ',' <exprStart>
+<assignOp>           -> '='
+<relOp>              -> 'eq' | 'neq' | 'lt' | 'gt' | 'leq' | 'geq'  
+<addOp>              -> '+' | '‐' | 'or'  
+<multOp>             -> '*' | '/' | 'and'
