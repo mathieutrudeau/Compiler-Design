@@ -95,9 +95,9 @@ public partial class Scanner : IScanner
     /// <exception cref="Exception">Thrown when no more tokens are available.</exception>
     public Token NextToken()
     {
-        // Throw an exception if no further tokens are available.
+        // If there are no tokens left, return an end of file token.
         if (!HasTokenLeft())
-            throw new Exception("No more tokens available.");
+            return new Token { Type = TokenType.Eof, Lexeme = "$", Location = LineNumber};
 
         // The current lexeme being read.
         string currentLexeme = string.Empty;

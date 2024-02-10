@@ -14,7 +14,7 @@ public partial class Token
     /// <summary>
     /// An element of the lexical definition of the language.
     /// </summary>
-    public TokenType Type { get; set; }
+    public TokenType Type { get; set; } 
 
     /// <summary>
     /// A sequence of characters in the source program that matches the pattern for a token and is identified by the lexical analyzer as an instance of that token.
@@ -357,5 +357,8 @@ public enum TokenType
     Inlinecmt, Blockcmt,
 
     // Errors
-    Invalidchar, Invalidnum, Invalidid
+    Invalidchar, Invalidnum, Invalidid,
+
+    // End of File
+    Eof
 }

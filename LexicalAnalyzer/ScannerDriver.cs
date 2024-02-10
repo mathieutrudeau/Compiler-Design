@@ -21,10 +21,11 @@ public static class ScannerDriver
 
             WriteLine("Fetching Tokens...");
 
-            while(scanner.HasTokenLeft())
+            do
             {
                 token = scanner.NextToken();
             }
+            while (token.Type != TokenType.Eof);
 
             WriteLine("Done!");
         }
