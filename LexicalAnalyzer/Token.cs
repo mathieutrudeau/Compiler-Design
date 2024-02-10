@@ -93,7 +93,7 @@ public partial class Token
     /// <summary>
     /// Represents a regular expression pattern used for matching punctuation.
     /// </summary>
-    [GeneratedRegex("^(\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|::|->)$")]
+    [GeneratedRegex("^(\\(|\\)|{|}|\\[|\\]|;|,|\\.|:|->)$")]
     public static partial Regex Punctuation();
 
     /// <summary>
@@ -215,7 +215,6 @@ public partial class Token
                 "," => TokenType.Comma,
                 "." => TokenType.Dot,
                 ":" => TokenType.Colon,
-                "::" => TokenType.Coloncolon,
                 "->" => TokenType.Arrow,
                 _ => TokenType.Invalidchar,
             };
@@ -347,7 +346,7 @@ public enum TokenType
     // Punctuation
     Openpar, Closepar, Opencubr, Closecubr,
     Opensqbr, Closesqbr, Comma, Dot, Semi,
-    Colon, Arrow, Coloncolon,
+    Colon, Arrow,
 
     // Reserved Words
     If,Then,Else,Integer,Float,Void,
