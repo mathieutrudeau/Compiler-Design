@@ -23,7 +23,7 @@ public partial class Scanner : IScanner
     private int BufferIndex { get; set; } = 0;
 
     private int LineNumber { get; set; } = 1;
-
+    
     private int LexemeStartLineNumber { get; set; } = 1;
 
     private const string OUTLEX_TOKENS_EXTENSION = ".outlextokens";

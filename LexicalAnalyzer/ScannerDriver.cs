@@ -5,13 +5,11 @@ namespace LexicalAnalyzer;
 
 public static class ScannerDriver
 {
-    public static void GenerateTokens(string sourceFolder, bool showConsole = false)
+    public static void GenerateTokens(string sourceFolder)
     {
         WriteLine("Running Scanner Driver...");
 
         string[] testFiles = Directory.GetFiles(sourceFolder, "*.src");
-
-
 
         foreach (string file in testFiles)
         {
