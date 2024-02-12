@@ -1,6 +1,4 @@
-using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using static System.Console;
 using static LexicalAnalyzer.Token;
 
 namespace LexicalAnalyzer;

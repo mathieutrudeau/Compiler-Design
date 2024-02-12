@@ -360,5 +360,8 @@ public enum TokenType
     Invalidchar, Invalidnum, Invalidid,
 
     // End of File
-    Eof
+    Eof,
+
+    // Epsilon
+    Epsilon
 }

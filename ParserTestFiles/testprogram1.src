@@ -1,0 +1,9 @@
+/* This is a sample program */
+// This is an inline
+func a () -> void {}
+
+func a (b:integer) -> float {}
+
+// This is an inline comment
+/* This is a block comment
+   that spans over multiple lines */

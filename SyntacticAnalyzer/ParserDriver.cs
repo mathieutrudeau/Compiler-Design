@@ -3,18 +3,26 @@ using LexicalAnalyzer;
 namespace SyntacticAnalyzer;
 
 
-public static class ErrorHandler
+public static class ParserDriver
 {
     public static void ParseFile(string sourceFolder)
     {
-        Scanner scanner = new (sourceFolder);
-        Parser parser = new (scanner);
+        string[] testFiles = Directory.GetFiles(sourceFolder, "*.src");
 
-        bool result = parser.Parse();
-        
-        if (result)
-            Console.WriteLine("Parsing successful");
-        else
-            Console.WriteLine("Parsing failed");
+        foreach (string testFile in testFiles)
+        {
+            Console.WriteLine("=========================================");
+            Console.WriteLine("Parsing file: " + testFile);
+            Console.WriteLine("=========================================");
+
+            Parser parser = new(testFile);
+
+            bool result = parser.Parse();
+
+            if (result)
+                Console.WriteLine("Parsing successful");
+            else
+                Console.WriteLine("Parsing failed");
+        }
     }
 }
