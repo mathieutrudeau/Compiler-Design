@@ -21,20 +21,16 @@
 
 <expression> ::= <arithmeticExpression> <optionalRelationalExpression> 
 
-<factor> ::= 'id' <factorOpt> 
+<factor> ::= 'id' <factorAlt> <repetitiveVariableOrFunctionCall> 
 <factor> ::= 'intLit' 
 <factor> ::= 'floatLit' 
 <factor> ::= '(' <arithmeticExpression> ')' 
 <factor> ::= 'not' <factor> 
 <factor> ::= <sign> <factor> 
 
-
-<factorOpt> ::= <factorAlt> <repetitiveVariableOrFunctionCall> 
-<factorOpt> ::= EPSILON
-
-
 <factorAlt> ::= '(' <argumentParameters> ')' 
 <factorAlt> ::= <repetitiveIndices> 
+<factorAlt> ::= EPSILON
 
 <functionBody> ::= '{' <repetitiveVariableDeclarationOrStatements> '}' 
 
@@ -71,8 +67,8 @@
 <optionalRelationalExpression> ::= <relationalOperator> <arithmeticExpression> 
 <optionalRelationalExpression> ::= EPSILON 
 
-<recursiveArithmeticExpression> ::= <addOperator> <term> <recursiveArithmeticExpression> 
 <recursiveArithmeticExpression> ::= EPSILON 
+<recursiveArithmeticExpression> ::= <addOperator> <term> <recursiveArithmeticExpression> 
 
 <recursiveTerms> ::= <multOperator> <factor> <recursiveTerms> 
 <recursiveTerms> ::= EPSILON 
@@ -125,16 +121,12 @@
 <sign> ::= '+' 
 <sign> ::= '-' 
 
-<statement> ::= 'id' <statementStart> <optionalAssignment> ';' 
+<statement> ::= 'id' <factorAlt> <repetitiveVariableOrFunctionCall> <optionalAssignment> ';' 
 <statement> ::= 'if' '(' <relationalExpression> ')' 'then' <statementBlock> 'else' <statementBlock> ';' 
 <statement> ::= 'while' '(' <relationalExpression> ')' <statementBlock> ';' 
 <statement> ::= 'read' '(' <variable> ')' ';' 
 <statement> ::= 'write' '(' <expression> ')' ';' 
 <statement> ::= 'return' '(' <expression> ')' ';' 
-
-<statementStart> ::= <factorAlt> <repetitiveVariableOrFunctionCall>
-<statementStart> ::= EPSILON
-
 
 <statementBlock> ::= '{' <repetitiveStatements> '}' 
 <statementBlock> ::= <statement> 

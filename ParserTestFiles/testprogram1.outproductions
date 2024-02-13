@@ -3,19 +3,13 @@
 <functionDefinition> -> <functionHeader> <functionBody>
 <functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
 <funtionParameters> -> EPSILON
-<returnType> -> 'void'
-<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
-<repetitiveVariableDeclarationOrStatements> -> EPSILON
-<START> -> <structOrImplOrFunction> <START>
-<structOrImplOrFunction> -> <functionDefinition>
-<functionDefinition> -> <functionHeader> <functionBody>
-<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
-<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
-<type> -> 'integer'
-<repetitiveArraySizes> -> EPSILON
-<repetitiveFunctionParametersTails> -> EPSILON
 <returnType> -> <type>
-<type> -> 'float'
+<type> -> 'id'
 <functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
-<repetitiveVariableDeclarationOrStatements> -> EPSILON
-<START> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'id' <statementStart> <optionalAssignment> ';'
+<statementStart> -> <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> <repetitiveIndices>
+<repetitiveIndices> -> <indice> <repetitiveIndices>
+<indice> -> '[' <arithmeticExpression> ']'

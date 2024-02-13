@@ -315,7 +315,7 @@ function Generate-Production-Method {
     $methodCode += @"
 
         else
-            return OutputError($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.");
+            return OutputError();
     }
 "@
             
@@ -527,10 +527,13 @@ using static System.Console;
 using static LexicalAnalyzer.TokenType;
     
 namespace SyntacticAnalyzer;
-    
+
+/// <summary>
+/// Parser class, used to parse a source file.
+/// </summary>
 public class Parser : IParser
 {
-    private const bool DEBUG = true;
+    private const bool DEBUG = false;
     private IScanner Scanner { get; }
     private Token LookAhead { get; set; }
     private string Source {get;set;} = "";
@@ -542,6 +545,10 @@ public class Parser : IParser
 
     #region Constructor
 
+    /// <summary>
+    /// Constructor for the Parser class
+    /// </summary>
+    /// <param name="sourceFileName">The name of the source file to parse</param>
     public Parser(string sourceFileName)
     {
         // Create a new scanner and get the first token
@@ -560,7 +567,7 @@ public class Parser : IParser
         if (File.Exists(SourceName + OUT_PRODUCTIONS_EXTENSION))
             File.Delete(SourceName + OUT_PRODUCTIONS_EXTENSION);
 
-        ParseTree = new ParseTree(new ParseNode("<START>",false), SourceName + OUT_DERIVATION_EXTENSION, true);
+        ParseTree = new ParseTree(new ParseNode("<START>",false), SourceName + OUT_DERIVATION_EXTENSION, DEBUG);
 
         if (DEBUG)
             WriteLine("Parser initialized...");
@@ -570,59 +577,86 @@ public class Parser : IParser
 
     #region Base Methods
 
+    /// <summary>
+    /// Parses the source file, returning true if the source file is parsed successfully, false otherwise
+    /// </summary>
+    /// <returns>True if the source file is parsed successfully, false otherwise</returns>
     public bool Parse()
     {
-        // Get the first token
-        LookAhead = Scanner.NextToken();
-
-        // Make sure the token is not a Comment
-        while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt)
+        // Get the next token and make sure it is not a Comment
+        do
             LookAhead = Scanner.NextToken();
+        while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt);
 
         if (DEBUG)
             WriteLine("Parsing...");
 
+        // Parse the source file   
         bool isParsed = Start() && Match(Eof);
         
+        // Close the parse tree resources
         ParseTree.Close();
         
         return isParsed;
     }
 
+    /// <summary>
+    /// Matches the current token with the expected token
+    /// </summary>
+    /// <param name="tokenType">The expected token type</param>
+    /// <returns>True if the current token matches the expected token, false otherwise</returns>
     private bool Match(TokenType tokenType)
     {
-        if(tokenType == Eof)
-            while(LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt)
+        if (tokenType == Eof)
+            while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt)
                 LookAhead = Scanner.NextToken();
 
         // Check if the current token matches the expected token
         bool isMatch = LookAhead.Type == tokenType;
 
-        if(!isMatch)
+        if (!isMatch)
             WriteLine($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}. Expected {tokenType}.");
 
-        // Get the next token
-        LookAhead = Scanner.NextToken();
-
-        // Make sure the token is not a Comment
-        while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt)
+        // Get the next token and make sure it is not a Comment
+        do
             LookAhead = Scanner.NextToken();
+        while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt);
 
         // Return the result
         return isMatch;
     }
 
+    /// <summary>
+    /// Skips errors in the source file
+    /// </summary>
+    /// <param name="firstSet">The first set of the production rule</param>
+    /// <param name="followSet">The follow set of the production rule</param>
+    /// <returns>True if there are no errors (or if the error is recovered from), false otherwise</returns>
     private bool SkipErrors(TokenType[] firstSet, TokenType[] followSet)
     {
+        // Check if the current token is in the first set or the follow set (if it is an epsilon token)
         if (firstSet.Contains(LookAhead.Type) || (firstSet.Contains(Epsilon) && followSet.Contains(LookAhead.Type)))
             return true;
         else
         {
+            // Output an error message, this error can be recovered from
             WriteLine($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.");
+            using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
+            sw.WriteLine($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.");
 
+            // Get the next token until it is in the first set or the follow set
             while (!firstSet.Contains(LookAhead.Type) && !followSet.Contains(LookAhead.Type))
             {
-                LookAhead = Scanner.NextToken();
+                // Get the next token and make sure it is not a Comment
+                do
+                    LookAhead = Scanner.NextToken();
+                while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt);
+
+                // If the end of the file is reached, return false
+                if(LookAhead.Type == Eof)
+                    return false;
+
+                // If the current token contains epsilon and the follow set contains the current token, return false
                 if (firstSet.Contains(Epsilon) && followSet.Contains(LookAhead.Type))
                     return false;
             }
@@ -630,26 +664,46 @@ public class Parser : IParser
         }
     }
 
+    /// <summary>
+    /// Outputs a derivation to the console and to the output file
+    /// </summary>
+    /// <param name="productionRuleStr">The production rule to output</param>
     private void OutputDerivation(string productionRuleStr)
     {
+        // Add the production rule to the parse tree and print the parse tree
         ParseTree.AddProduction(productionRuleStr);
         ParseTree.Print();
 
+        // Write the production rule to the output file
         using StreamWriter sw = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
         sw.WriteLine(productionRuleStr);
     }
 
+    /// <summary>
+    /// Outputs a production rule to the console and to the output file
+    /// </summary>
+    /// <param name="productionRuleStr">The production rule to output</param>
+    /// <returns>True</returns>
     private static bool OutputProductionRule(string productionRuleStr)
     {
-        //WriteLine(productionRuleStr);
+        if (DEBUG)
+            WriteLine(productionRuleStr);
         return true;
     }
 
-    private bool OutputError(string messageStr)
+    /// <summary>
+    /// Outputs an error message to the console and to the output file
+    /// </summary>
+    /// <returns>False</returns>
+    private bool OutputError()
     {
-        WriteLine(messageStr);
+        // Define the error message
+        string errorMsg = $"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.";
+
+        // Write the error message to the console and to the output file
+        WriteLine(errorMsg);
         using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
-        sw.WriteLine(messageStr);
+        sw.WriteLine(errorMsg);
         return false;
     }
 
@@ -694,7 +748,7 @@ $grammar = Get-Content -Path "grammar.grm"
 
 # Loop through each line in the grammar file and process the production
 foreach ($line in $grammar) {
-    if ($line -eq "") {
+    if ($line -eq "" -or $line -like '#*') {
         continue
     }
     Process-Production -production $line

@@ -1,0 +1,414 @@
+[blockcmt, /* sort the array */, 1]
+[func, func, 2]
+[id, bubbleSort, 2]
+[openpar, (, 2]
+[id, arr, 2]
+[colon, :, 2]
+[integer, integer, 2]
+[opensqbr, [, 2]
+[closesqbr, ], 2]
+[comma, ,, 2]
+[id, size, 2]
+[colon, :, 2]
+[integer, integer, 2]
+[closepar, ), 2]
+[arrow, ->, 2]
+[void, void, 2]
+[opencubr, {, 3]
+[let, let, 4]
+[id, n, 4]
+[colon, :, 4]
+[integer, integer, 4]
+[semi, ;, 4]
+[let, let, 5]
+[id, i, 5]
+[colon, :, 5]
+[integer, integer, 5]
+[semi, ;, 5]
+[let, let, 6]
+[id, j, 6]
+[colon, :, 6]
+[integer, integer, 6]
+[semi, ;, 6]
+[let, let, 7]
+[id, temp, 7]
+[colon, :, 7]
+[integer, integer, 7]
+[semi, ;, 7]
+[id, n, 8]
+[assign, =, 8]
+[id, size, 8]
+[semi, ;, 8]
+[id, i, 9]
+[assign, =, 9]
+[intnum, 0, 9]
+[semi, ;, 9]
+[id, j, 10]
+[assign, =, 10]
+[intnum, 0, 10]
+[semi, ;, 10]
+[id, temp, 11]
+[assign, =, 11]
+[intnum, 0, 11]
+[semi, ;, 11]
+[while, while, 12]
+[openpar, (, 12]
+[id, i, 12]
+[lt, <, 12]
+[id, n, 12]
+[minus, -, 12]
+[intnum, 1, 12]
+[closepar, ), 12]
+[opencubr, {, 12]
+[while, while, 13]
+[openpar, (, 13]
+[id, j, 13]
+[lt, <, 13]
+[id, n, 13]
+[minus, -, 13]
+[id, i, 13]
+[minus, -, 13]
+[intnum, 1, 13]
+[closepar, ), 13]
+[opencubr, {, 13]
+[if, if, 14]
+[openpar, (, 14]
+[id, arr, 14]
+[opensqbr, [, 14]
+[id, j, 14]
+[closesqbr, ], 14]
+[gt, >, 14]
+[id, arr, 14]
+[opensqbr, [, 14]
+[id, j, 14]
+[plus, +, 14]
+[intnum, 1, 14]
+[closesqbr, ], 14]
+[closepar, ), 14]
+[then, then, 15]
+[opencubr, {, 15]
+[inlinecmt, // swap temp and arr[i], 16]
+[id, temp, 17]
+[assign, =, 17]
+[id, arr, 17]
+[opensqbr, [, 17]
+[id, j, 17]
+[closesqbr, ], 17]
+[semi, ;, 17]
+[id, arr, 18]
+[opensqbr, [, 18]
+[id, j, 18]
+[closesqbr, ], 18]
+[assign, =, 18]
+[id, arr, 18]
+[opensqbr, [, 18]
+[id, j, 18]
+[plus, +, 18]
+[intnum, 1, 18]
+[closesqbr, ], 18]
+[semi, ;, 18]
+[id, arr, 19]
+[opensqbr, [, 19]
+[id, j, 19]
+[plus, +, 19]
+[intnum, 1, 19]
+[closesqbr, ], 19]
+[assign, =, 19]
+[id, temp, 19]
+[semi, ;, 19]
+[closecubr, }, 20]
+[else, else, 20]
+[semi, ;, 20]
+[id, j, 21]
+[assign, =, 21]
+[id, j, 21]
+[plus, +, 21]
+[intnum, 1, 21]
+[semi, ;, 21]
+[closecubr, }, 22]
+[semi, ;, 22]
+[id, i, 23]
+[assign, =, 23]
+[id, i, 23]
+[plus, +, 23]
+[intnum, 1, 23]
+[semi, ;, 23]
+[closecubr, }, 24]
+[semi, ;, 24]
+[closecubr, }, 25]
+[blockcmt, /* print the array */, 27]
+[func, func, 28]
+[id, printArray, 28]
+[openpar, (, 28]
+[id, arr, 28]
+[colon, :, 28]
+[integer, integer, 28]
+[opensqbr, [, 28]
+[closesqbr, ], 28]
+[comma, ,, 28]
+[id, size, 28]
+[colon, :, 28]
+[integer, integer, 28]
+[closepar, ), 28]
+[arrow, ->, 28]
+[void, void, 28]
+[opencubr, {, 29]
+[let, let, 30]
+[id, n, 30]
+[colon, :, 30]
+[integer, integer, 30]
+[semi, ;, 30]
+[let, let, 31]
+[id, i, 31]
+[colon, :, 31]
+[integer, integer, 31]
+[semi, ;, 31]
+[id, n, 32]
+[assign, =, 32]
+[id, size, 32]
+[semi, ;, 32]
+[id, i, 33]
+[assign, =, 33]
+[intnum, 0, 33]
+[semi, ;, 33]
+[while, while, 34]
+[openpar, (, 34]
+[id, i, 34]
+[lt, <, 34]
+[id, n, 34]
+[closepar, ), 34]
+[opencubr, {, 34]
+[write, write, 35]
+[openpar, (, 35]
+[id, arr, 35]
+[opensqbr, [, 35]
+[id, i, 35]
+[closesqbr, ], 35]
+[closepar, ), 35]
+[semi, ;, 35]
+[id, i, 36]
+[assign, =, 36]
+[id, i, 36]
+[plus, +, 36]
+[intnum, 1, 36]
+[semi, ;, 36]
+[closecubr, }, 37]
+[semi, ;, 37]
+[closecubr, }, 38]
+[inlinecmt, // main funtion to test above, 40]
+[func, func, 41]
+[id, main, 41]
+[openpar, (, 41]
+[closepar, ), 41]
+[arrow, ->, 41]
+[void, void, 41]
+[opencubr, {, 42]
+[let, let, 43]
+[id, arr, 43]
+[colon, :, 43]
+[integer, integer, 43]
+[opensqbr, [, 43]
+[intnum, 7, 43]
+[closesqbr, ], 43]
+[semi, ;, 43]
+[id, arr, 44]
+[opensqbr, [, 44]
+[intnum, 0, 44]
+[closesqbr, ], 44]
+[assign, =, 44]
+[intnum, 64, 44]
+[semi, ;, 44]
+[id, arr, 45]
+[opensqbr, [, 45]
+[intnum, 1, 45]
+[closesqbr, ], 45]
+[assign, =, 45]
+[intnum, 34, 45]
+[semi, ;, 45]
+[id, arr, 46]
+[opensqbr, [, 46]
+[intnum, 2, 46]
+[closesqbr, ], 46]
+[assign, =, 46]
+[intnum, 25, 46]
+[semi, ;, 46]
+[id, arr, 47]
+[opensqbr, [, 47]
+[intnum, 3, 47]
+[closesqbr, ], 47]
+[assign, =, 47]
+[intnum, 12, 47]
+[semi, ;, 47]
+[id, arr, 48]
+[opensqbr, [, 48]
+[intnum, 4, 48]
+[closesqbr, ], 48]
+[assign, =, 48]
+[intnum, 22, 48]
+[semi, ;, 48]
+[id, arr, 49]
+[opensqbr, [, 49]
+[intnum, 5, 49]
+[closesqbr, ], 49]
+[assign, =, 49]
+[intnum, 11, 49]
+[semi, ;, 49]
+[id, arr, 50]
+[opensqbr, [, 50]
+[intnum, 6, 50]
+[closesqbr, ], 50]
+[assign, =, 50]
+[intnum, 90, 50]
+[semi, ;, 50]
+[id, printarray, 51]
+[openpar, (, 51]
+[id, arr, 51]
+[comma, ,, 51]
+[intnum, 7, 51]
+[closepar, ), 51]
+[semi, ;, 51]
+[id, bubbleSort, 52]
+[openpar, (, 52]
+[id, arr, 52]
+[comma, ,, 52]
+[intnum, 7, 52]
+[closepar, ), 52]
+[semi, ;, 52]
+[id, printarray, 53]
+[openpar, (, 53]
+[id, arr, 53]
+[comma, ,, 53]
+[intnum, 7, 53]
+[closepar, ), 53]
+[semi, ;, 53]
+[closecubr, }, 54]
+[blockcmt, /*
+    classes
+    --------------------------------------
+|X| no class declaration
+| | class declaration
+| | multiple class declarations
+| | no data member declaration
+| | data member declaration
+| | multiple data member declaration
+| | no member function declaration
+| | member function declaration
+| | multiple member function declaration
+| | no member
+| | no inherited class
+| | one inherited class
+| | multiple inherited classes
+| | private member specifier
+| | public member specifier
+
+    functions: definitions
+    --------------------------------------
+| | no main function definition
+|X| main function definition
+| | no free function definition
+|X| free function definition
+|X| multiple free function definitions
+|X| no member function definition
+| | member function definition
+| | multiple member function definitions
+|X| return type: void
+| | return type: integer
+| | return type: float
+| | return type: id
+| | return type: array (not allowed)
+
+    functions: formal parameters
+    --------------------------------------
+|X| type: integer
+| | type: float
+| | type: id
+|X| type: 1-dim array 
+| | type: n-dim array
+| | type: array (with size)
+|X| type: array (without size)
+
+    functions: calls
+    --------------------------------------
+|X| free function call
+| | member function call
+| | parameters:0
+| | parameters:1
+|X| parameters:n
+|X| array parameter - 1-dim
+| | array parameter - n-dim
+| | array parameter - with size
+| | array parameter - without size
+| | function call as statement
+| | function call as expression factor
+| | expression as parameter
+
+    variable declaration
+    --------------------------------------
+|X| type: integer
+| | type: float
+| | type: string
+| | type: id
+|X| type: 1-dim array 
+| | type: n-dim array
+|X| type: array (with size)
+| | type: array (without size) (not allowed)
+
+    function body: local variable declarations
+    --------------------------------------
+| | no local variable declarations
+|X| local variable declarations
+| | intertwined statements and variable declarations
+
+    function body: statements
+    --------------------------------------
+| | no statement
+| | 1 statement
+|X| n statements
+|X| if statement
+|X| if: empty then or else blocks
+| | if: 1-statement then or else blocks
+|X| if: n-statements then or else blocks
+|X| while statement
+| | while: empty block
+| | while: 1-statement block
+|X| while: n-statement block
+| | read(<variable>) statement
+|X| write(<expr>) statement
+|X| return(<expr>) statement
+|X| assignment statement
+
+    variable + idnest
+    --------------------------------------
+|X| id
+| | id.id
+| | id.id(id)
+| | id(id).id
+| | id(id).id()
+| | id.id[id]
+| | id[id].id
+| | id[id].id[id]
+| | id.id[id][id]
+| | id[id][id].id
+| | id[id][id].id[id][id]
+| | id(id).id[id]
+| | id(id).id[id][id]
+| | expression as array index
+
+    expressions
+    --------------------------------------
+|X| single variable
+|X| involving addop
+| | involving multop
+|X| involving relop
+| | involving addop + multop
+|X| involving multop + relop
+| | involving addop + multop + relop
+| | involving parentheses
+| | involving nested parentheses
+| | involving not
+| | involving sign
+|X| involving literals
+| | involving variable + idnest
+|X| involving function calls
+| | involving all the above in one expression
+*/, 56]
