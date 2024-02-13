@@ -535,6 +535,7 @@ public class Parser : IParser
     private Token LookAhead { get; set; }
     private string Source {get;set;} = "";
     private string SourceName {get;set;} = "";
+    private IParseTree ParseTree { get; set; }
     private const string OUT_SYNTAX_ERRORS_EXTENSION = ".outsyntaxerrors";
     private const string OUT_DERIVATION_EXTENSION = ".outderivation";
     private const string OUT_PRODUCTIONS_EXTENSION = ".outproductions";
@@ -559,6 +560,8 @@ public class Parser : IParser
         if (File.Exists(SourceName + OUT_PRODUCTIONS_EXTENSION))
             File.Delete(SourceName + OUT_PRODUCTIONS_EXTENSION);
 
+        ParseTree = new ParseTree(new ParseNode("<START>",false), SourceName + OUT_DERIVATION_EXTENSION, true);
+
         if (DEBUG)
             WriteLine("Parser initialized...");
     }
@@ -576,11 +579,14 @@ public class Parser : IParser
         while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt)
             LookAhead = Scanner.NextToken();
 
-
         if (DEBUG)
             WriteLine("Parsing...");
 
-        return Start() && Match(Eof);
+        bool isParsed = Start() && Match(Eof);
+        
+        ParseTree.Close();
+        
+        return isParsed;
     }
 
     private bool Match(TokenType tokenType)
@@ -626,7 +632,10 @@ public class Parser : IParser
 
     private void OutputDerivation(string productionRuleStr)
     {
-        using StreamWriter sw = new(SourceName + OUT_DERIVATION_EXTENSION, true);
+        ParseTree.AddProduction(productionRuleStr);
+        ParseTree.Print();
+
+        using StreamWriter sw = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
         sw.WriteLine(productionRuleStr);
     }
 

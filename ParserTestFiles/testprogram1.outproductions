@@ -1,0 +1,21 @@
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <functionDefinition>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> EPSILON
+<returnType> -> 'void'
+<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
+<repetitiveVariableDeclarationOrStatements> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <functionDefinition>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'integer'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'float'
+<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
+<repetitiveVariableDeclarationOrStatements> -> EPSILON
+<START> -> EPSILON

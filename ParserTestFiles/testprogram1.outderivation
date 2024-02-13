@@ -1,21 +1,21 @@
-<START> -> <structOrImplOrFunction> <START>
-<structOrImplOrFunction> -> <functionDefinition>
-<functionDefinition> -> <functionHeader> <functionBody>
-<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
-<funtionParameters> -> EPSILON
-<returnType> -> 'void'
-<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
-<repetitiveVariableDeclarationOrStatements> -> EPSILON
-<START> -> <structOrImplOrFunction> <START>
-<structOrImplOrFunction> -> <functionDefinition>
-<functionDefinition> -> <functionHeader> <functionBody>
-<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
-<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
-<type> -> 'integer'
-<repetitiveArraySizes> -> EPSILON
-<repetitiveFunctionParametersTails> -> EPSILON
-<returnType> -> <type>
-<type> -> 'float'
-<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
-<repetitiveVariableDeclarationOrStatements> -> EPSILON
-<START> -> EPSILON
+<START> -> <structOrImplOrFunction> <START> 
+<START> -> <functionDefinition> <START> 
+<START> -> <functionHeader> <functionBody> <START> 
+<START> -> func id ( <funtionParameters> ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> void <functionBody> <START> 
+<START> -> func id ( ) -> void { <repetitiveVariableDeclarationOrStatements> } <START> 
+<START> -> func id ( ) -> void { } <START> 
+<START> -> func id ( ) -> void { } <structOrImplOrFunction> <START> 
+<START> -> func id ( ) -> void { } <functionDefinition> <START> 
+<START> -> func id ( ) -> void { } <functionHeader> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( <funtionParameters> ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails> ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer <repetitiveArraySizes> <repetitiveFunctionParametersTails> ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer <repetitiveFunctionParametersTails> ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer ) -> <returnType> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer ) -> <type> <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer ) -> float <functionBody> <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer ) -> float { <repetitiveVariableDeclarationOrStatements> } <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer ) -> float { } <START> 
+<START> -> func id ( ) -> void { } func id ( id : integer ) -> float { } 

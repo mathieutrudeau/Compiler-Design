@@ -1,0 +1,160 @@
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <structDeclaration>
+<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'
+<structOptionalInheritance> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'float'
+<repetitiveStructMemberDeclarations> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <structDeclaration>
+<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'
+<structOptionalInheritance> -> 'inherits' 'id' <repetitiveStructOptionalInheritances>
+<repetitiveStructOptionalInheritances> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>
+<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'id'
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'float'
+<repetitiveStructMemberDeclarations> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <structDeclaration>
+<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'
+<structOptionalInheritance> -> 'inherits' 'id' <repetitiveStructOptionalInheritances>
+<repetitiveStructOptionalInheritances> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>
+<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>
+<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'id'
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'float'
+<repetitiveStructMemberDeclarations> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <implDefinition>
+<implDefinition> -> 'impl' 'id' '{' <repetitiveFunctionDefinitions> '}'
+<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'float'
+<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'return' '(' <expression> ')' ';'
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> EPSILON
+<repetitiveFunctionDefinitions> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <implDefinition>
+<implDefinition> -> 'impl' 'id' '{' <repetitiveFunctionDefinitions> '}'
+<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
+<type> -> 'float'
+<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall> <optionalAssignment> ';'
