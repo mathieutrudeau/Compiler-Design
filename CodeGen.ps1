@@ -4,39 +4,68 @@
 
 $languageDict = @{}
 
+<#
+.SYNOPSIS
+    Checks if a symbol is a terminal
+.DESCRIPTION
+    This function checks if a symbol is a terminal. A terminal is a symbol that is enclosed in single quotes.
+.PARAMETER symbol
+    The symbol to check
+.EXAMPLE
+    Is-Terminal -symbol "'id'"
+.NOTES
+    A terminal is a symbol that is enclosed in single quotes. For example, 'id' is a terminal.
+#>
 function Is-Terminal {
     param(
         [string]$symbol
     )
 
-    if ($symbol[0] -eq "'" -and $symbol[-1] -eq "'") {
-        return $true
-    }
-    return $false
+    return $symbol.Trim() -match "^'.*'$"
 }
 
+<#
+.SYNOPSIS
+    Checks if a symbol is a non-terminal
+.DESCRIPTION
+    This function checks if a symbol is a non-terminal. A non-terminal is a symbol that is enclosed in angle brackets.
+.PARAMETER symbol
+    The symbol to check
+.EXAMPLE
+    Is-NonTerminal -symbol "<START>"
+.NOTES
+    A non-terminal is a symbol that is enclosed in angle brackets. For example, <START> is a non-terminal.
+#>
 function Is-NonTerminal {
     param(
         [string]$symbol
     )
 
-    if ($symbol[0] -eq "<" -and $symbol[-1] -eq ">") {
-        return $true
-    }
-    return $false
+    return $symbol.Trim() -match "^<.*>$"
 }
 
+<#
+.SYNOPSIS
+    Extracts the name of a symbol
+.DESCRIPTION
+    This function extracts the name of a symbol. If the symbol is a non-terminal, it will remove the angle brackets and make the first letter uppercase.
+    If the symbol is a terminal, it will remove the single quotes.
+.PARAMETER symbol
+    The symbol to extract the name from
+.EXAMPLE
+    Extract-Name -symbol "<START>"
+.NOTES
+    If the symbol is a non-terminal, it will remove the angle brackets and make the first letter uppercase.
+    If the symbol is a terminal, it will remove the single quotes.  
+#>
 function Extract-Name {
     param(
         [string]$symbol
     )
 
-    $symbol = $symbol.Trim()
-
     if (Is-NonTerminal -symbol $symbol) {
-        $prodName = $symbol.Replace("<", "").Replace(">", "")
-        $prodName = $prodName.Substring(0, 1).ToUpper() + $prodName.Substring(1)
-        $prodName = $prodName.Trim()
+        $prodName = $symbol.Replace("<", "").Replace(">", "").Trim()
+        $prodName = ($prodName.Substring(0, 1).ToUpper() + $prodName.Substring(1)).Trim()
 
         if ($prodName -eq "START") {
             $prodName = "Start"
@@ -45,16 +74,25 @@ function Extract-Name {
         return $prodName
     }
     elseif (Is-Terminal -symbol $symbol) {
-        $termName = $symbol.Replace("'", "")
-        $termName = $termName.Trim()
-        return $termName
+        return $symbol.Replace("'", "").Trim()
     }
     else {
-        $symbol = $symbol.Trim()
-        return $symbol
+        return $symbol.Trim()
     }
 }
 
+<#
+.SYNOPSIS
+    Translates a terminal to an enum value
+.DESCRIPTION
+    This function translates a terminal to an enum value. For example, 'id' will be translated to Id.
+.PARAMETER terminal
+    The terminal to translate
+.EXAMPLE
+    Get-Enum-Value -terminal "'id'
+.NOTES
+    This function translates a terminal to an enum value. For example, 'id' will be translated to Id.
+#>
 function Get-Enum-Value {
     param(
         [string]$terminal
@@ -97,11 +135,11 @@ function Get-Enum-Value {
         "'lt'" { return "Lt" }
         "'leq'" { return "Leq" }
         "'gt'" { return "Gt" }
-        "'void'" { return "Void" }
+        "'void'" { return "TokenType.Void" }
         "'while'" { return "While" }
         "'return'" { return "Return" }
-        "'read'" { return "Read" }
-        "'write'" { return "Write" }
+        "'read'" { return "TokenType.Read" }
+        "'write'" { return "TokenType.Write" }
         "'then'" { return "Then" }
         "'struct'" { return "Struct" }
         "'inherits'" { return "Inherits" }
@@ -114,22 +152,9 @@ function Get-Enum-Value {
         Default {}
     }
 
-
     return $terminal
 }
 
-function Translate-Terminal {
-    param(
-        [string]$terminal
-    )
-    #Write-Host "Translating $terminal"
-
-    $terminal = $terminal.Trim()
-
-    $termName = "TokenType." + (Get-Enum-Value -terminal $terminal)
-
-    return $termName
-}
 
 function Process-Production {
     param(
@@ -148,8 +173,6 @@ function Process-Production {
     else {
         $languageDict[$left] += $right
     }   
-
-    #Write-Host "$left -> $right"
 }
 
 function Show-Grammar {
@@ -216,7 +239,7 @@ function Generate-Production-Method {
         }
         
         if (Is-Terminal -symbol $start) {
-            $translatedTerm = Translate-Terminal -terminal $start
+            $translatedTerm = Get-Enum-Value -terminal $start
 
             $start = "$translatedTerm == LookAhead.Type"
         }
@@ -238,7 +261,7 @@ function Generate-Production-Method {
                 if ($recMatch -ne "") {
                     $recMatch += " && "
                 }
-                $recMatch += "Match(" + (Translate-Terminal -terminal $symbol) + ")"
+                $recMatch += "Match(" + (Get-Enum-Value -terminal $symbol) + ")"
                 $recOutput += " $symbol"
             }
             else {
@@ -315,7 +338,7 @@ function Generate-Production-Method {
     $methodCode += @"
 
         else
-            return OutputError();
+            return OutputError(FIRST_$prodName, FOLLOW_$prodName);
     }
 "@
             
@@ -340,10 +363,29 @@ function Generate-Set-Code {
 
     return @"
 
-    private static readonly TokenType[] $prodName = new TokenType[] { $(($set | ForEach-Object { Translate-Terminal -terminal $_ }) -join ", ") };
+    private static readonly TokenType[] $prodName = new TokenType[] { $(($set | ForEach-Object { Get-Enum-Value -terminal $_ }) -join ", ") };
 "@
 }
 
+<#
+.SYNOPSIS
+    Generates the first set for a production rule
+.DESCRIPTION
+    This function generates the first set for a production rule.
+    It does so by checking if the first element of the production is a terminal. If it is, it adds it to the first set.
+    If the first element is a non-terminal, it adds the elements of the first set of the non-terminal to the first set of the current production.
+    If the first element is epsilon, it adds it to the first set.
+.PARAMETER productionName
+    The name of the production rule
+.PARAMETER grammarDict
+    The grammar dictionary
+.PARAMETER firstSet
+    The first set
+.EXAMPLE
+    Generate-First-Set-Rec -productionName "<START>" -grammarDict $languageDict -firstSet $firstSet
+.NOTES
+    This function is called recursively to generate the first set for a production rule.
+#>
 function Generate-First-Set-Rec {
     param(
         [string]$productionName,
@@ -351,45 +393,60 @@ function Generate-First-Set-Rec {
         [System.Collections.ArrayList]$firstSet
     )
 
+    # Getting all productions for the given LHS symbol
     $productions = $grammarDict[$productionName]
 
+    # Loop through each production
     foreach ($prod in $productions) {
+
         #Write-Host "Production: $prod"
+        
+        # Split the production into elements
         $elements = ($prod.Trim() -split " ")
         $first = $elements[0].Trim()
      
         #Write-Host "First element: $first"
 
-        if (Is-Terminal -symbol $first) {
-            # If the first element is a terminal, add it to the first set if it's not already there
-            if (!$firstSet.Contains($first)) {
-                #Write-Host "Adding $first to first set"
-                $firstSet.Add($first) | Out-Null
-            }
+        # If the first element is a terminal, add it to the first set if it's not already there
+        if ((Is-Terminal -symbol $first) -and (!$firstSet.Contains($first))) {
+            #Write-Host "Adding $first to first set"
+            $firstSet.Add($first) | Out-Null
         }
+        # If the first element is a non-terminal, add the elements of the first set of the non-terminal to the first set of the current production
         elseif (Is-NonTerminal -symbol $first) {
-            # If the first element is a non-terminal, get the first set of that non-terminal
+
+            # Get the first set of the non-terminal
             $nt_firstSet = (Generate-First-Set-Rec -productionName $first -grammarDict $grammarDict -firstSet $firstSet)
 
             # Add the elements of the first set of the non-terminal to the first set of the current production
-            foreach ($elem in $nt_firstSet) {
-                if (!$firstSet.Contains($elem)) {
-                    #Write-Host "Adding $elem to first set"
-                    $firstSet.Add($elem) | Out-Null
+            $nt_firstSet | ForEach-Object {
+                if (!$firstSet.Contains($_)) {
+                    #Write-Host "Adding $_ to first set"
+                    $firstSet.Add($_) | Out-Null
                 }
             }
         }
-        else {
-            if (!$firstSet.Contains("EPSILON")) {
-                #Write-Host "Adding EPSILON to first set"
-                $firstSet.Add("EPSILON") | Out-Null
-            }
+        # If the first element is epsilon, add it to the first set if it's not already there
+        elseif ($first -eq "EPSILON" -and !$firstSet.Contains("EPSILON")) {
+            $firstSet.Add("EPSILON") | Out-Null
         }
     }
 
     return $firstSet
 }
 
+<#
+.SYNOPSIS
+    Generates the first set for a production rule
+.DESCRIPTION
+    This function generates the first set for a production rule.
+.PARAMETER productionName
+    The name of the production rule
+.PARAMETER grammarDict
+    The grammar dictionary
+.EXAMPLE
+    Generate-First-Set -productionName "<START>" -grammarDict $languageDict
+#>
 function Generate-First-Set {
     param(
         [string]$productionName,
@@ -398,12 +455,13 @@ function Generate-First-Set {
 
     Write-Host "Generating first set for $productionName"
 
+    # Create an array list to store the first set
     $firstSet = New-Object System.Collections.ArrayList
 
-    #Write-Host "Generating first set for $productionName"
-
+    # Call the recursive function to generate the first set
     $firstSet = (Generate-First-Set-Rec -productionName $productionName -grammarDict $grammarDict -firstSet $firstSet)
 
+    # Return the first set
     return $firstSet
 }
 
@@ -415,57 +473,90 @@ function Generate-Follow-Set-Rec {
         [System.Collections.ArrayList]$visited
     )
 
+    # If this production has already been visited, return the follow set to avoid infinite recursion
     if ($visited.Contains($productionName)) {
         return $followSet
     }
+    # Otherwise, add the production to the visited list
     else {
         $visited.Add($productionName) | Out-Null
     }
 
+    # Iterate through each LHS symbol in the grammar dictionary
     foreach ($key in $grammarDict.Keys) {
+        
+        # Get all productions for the current LHS symbol
         $productions = $grammarDict[$key]
 
+        # If the current LHS symbol is the same as the production name, skip it. 
+        # We can't find the follow set of a production in itself
         if ($key -eq $productionName) {
             continue
         }
 
+        # Iterate through each RHS symbol in the production
         foreach ($prod in $productions) {
+
+            # If the RHS contains the production name, this production is a candidate for the follow set,
+            # Otherwise, skip it
             if ($prod.Contains($productionName)) {
+
                 #Write-Host "Found $productionName in $key"
                 #Write-Host "Production: $key -> $prod"
                 
+                # Split the production into elements
                 $elements = $prod.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
+                
+                # Get the count of elements (minus 1 because the array is 0-based)
                 $count = $elements.Count - 1
 
+                # Iterate through each element in the production
                 for ($i = 0; $i -le $count; $i++) {
+
+                    # If the current element is the production name, 
+                    # then the next element(if it has one) is a candidate for the follow set
                     if ($elements[$i] -eq $productionName) {
                         #Write-Host "Element: $($elements[$i])"
+                        
+                        # If the element is not the last element in the production,
+                        # then the next element is a candidate for the follow set
                         if ($i -lt $count) {
+
+                            # Get the next element
                             $next = $elements[$i + 1]
 
-                            if (Is-Terminal -symbol $next) {
-                                if (!$followSet.Contains($next)) {
-                                    #Write-Host "Adding $next to follow set"
-                                    $followSet.Add($next) | Out-Null
-                                }
+                            # If the next element is a terminal symbol that is not already in the follow set, add it to the follow set
+                            if ((Is-Terminal -symbol $next) -and !$followSet.Contains($next)) {
+                                #Write-Host "Adding $next to follow set"
+                                $followSet.Add($next) | Out-Null
                             }
-                            else {
+                            # If the next element is a non-terminal symbol, add the first set of the non-terminal to the follow set
+                            elseif (Is-NonTerminal -symbol $next) {
+
+                                # Get the first set of the next non-terminal symbol
                                 $nt_firstSet = (Generate-First-Set -productionName $next -grammarDict $grammarDict)
 
-                                foreach ($elem in $nt_firstSet) {
-                                    if (!$followSet.Contains($elem) -and ($elem -ne "EPSILON")) {
-                                        #Write-Host "Adding $elem to follow set"
-                                        $followSet.Add($elem) | Out-Null
+                                # Add the elements of the first set of the next non-terminal symbol to the follow set,
+                                # except for epsilon of course
+                                $nt_firstSet | ForEach-Object {
+                                    if (!$followSet.Contains($_) -and ($_ -ne "EPSILON")) {
+                                        #Write-Host "Adding $_ to follow set"
+                                        $followSet.Add($_) | Out-Null
                                     }
                                 }
 
+                                # If the first set of the next non-terminal symbol contains epsilon,
+                                # then the follow set of that non-terminal symbol needs to be added to the follow set of the current production 
                                 if ($nt_firstSet.Contains("EPSILON")) {
+
+                                    # Get the follow set of the next non-terminal symbol
                                     $nextFollow = (Generate-Follow-Set-Rec -productionName $next -grammarDict $grammarDict -followSet $followSet -visited $visited)
 
-                                    foreach ($elem in $nextFollow) {
-                                        if (!$followSet.Contains($elem)) {
-                                            #Write-Host "Adding $elem to follow set"
-                                            $followSet.Add($elem) | Out-Null
+                                    # Add the elements of the follow set of the next non-terminal symbol to the follow set of the current production
+                                    $nextFollow | ForEach-Object {
+                                        if (!$followSet.Contains($_)) {
+                                            #Write-Host "Adding $_ to follow set"
+                                            $followSet.Add($_) | Out-Null
                                         }
                                     }
                                 }
@@ -474,15 +565,19 @@ function Generate-Follow-Set-Rec {
 
                             #Write-Host "Next: $next"
                         }
+                        # If the element is the last element in the production,
+                        # then the follow set of the LHS symbol is a candidate for the follow set
                         else {
                             #Write-Host "Next: End of production"
 
+                            # Get the follow set of the LHS symbol
                             $nextFollow = (Generate-Follow-Set-Rec -productionName $key -grammarDict $grammarDict -followSet $followSet -visited $visited)
 
-                            foreach ($elem in $nextFollow) {
-                                if (!$followSet.Contains($elem)) {
-                                    #Write-Host "Adding $elem to follow set"
-                                    $followSet.Add($elem) | Out-Null
+                            # Add the elements of the follow set of the LHS symbol to the follow set of the current production
+                            $nextFollow | ForEach-Object {
+                                if (!$followSet.Contains($_)) {
+                                    #Write-Host "Adding $_ to follow set"
+                                    $followSet.Add($_) | Out-Null
                                 }
                             }
                         }
@@ -493,6 +588,7 @@ function Generate-Follow-Set-Rec {
         }
     }
 
+    # Return the follow set of the current production
     return $followSet
 }
 
@@ -501,6 +597,10 @@ function Generate-Follow-Set {
         [string]$productionName,
         [System.Collections.Hashtable]$grammarDict
     )
+
+    if ($productionName -eq "<factor>") {
+        Write-Host "Generating follow set for $productionName"
+    }
 
     $followSet = New-Object System.Collections.ArrayList
     $visited = New-Object System.Collections.ArrayList
@@ -511,7 +611,21 @@ function Generate-Follow-Set {
         $followSet.Add("$") | Out-Null
     }
 
+    # SANITY CHECKS
+
+    # Do a quick check to see if the production is ambiguous,
+    # It can be ambiguous if the production has many derivations and the first set has overlapping elements with the follow set
     $followSet = (Generate-Follow-Set-Rec -productionName $productionName -grammarDict $grammarDict -followSet $followSet -visited $visited)
+    $firstSet = (Generate-First-Set -productionName $productionName -grammarDict $grammarDict)
+    $elementCount = $grammarDict[$productionName].Count
+
+    if ($elementCount -gt 1 -and $firstSet.Contains("EPSILON")) {
+        $firstSet | ForEach-Object {
+            if ($followSet.Contains($_) ) {
+                Write-Error "Error: $productionName : $_ is in the first set and the follow set"
+            }
+        }
+    }
 
     return $followSet
 }
@@ -615,7 +729,7 @@ public class Parser : IParser
         bool isMatch = LookAhead.Type == tokenType;
 
         if (!isMatch)
-            WriteLine($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}. Expected {tokenType}.");
+            WriteLine($"Syntax error: Unexpected '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected {Token.TokenTypeToString(tokenType)}.");
 
         // Get the next token and make sure it is not a Comment
         do
@@ -640,9 +754,10 @@ public class Parser : IParser
         else
         {
             // Output an error message, this error can be recovered from
-            WriteLine($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.");
+            string[] expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
+            WriteLine($"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.");
             using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
-            sw.WriteLine($"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.");
+            sw.WriteLine($"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.");
 
             // Get the next token until it is in the first set or the follow set
             while (!firstSet.Contains(LookAhead.Type) && !followSet.Contains(LookAhead.Type))
@@ -671,8 +786,8 @@ public class Parser : IParser
     private void OutputDerivation(string productionRuleStr)
     {
         // Add the production rule to the parse tree and print the parse tree
-        ParseTree.AddProduction(productionRuleStr);
-        ParseTree.Print();
+        //ParseTree.AddProduction(productionRuleStr);
+        //ParseTree.Print();
 
         // Write the production rule to the output file
         using StreamWriter sw = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
@@ -695,10 +810,16 @@ public class Parser : IParser
     /// Outputs an error message to the console and to the output file
     /// </summary>
     /// <returns>False</returns>
-    private bool OutputError()
+    private bool OutputError(TokenType[] firstSet, TokenType[] followSet)
     {
         // Define the error message
-        string errorMsg = $"Syntax error: Unexpected {LookAhead.Lexeme} at line {LookAhead.Location}.";
+        string[] expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
+        if (firstSet.Contains(Epsilon))
+            expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
+        else
+            expectedTokens = firstSet.Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
+
+        string errorMsg = $"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.";
 
         // Write the error message to the console and to the output file
         WriteLine(errorMsg);
@@ -710,24 +831,25 @@ public class Parser : IParser
     #endregion Base Methods
 
     #region First Sets
-
-    $($grammarDict.Keys | ForEach-Object { Generate-Set-Code -productionName $_ -set (Generate-First-Set -productionName $_ -grammarDict $grammarDict) })
+    $($grammarDict.Keys | Sort-Object | ForEach-Object { Generate-Set-Code -productionName $_ -set (Generate-First-Set -productionName $_ -grammarDict $grammarDict) })
 
     #endregion First Sets
 
     #region Follow Sets
-    $($grammarDict.Keys | ForEach-Object { Generate-Set-Code -productionName $_ -set (Generate-Follow-Set -productionName $_ -grammarDict $grammarDict) -isFollow $true })
+    $($grammarDict.Keys | Sort-Object | ForEach-Object { Generate-Set-Code -productionName $_ -set (Generate-Follow-Set -productionName $_ -grammarDict $grammarDict) -isFollow $true })
 
     #endregion Follow Sets
 
     #region Productions
-
-    $($grammarDict.Keys | ForEach-Object { Generate-Production-Method -productionName $_ -productions $grammarDict[$_] })
+    $($grammarDict.Keys | Sort-Object | ForEach-Object { Generate-Production-Method -productionName $_ -productions $grammarDict[$_] })
 
     #endregion Productions
 }
 "@
 
+    # IMPORTANT:
+    # Need to add follow whenever there is an epsilon in the first set
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     return $code
 
@@ -748,9 +870,14 @@ $grammar = Get-Content -Path "grammar.grm"
 
 # Loop through each line in the grammar file and process the production
 foreach ($line in $grammar) {
-    if ($line -eq "" -or $line -like '#*') {
+    if ($line -eq "") {
         continue
     }
+
+    if ($line[0] -eq "#") {
+        continue
+    }
+    
     Process-Production -production $line
 }
 

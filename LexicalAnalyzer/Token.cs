@@ -302,6 +302,78 @@ public partial class Token
     }
 
     /// <summary>
+    /// Converts a TokenType to a string.
+    /// </summary>
+    /// <param name="tokenType">The TokenType to convert.</param>
+    /// <returns>The string representation of the TokenType.</returns>
+    public static string TokenTypeToString(TokenType tokenType)
+    {
+        return tokenType switch
+        {
+            TokenType.Id => "Id",
+            TokenType.Alphanumeric => "Alphanumeric",
+            TokenType.Intnum => "integer number",
+            TokenType.Floatnum => "Float number",
+            TokenType.Fraction => "Fraction",
+            TokenType.Letter => "Letter",
+            TokenType.Digit => "Digit",
+            TokenType.Nonzerodigit => "Nonzerodigit",
+            TokenType.Eq => "'=='",
+            TokenType.Noteq => "'<>'",
+            TokenType.Leq => "'<='",
+            TokenType.Geq => "'>='",
+            TokenType.Lt => "'<'",
+            TokenType.Gt => "'>'",
+            TokenType.Plus => "'+'",
+            TokenType.Minus => "'-'",
+            TokenType.Mult => "'*'",
+            TokenType.Div => "'/'",
+            TokenType.Assign => "'='",
+            TokenType.Or => "'|'",
+            TokenType.And => "'&'",
+            TokenType.Not => "'!'",
+            TokenType.Openpar => "'('",
+            TokenType.Closepar => "')'",
+            TokenType.Opencubr => "'{'",
+            TokenType.Closecubr => "'}'",
+            TokenType.Opensqbr => "'['",
+            TokenType.Closesqbr => "']'",
+            TokenType.Comma => "','",
+            TokenType.Dot => "'.'",
+            TokenType.Semi => "';'",
+            TokenType.Colon => "':'",
+            TokenType.Arrow => "'->'",
+            TokenType.If => "'if'",
+            TokenType.Then => "'then'",
+            TokenType.Else => "'else'",
+            TokenType.Integer => "'integer'",
+            TokenType.Float => "'float'",
+            TokenType.Void => "'void'",
+            TokenType.Public => "'public'",
+            TokenType.Private => "'private'",
+            TokenType.Func => "'func'",
+            TokenType.Var => "'var'",
+            TokenType.Struct => "'struct'",
+            TokenType.While => "'while'",
+            TokenType.Read => "'read'",
+            TokenType.Write => "'write'",
+            TokenType.Return => "'return'",
+            TokenType.Self => "'self'",
+            TokenType.Inherits => "'inherits'",
+            TokenType.Let => "'let'",
+            TokenType.Impl => "'impl'",
+            TokenType.Inlinecmt => "Inline comment",
+            TokenType.Blockcmt => "Block comment",
+            TokenType.Invalidchar => "Invalid character",
+            TokenType.Invalidnum => "Invalid number",
+            TokenType.Invalidid => "Invalid identifier",
+            TokenType.Eof => "End of file",
+            TokenType.Epsilon => "Epsilon",
+            _ => "Invalid token",
+        };
+    }
+
+    /// <summary>
     /// Returns an array of regular expressions used for token matching.
     /// </summary>
     /// <returns>An array of regular expressions.</returns>

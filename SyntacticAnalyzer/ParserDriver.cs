@@ -7,7 +7,7 @@ public static class ParserDriver
 {
     public static void ParseFile(string sourceFolder)
     {
-        string[] testFiles = Directory.GetFiles(sourceFolder, "testprogram1.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "*.src");
 
         foreach (string testFile in testFiles)
         {

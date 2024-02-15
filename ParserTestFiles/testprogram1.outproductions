@@ -1,15 +1,391 @@
 <START> -> <structOrImplOrFunction> <START>
-<structOrImplOrFunction> -> <functionDefinition>
-<functionDefinition> -> <functionHeader> <functionBody>
+<structOrImplOrFunction> -> <structDeclaration>
+<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'
+<structOptionalInheritance> -> 'inherits' 'id' <repetitiveStructOptionalInheritances>
+<repetitiveStructOptionalInheritances> -> ',' 'id' <repetitiveStructOptionalInheritances>
+<repetitiveStructOptionalInheritances> -> ',' 'id' <repetitiveStructOptionalInheritances>
+<repetitiveStructOptionalInheritances> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'id'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'float'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> 'intNum' ']'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> ']'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> ']'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> ']'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'public'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> EPSILON
+<returnType> -> 'void'
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
 <functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
 <funtionParameters> -> EPSILON
 <returnType> -> <type>
+<type> -> 'float'
+<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>
+<visibility> -> 'private'
+<memberDeclaration> -> <functionDeclaration>
+<functionDeclaration> -> <functionHeader> ';'
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> 'intNum' ']'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>
+<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>
+<type> -> 'integer'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> ']'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>
+<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>
+<type> -> 'float'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> <type>
 <type> -> 'id'
+<repetitiveStructMemberDeclarations> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <implDefinition>
+<implDefinition> -> 'impl' 'id' '{' <repetitiveFunctionDefinitions> '}'
+<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> EPSILON
+<returnType> -> 'void'
 <functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
 <repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'integer'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> EPSILON
+<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> EPSILON
+<returnType> -> 'void'
+<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
+<repetitiveVariableDeclarationOrStatements> -> EPSILON
+<repetitiveFunctionDefinitions> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <functionDefinition>
+<functionDefinition> -> <functionHeader> <functionBody>
+<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>
+<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>
+<type> -> 'float'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> ']'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> 'intNum' ']'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> ']'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>
+<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>
+<type> -> 'id'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> 'intNum' ']'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveFunctionParametersTails> -> EPSILON
+<returnType> -> 'void'
+<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'integer'
+<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>
+<arraySize> -> '[' <arraySizeContent>
+<arraySizeContent> -> 'intNum' ']'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
 <variableDeclarationOrStatement> -> <statement>
-<statement> -> 'id' <statementStart> <optionalAssignment> ';'
-<statementStart> -> <factorAlt> <repetitiveVariableOrFunctionCall>
+<statement> -> 'return' '(' <expression> ')' ';'
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'return' '(' <expression> ')' ';'
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'floatLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'return' '(' <expression> ')' ';'
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'not' <factor>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'return' '(' <expression> ')' ';'
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> <sign> <factor>
+<sign> -> '+'
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'return' '(' <expression> ')' ';'
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> <sign> <factor>
+<sign> -> '-'
+<factor> -> 'floatLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <variableDeclaration>
+<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'
+<type> -> 'id'
+<repetitiveArraySizes> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'read' '(' <variable> ')' ';'
+<variable> -> 'id' <variableRest>
+<variableRest> -> <repetitiveVariables>
+<repetitiveVariables> -> <variableIdnest> <repetitiveVariables>
+<variableIdnest> -> '.' 'id' <variableIdnestRest>
+<variableIdnestRest> -> '(' <argumentParameters> ')' <variableIdnest>
+<argumentParameters> -> <expression> <repetitiveArgumentParametersTail>
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>
+<relationalOperator> -> 'gt'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveArgumentParametersTail> -> <argumentParametersTail> <repetitiveArgumentParametersTail>
+<argumentParametersTail> -> ',' <expression>
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> <addOperator> <term> <recursiveArithmeticExpression>
+<addOperator> -> '-'
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveArgumentParametersTail> -> <argumentParametersTail> <repetitiveArgumentParametersTail>
+<argumentParametersTail> -> ',' <expression>
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>
+<relationalOperator> -> 'eq'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> '(' <arithmeticExpression> ')'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> <multOperator> <factor> <recursiveTerms>
+<multOperator> -> '*'
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> <addOperator> <term> <recursiveArithmeticExpression>
+<addOperator> -> '-'
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveArgumentParametersTail> -> EPSILON
+<variableIdnest> -> '.' 'id' <variableIdnestRest>
+<variableIdnestRest> -> <repetitiveIndices>
+<repetitiveIndices> -> <indice> <repetitiveIndices>
+<indice> -> '[' <arithmeticExpression> ']'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
 <factorAlt> -> <repetitiveIndices>
 <repetitiveIndices> -> <indice> <repetitiveIndices>
 <indice> -> '[' <arithmeticExpression> ']'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveIndices> -> <indice> <repetitiveIndices>
+<indice> -> '[' <arithmeticExpression> ']'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveIndices> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>
+<idnest> -> '.' 'id' <idnestRest>
+<idnestRest> -> '(' <argumentParameters> ')'
+<argumentParameters> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>
+<idnest> -> '.' 'id' <idnestRest>
+<idnestRest> -> '(' <argumentParameters> ')'
+<argumentParameters> -> <expression> <repetitiveArgumentParametersTail>
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>
+<relationalOperator> -> 'gt'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveArgumentParametersTail> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveIndices> -> EPSILON
+<repetitiveVariables> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'id' <statementAlt> ';'
+<statementAlt> -> <repetitiveIndicesStat>
+<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>
+<repetitiveVariableOrFunctionCallStat_Var> -> <assignmentOperator> <expression>
+<assignmentOperator> -> '='
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>
+<idnest> -> '.' 'id' <idnestRest>
+<idnestRest> -> '(' <argumentParameters> ')'
+<argumentParameters> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>
+<idnest> -> '.' 'id' <idnestRest>
+<idnestRest> -> '(' <argumentParameters> ')'
+<argumentParameters> -> <expression> <repetitiveArgumentParametersTail>
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>
+<relationalOperator> -> 'gt'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveArgumentParametersTail> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'id' <statementAlt> ';'
+<statementAlt> -> <repetitiveIndicesStat>
+<repetitiveIndicesStat> -> <indice> <repetitiveIndicesStat>
+<indice> -> '[' <arithmeticExpression> ']'
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>
+<factorAlt> -> EPSILON
+<repetitiveVariableOrFunctionCall> -> EPSILON
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>
+<repetitiveVariableOrFunctionCallStat_Var> -> <idnestStat>
+<idnestStat> -> '.' 'id' <idnestRestStat>
+<idnestRestStat> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>
+<argumentParameters> -> EPSILON
+<repetitiveVariableOrFunctionCallStat_Function> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'id' <statementAlt> ';'
+<statementAlt> -> <repetitiveIndicesStat>
+<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>
+<repetitiveVariableOrFunctionCallStat_Var> -> <assignmentOperator> <expression>
+<assignmentOperator> -> '='
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'floatLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> EPSILON
+<START> -> EPSILON
