@@ -9,15 +9,49 @@ namespace SyntacticAnalyzer;
 /// </summary>
 public class Parser : IParser
 {
-    private const bool DEBUG = false;
+    /// <summary>
+    /// The scanner used to scan and tokenize the source file
+    /// </summary>
     private IScanner Scanner { get; }
+
+    /// <summary>
+    /// The current token being looked at
+    /// </summary>
     private Token LookAhead { get; set; }
-    private string Source {get;set;} = "";
-    private string SourceName {get;set;} = "";
-    private IParseTree ParseTree { get; set; }
+
+    /// <summary>
+    /// The source file to parse (with the file extension)
+    /// </summary>
+    private string Source {get;} = "";
+
+    /// <summary>
+    /// The name of the source file to parse
+    /// </summary>
+    private string SourceName {get;} = "";
+    
+    /// <summary>
+    /// The parse list used to track the derivations
+    /// </summary>
+    private IParseList ParseList { get; set; } = new ParseList();
+
+    #region Constants
+
+    /// <summary>
+    /// Extension for the output syntax errors file
+    /// </summary>
     private const string OUT_SYNTAX_ERRORS_EXTENSION = ".outsyntaxerrors";
+
+    /// <summary>
+    /// Extension for the output derivation file
+    /// </summary>
     private const string OUT_DERIVATION_EXTENSION = ".outderivation";
+
+    /// <summary>
+    /// Extension for the output productions file
+    /// </summary>
     private const string OUT_PRODUCTIONS_EXTENSION = ".outproductions";
+
+    #endregion Constants
 
     #region Constructor
 
@@ -42,11 +76,6 @@ public class Parser : IParser
             File.Delete(SourceName + OUT_DERIVATION_EXTENSION);
         if (File.Exists(SourceName + OUT_PRODUCTIONS_EXTENSION))
             File.Delete(SourceName + OUT_PRODUCTIONS_EXTENSION);
-
-        ParseTree = new ParseTree(new ParseNode("<START>",false), SourceName + OUT_DERIVATION_EXTENSION, DEBUG);
-
-        if (DEBUG)
-            WriteLine("Parser initialized...");
     }
 
     #endregion Constructor
@@ -64,16 +93,13 @@ public class Parser : IParser
             LookAhead = Scanner.NextToken();
         while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt);
 
-        if (DEBUG)
-            WriteLine("Parsing...");
-
+        // Output the derivation to the output file
+        using StreamWriter sw = new(SourceName + OUT_DERIVATION_EXTENSION, true);
+        sw.WriteLine(ParseList.GetDerivation());
+        sw.Close();
+        
         // Parse the source file   
-        bool isParsed = Start() && Match(Eof);
-        
-        // Close the parse tree resources
-        ParseTree.Close();
-        
-        return isParsed;
+        return Start() && Match(Eof);
     }
 
     /// <summary>
@@ -116,10 +142,18 @@ public class Parser : IParser
         else
         {
             // Output an error message, this error can be recovered from
-            string[] expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-            WriteLine($"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.");
+            string[] expectedTokens = firstSet.Contains(Epsilon) ? 
+            firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(Token.TokenTypeToString).ToArray() :
+            firstSet.Distinct().Where(x => x != Epsilon && x!=Eof).Select(Token.TokenTypeToString).ToArray();
+
+            // Define the error message
+            string errorMsg = $"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.";
+
+            // Write the error message to the console and to the output file
+            WriteLine(errorMsg);
+        
             using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
-            sw.WriteLine($"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.");
+            sw.WriteLine(errorMsg);
 
             // Get the next token until it is in the first set or the follow set
             while (!firstSet.Contains(LookAhead.Type) && !followSet.Contains(LookAhead.Type))
@@ -147,47 +181,16 @@ public class Parser : IParser
     /// <param name="productionRuleStr">The production rule to output</param>
     private void OutputDerivation(string productionRuleStr)
     {
-        // Add the production rule to the parse tree and print the parse tree
-        //ParseTree.AddProduction(productionRuleStr);
-        //ParseTree.Print();
+        // Add the production rule to the parse list
+        ParseList.Add(productionRuleStr);
+
+        // Write the derivation to the output file
+        using StreamWriter sw = new(SourceName + OUT_DERIVATION_EXTENSION, true);
+        sw.WriteLine(ParseList.GetDerivation());
 
         // Write the production rule to the output file
-        using StreamWriter sw = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
-        sw.WriteLine(productionRuleStr);
-    }
-
-    /// <summary>
-    /// Outputs a production rule to the console and to the output file
-    /// </summary>
-    /// <param name="productionRuleStr">The production rule to output</param>
-    /// <returns>True</returns>
-    private static bool OutputProductionRule(string productionRuleStr)
-    {
-        if (DEBUG)
-            WriteLine(productionRuleStr);
-        return true;
-    }
-
-    /// <summary>
-    /// Outputs an error message to the console and to the output file
-    /// </summary>
-    /// <returns>False</returns>
-    private bool OutputError(TokenType[] firstSet, TokenType[] followSet)
-    {
-        // Define the error message
-        string[] expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-        if (firstSet.Contains(Epsilon))
-            expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-        else
-            expectedTokens = firstSet.Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-
-        string errorMsg = $"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.";
-
-        // Write the error message to the console and to the output file
-        WriteLine(errorMsg);
-        using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
-        sw.WriteLine(errorMsg);
-        return false;
+        using StreamWriter sw1 = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
+        sw1.WriteLine(productionRuleStr);
     }
 
     #endregion Base Methods
@@ -338,29 +341,20 @@ public class Parser : IParser
         if (Plus == LookAhead.Type)
         {
             OutputDerivation("<addOperator> -> '+'");
-            if(Match(Plus))
-                return OutputProductionRule("<addOperator> -> '+'");
-            else
-                return false;
+            return Match(Plus);
         }
         else if (Minus == LookAhead.Type)
         {
             OutputDerivation("<addOperator> -> '-'");
-            if(Match(Minus))
-                return OutputProductionRule("<addOperator> -> '-'");
-            else
-                return false;
+            return Match(Minus);
         }
         else if (Or == LookAhead.Type)
         {
             OutputDerivation("<addOperator> -> 'or'");
-            if(Match(Or))
-                return OutputProductionRule("<addOperator> -> 'or'");
-            else
-                return false;
+            return Match(Or);
         }
         else
-            return OutputError(FIRST_AddOperator, FOLLOW_AddOperator);
+            return false;
     } 
 
     /// <summary>
@@ -374,18 +368,15 @@ public class Parser : IParser
         if (FIRST_Expression.Contains(LookAhead.Type))
         {
             OutputDerivation("<argumentParameters> -> <expression> <repetitiveArgumentParametersTail>");
-            if(Expression() && RepetitiveArgumentParametersTail())
-                return OutputProductionRule("<argumentParameters> -> <expression> <repetitiveArgumentParametersTail>");
-            else
-                return false;
+            return Expression() && RepetitiveArgumentParametersTail();
         }
         else if (FOLLOW_ArgumentParameters.Contains(LookAhead.Type))
         {
             OutputDerivation("<argumentParameters> -> EPSILON");
-            return OutputProductionRule("<argumentParameters> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_ArgumentParameters, FOLLOW_ArgumentParameters);
+            return false;
     } 
 
     /// <summary>
@@ -399,13 +390,10 @@ public class Parser : IParser
         if (Comma == LookAhead.Type)
         {
             OutputDerivation("<argumentParametersTail> -> ',' <expression>");
-            if(Match(Comma) && Expression())
-                return OutputProductionRule("<argumentParametersTail> -> ',' <expression>");
-            else
-                return false;
+            return Match(Comma) && Expression();
         }
         else
-            return OutputError(FIRST_ArgumentParametersTail, FOLLOW_ArgumentParametersTail);
+            return false;
     } 
 
     /// <summary>
@@ -419,13 +407,10 @@ public class Parser : IParser
         if (FIRST_Term.Contains(LookAhead.Type))
         {
             OutputDerivation("<arithmeticExpression> -> <term> <recursiveArithmeticExpression>");
-            if(Term() && RecursiveArithmeticExpression())
-                return OutputProductionRule("<arithmeticExpression> -> <term> <recursiveArithmeticExpression>");
-            else
-                return false;
+            return Term() && RecursiveArithmeticExpression();
         }
         else
-            return OutputError(FIRST_ArithmeticExpression, FOLLOW_ArithmeticExpression);
+            return false;
     } 
 
     /// <summary>
@@ -439,13 +424,10 @@ public class Parser : IParser
         if (Opensqbr == LookAhead.Type)
         {
             OutputDerivation("<arraySize> -> '[' <arraySizeContent>");
-            if(Match(Opensqbr) && ArraySizeContent())
-                return OutputProductionRule("<arraySize> -> '[' <arraySizeContent>");
-            else
-                return false;
+            return Match(Opensqbr) && ArraySizeContent();
         }
         else
-            return OutputError(FIRST_ArraySize, FOLLOW_ArraySize);
+            return false;
     } 
 
     /// <summary>
@@ -459,21 +441,15 @@ public class Parser : IParser
         if (Intnum == LookAhead.Type)
         {
             OutputDerivation("<arraySizeContent> -> 'intNum' ']'");
-            if(Match(Intnum) && Match(Closesqbr))
-                return OutputProductionRule("<arraySizeContent> -> 'intNum' ']'");
-            else
-                return false;
+            return Match(Intnum) && Match(Closesqbr);
         }
         else if (Closesqbr == LookAhead.Type)
         {
             OutputDerivation("<arraySizeContent> -> ']'");
-            if(Match(Closesqbr))
-                return OutputProductionRule("<arraySizeContent> -> ']'");
-            else
-                return false;
+            return Match(Closesqbr);
         }
         else
-            return OutputError(FIRST_ArraySizeContent, FOLLOW_ArraySizeContent);
+            return false;
     } 
 
     /// <summary>
@@ -487,13 +463,10 @@ public class Parser : IParser
         if (Assign == LookAhead.Type)
         {
             OutputDerivation("<assignmentOperator> -> '='");
-            if(Match(Assign))
-                return OutputProductionRule("<assignmentOperator> -> '='");
-            else
-                return false;
+            return Match(Assign);
         }
         else
-            return OutputError(FIRST_AssignmentOperator, FOLLOW_AssignmentOperator);
+            return false;
     } 
 
     /// <summary>
@@ -507,13 +480,10 @@ public class Parser : IParser
         if (FIRST_ArithmeticExpression.Contains(LookAhead.Type))
         {
             OutputDerivation("<expression> -> <arithmeticExpression> <optionalRelationalExpression>");
-            if(ArithmeticExpression() && OptionalRelationalExpression())
-                return OutputProductionRule("<expression> -> <arithmeticExpression> <optionalRelationalExpression>");
-            else
-                return false;
+            return ArithmeticExpression() && OptionalRelationalExpression();
         }
         else
-            return OutputError(FIRST_Expression, FOLLOW_Expression);
+            return false;
     } 
 
     /// <summary>
@@ -527,53 +497,35 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>");
-            if(Match(Id) && FactorAlt() && RepetitiveVariableOrFunctionCall())
-                return OutputProductionRule("<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>");
-            else
-                return false;
+            return Match(Id) && FactorAlt() && RepetitiveVariableOrFunctionCall();
         }
         else if (Intnum == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'intLit'");
-            if(Match(Intnum))
-                return OutputProductionRule("<factor> -> 'intLit'");
-            else
-                return false;
+            return Match(Intnum);
         }
         else if (Floatnum == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'floatLit'");
-            if(Match(Floatnum))
-                return OutputProductionRule("<factor> -> 'floatLit'");
-            else
-                return false;
+            return Match(Floatnum);
         }
         else if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<factor> -> '(' <arithmeticExpression> ')'");
-            if(Match(Openpar) && ArithmeticExpression() && Match(Closepar))
-                return OutputProductionRule("<factor> -> '(' <arithmeticExpression> ')'");
-            else
-                return false;
+            return Match(Openpar) && ArithmeticExpression() && Match(Closepar);
         }
         else if (Not == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'not' <factor>");
-            if(Match(Not) && Factor())
-                return OutputProductionRule("<factor> -> 'not' <factor>");
-            else
-                return false;
+            return Match(Not) && Factor();
         }
         else if (FIRST_Sign.Contains(LookAhead.Type))
         {
             OutputDerivation("<factor> -> <sign> <factor>");
-            if(Sign() && Factor())
-                return OutputProductionRule("<factor> -> <sign> <factor>");
-            else
-                return false;
+            return Sign() && Factor();
         }
         else
-            return OutputError(FIRST_Factor, FOLLOW_Factor);
+            return false;
     } 
 
     /// <summary>
@@ -587,26 +539,20 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<factorAlt> -> '(' <argumentParameters> ')'");
-            if(Match(Openpar) && ArgumentParameters() && Match(Closepar))
-                return OutputProductionRule("<factorAlt> -> '(' <argumentParameters> ')'");
-            else
-                return false;
+            return Match(Openpar) && ArgumentParameters() && Match(Closepar);
         }
         else if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
         {
             OutputDerivation("<factorAlt> -> <repetitiveIndices>");
-            if(RepetitiveIndices())
-                return OutputProductionRule("<factorAlt> -> <repetitiveIndices>");
-            else
-                return false;
+            return RepetitiveIndices();
         }
         else if (FOLLOW_FactorAlt.Contains(LookAhead.Type))
         {
             OutputDerivation("<factorAlt> -> EPSILON");
-            return OutputProductionRule("<factorAlt> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_FactorAlt, FOLLOW_FactorAlt);
+            return false;
     } 
 
     /// <summary>
@@ -620,13 +566,10 @@ public class Parser : IParser
         if (Opencubr == LookAhead.Type)
         {
             OutputDerivation("<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'");
-            if(Match(Opencubr) && RepetitiveVariableDeclarationOrStatements() && Match(Closecubr))
-                return OutputProductionRule("<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'");
-            else
-                return false;
+            return Match(Opencubr) && RepetitiveVariableDeclarationOrStatements() && Match(Closecubr);
         }
         else
-            return OutputError(FIRST_FunctionBody, FOLLOW_FunctionBody);
+            return false;
     } 
 
     /// <summary>
@@ -640,13 +583,10 @@ public class Parser : IParser
         if (FIRST_FunctionHeader.Contains(LookAhead.Type))
         {
             OutputDerivation("<functionDeclaration> -> <functionHeader> ';'");
-            if(FunctionHeader() && Match(Semi))
-                return OutputProductionRule("<functionDeclaration> -> <functionHeader> ';'");
-            else
-                return false;
+            return FunctionHeader() && Match(Semi);
         }
         else
-            return OutputError(FIRST_FunctionDeclaration, FOLLOW_FunctionDeclaration);
+            return false;
     } 
 
     /// <summary>
@@ -660,13 +600,10 @@ public class Parser : IParser
         if (FIRST_FunctionHeader.Contains(LookAhead.Type))
         {
             OutputDerivation("<functionDefinition> -> <functionHeader> <functionBody>");
-            if(FunctionHeader() && FunctionBody())
-                return OutputProductionRule("<functionDefinition> -> <functionHeader> <functionBody>");
-            else
-                return false;
+            return FunctionHeader() && FunctionBody();
         }
         else
-            return OutputError(FIRST_FunctionDefinition, FOLLOW_FunctionDefinition);
+            return false;
     } 
 
     /// <summary>
@@ -680,13 +617,10 @@ public class Parser : IParser
         if (Func == LookAhead.Type)
         {
             OutputDerivation("<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>");
-            if(Match(Func) && Match(Id) && Match(Openpar) && FuntionParameters() && Match(Closepar) && Match(Arrow) && ReturnType())
-                return OutputProductionRule("<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>");
-            else
-                return false;
+            return Match(Func) && Match(Id) && Match(Openpar) && FuntionParameters() && Match(Closepar) && Match(Arrow) && ReturnType();
         }
         else
-            return OutputError(FIRST_FunctionHeader, FOLLOW_FunctionHeader);
+            return false;
     } 
 
     /// <summary>
@@ -700,13 +634,10 @@ public class Parser : IParser
         if (Comma == LookAhead.Type)
         {
             OutputDerivation("<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>");
-            if(Match(Comma) && Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes())
-                return OutputProductionRule("<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>");
-            else
-                return false;
+            return Match(Comma) && Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes();
         }
         else
-            return OutputError(FIRST_FunctionParametersTail, FOLLOW_FunctionParametersTail);
+            return false;
     } 
 
     /// <summary>
@@ -720,18 +651,15 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>");
-            if(Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes() && RepetitiveFunctionParametersTails())
-                return OutputProductionRule("<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>");
-            else
-                return false;
+            return Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes() && RepetitiveFunctionParametersTails();
         }
         else if (FOLLOW_FuntionParameters.Contains(LookAhead.Type))
         {
             OutputDerivation("<funtionParameters> -> EPSILON");
-            return OutputProductionRule("<funtionParameters> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_FuntionParameters, FOLLOW_FuntionParameters);
+            return false;
     } 
 
     /// <summary>
@@ -745,13 +673,10 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<idnest> -> '.' 'id' <idnestRest>");
-            if(Match(Dot) && Match(Id) && IdnestRest())
-                return OutputProductionRule("<idnest> -> '.' 'id' <idnestRest>");
-            else
-                return false;
+            return Match(Dot) && Match(Id) && IdnestRest();
         }
         else
-            return OutputError(FIRST_Idnest, FOLLOW_Idnest);
+            return false;
     } 
 
     /// <summary>
@@ -765,26 +690,20 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<idnestRest> -> '(' <argumentParameters> ')'");
-            if(Match(Openpar) && ArgumentParameters() && Match(Closepar))
-                return OutputProductionRule("<idnestRest> -> '(' <argumentParameters> ')'");
-            else
-                return false;
+            return Match(Openpar) && ArgumentParameters() && Match(Closepar);
         }
         else if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
         {
             OutputDerivation("<idnestRest> -> <repetitiveIndices>");
-            if(RepetitiveIndices())
-                return OutputProductionRule("<idnestRest> -> <repetitiveIndices>");
-            else
-                return false;
+            return RepetitiveIndices();
         }
         else if (FOLLOW_IdnestRest.Contains(LookAhead.Type))
         {
             OutputDerivation("<idnestRest> -> EPSILON");
-            return OutputProductionRule("<idnestRest> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_IdnestRest, FOLLOW_IdnestRest);
+            return false;
     } 
 
     /// <summary>
@@ -798,21 +717,15 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<idnestRestStat> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>");
-            if(Match(Openpar) && ArgumentParameters() && Match(Closepar) && RepetitiveVariableOrFunctionCallStat_Function())
-                return OutputProductionRule("<idnestRestStat> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>");
-            else
-                return false;
+            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && RepetitiveVariableOrFunctionCallStat_Function();
         }
         else if (FIRST_RepetitiveIndicesStat.Contains(LookAhead.Type))
         {
             OutputDerivation("<idnestRestStat> -> <repetitiveIndicesStat>");
-            if(RepetitiveIndicesStat())
-                return OutputProductionRule("<idnestRestStat> -> <repetitiveIndicesStat>");
-            else
-                return false;
+            return RepetitiveIndicesStat();
         }
         else
-            return OutputError(FIRST_IdnestRestStat, FOLLOW_IdnestRestStat);
+            return false;
     } 
 
     /// <summary>
@@ -826,13 +739,10 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<idnestStat> -> '.' 'id' <idnestRestStat>");
-            if(Match(Dot) && Match(Id) && IdnestRestStat())
-                return OutputProductionRule("<idnestStat> -> '.' 'id' <idnestRestStat>");
-            else
-                return false;
+            return Match(Dot) && Match(Id) && IdnestRestStat();
         }
         else
-            return OutputError(FIRST_IdnestStat, FOLLOW_IdnestStat);
+            return false;
     } 
 
     /// <summary>
@@ -846,13 +756,10 @@ public class Parser : IParser
         if (Impl == LookAhead.Type)
         {
             OutputDerivation("<implDefinition> -> 'impl' 'id' '{' <repetitiveFunctionDefinitions> '}'");
-            if(Match(Impl) && Match(Id) && Match(Opencubr) && RepetitiveFunctionDefinitions() && Match(Closecubr))
-                return OutputProductionRule("<implDefinition> -> 'impl' 'id' '{' <repetitiveFunctionDefinitions> '}'");
-            else
-                return false;
+            return Match(Impl) && Match(Id) && Match(Opencubr) && RepetitiveFunctionDefinitions() && Match(Closecubr);
         }
         else
-            return OutputError(FIRST_ImplDefinition, FOLLOW_ImplDefinition);
+            return false;
     } 
 
     /// <summary>
@@ -866,13 +773,10 @@ public class Parser : IParser
         if (Opensqbr == LookAhead.Type)
         {
             OutputDerivation("<indice> -> '[' <arithmeticExpression> ']'");
-            if(Match(Opensqbr) && ArithmeticExpression() && Match(Closesqbr))
-                return OutputProductionRule("<indice> -> '[' <arithmeticExpression> ']'");
-            else
-                return false;
+            return Match(Opensqbr) && ArithmeticExpression() && Match(Closesqbr);
         }
         else
-            return OutputError(FIRST_Indice, FOLLOW_Indice);
+            return false;
     } 
 
     /// <summary>
@@ -886,21 +790,15 @@ public class Parser : IParser
         if (FIRST_FunctionDeclaration.Contains(LookAhead.Type))
         {
             OutputDerivation("<memberDeclaration> -> <functionDeclaration>");
-            if(FunctionDeclaration())
-                return OutputProductionRule("<memberDeclaration> -> <functionDeclaration>");
-            else
-                return false;
+            return FunctionDeclaration();
         }
         else if (FIRST_VariableDeclaration.Contains(LookAhead.Type))
         {
             OutputDerivation("<memberDeclaration> -> <variableDeclaration>");
-            if(VariableDeclaration())
-                return OutputProductionRule("<memberDeclaration> -> <variableDeclaration>");
-            else
-                return false;
+            return VariableDeclaration();
         }
         else
-            return OutputError(FIRST_MemberDeclaration, FOLLOW_MemberDeclaration);
+            return false;
     } 
 
     /// <summary>
@@ -914,29 +812,20 @@ public class Parser : IParser
         if (Mult == LookAhead.Type)
         {
             OutputDerivation("<multOperator> -> '*'");
-            if(Match(Mult))
-                return OutputProductionRule("<multOperator> -> '*'");
-            else
-                return false;
+            return Match(Mult);
         }
         else if (Div == LookAhead.Type)
         {
             OutputDerivation("<multOperator> -> '/'");
-            if(Match(Div))
-                return OutputProductionRule("<multOperator> -> '/'");
-            else
-                return false;
+            return Match(Div);
         }
         else if (And == LookAhead.Type)
         {
             OutputDerivation("<multOperator> -> 'and'");
-            if(Match(And))
-                return OutputProductionRule("<multOperator> -> 'and'");
-            else
-                return false;
+            return Match(And);
         }
         else
-            return OutputError(FIRST_MultOperator, FOLLOW_MultOperator);
+            return false;
     } 
 
     /// <summary>
@@ -950,18 +839,15 @@ public class Parser : IParser
         if (FIRST_RelationalOperator.Contains(LookAhead.Type))
         {
             OutputDerivation("<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>");
-            if(RelationalOperator() && ArithmeticExpression())
-                return OutputProductionRule("<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>");
-            else
-                return false;
+            return RelationalOperator() && ArithmeticExpression();
         }
         else if (FOLLOW_OptionalRelationalExpression.Contains(LookAhead.Type))
         {
             OutputDerivation("<optionalRelationalExpression> -> EPSILON");
-            return OutputProductionRule("<optionalRelationalExpression> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_OptionalRelationalExpression, FOLLOW_OptionalRelationalExpression);
+            return false;
     } 
 
     /// <summary>
@@ -975,18 +861,15 @@ public class Parser : IParser
         if (FIRST_AddOperator.Contains(LookAhead.Type))
         {
             OutputDerivation("<recursiveArithmeticExpression> -> <addOperator> <term> <recursiveArithmeticExpression>");
-            if(AddOperator() && Term() && RecursiveArithmeticExpression())
-                return OutputProductionRule("<recursiveArithmeticExpression> -> <addOperator> <term> <recursiveArithmeticExpression>");
-            else
-                return false;
+            return AddOperator() && Term() && RecursiveArithmeticExpression();
         }
         else if (FOLLOW_RecursiveArithmeticExpression.Contains(LookAhead.Type))
         {
             OutputDerivation("<recursiveArithmeticExpression> -> EPSILON");
-            return OutputProductionRule("<recursiveArithmeticExpression> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RecursiveArithmeticExpression, FOLLOW_RecursiveArithmeticExpression);
+            return false;
     } 
 
     /// <summary>
@@ -1000,18 +883,15 @@ public class Parser : IParser
         if (FIRST_MultOperator.Contains(LookAhead.Type))
         {
             OutputDerivation("<recursiveTerms> -> <multOperator> <factor> <recursiveTerms>");
-            if(MultOperator() && Factor() && RecursiveTerms())
-                return OutputProductionRule("<recursiveTerms> -> <multOperator> <factor> <recursiveTerms>");
-            else
-                return false;
+            return MultOperator() && Factor() && RecursiveTerms();
         }
         else if (FOLLOW_RecursiveTerms.Contains(LookAhead.Type))
         {
             OutputDerivation("<recursiveTerms> -> EPSILON");
-            return OutputProductionRule("<recursiveTerms> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RecursiveTerms, FOLLOW_RecursiveTerms);
+            return false;
     } 
 
     /// <summary>
@@ -1025,13 +905,10 @@ public class Parser : IParser
         if (FIRST_ArithmeticExpression.Contains(LookAhead.Type))
         {
             OutputDerivation("<relationalExpression> -> <arithmeticExpression> <relationalOperator> <arithmeticExpression>");
-            if(ArithmeticExpression() && RelationalOperator() && ArithmeticExpression())
-                return OutputProductionRule("<relationalExpression> -> <arithmeticExpression> <relationalOperator> <arithmeticExpression>");
-            else
-                return false;
+            return ArithmeticExpression() && RelationalOperator() && ArithmeticExpression();
         }
         else
-            return OutputError(FIRST_RelationalExpression, FOLLOW_RelationalExpression);
+            return false;
     } 
 
     /// <summary>
@@ -1045,53 +922,35 @@ public class Parser : IParser
         if (Eq == LookAhead.Type)
         {
             OutputDerivation("<relationalOperator> -> 'eq'");
-            if(Match(Eq))
-                return OutputProductionRule("<relationalOperator> -> 'eq'");
-            else
-                return false;
+            return Match(Eq);
         }
         else if (Noteq == LookAhead.Type)
         {
             OutputDerivation("<relationalOperator> -> 'neq'");
-            if(Match(Noteq))
-                return OutputProductionRule("<relationalOperator> -> 'neq'");
-            else
-                return false;
+            return Match(Noteq);
         }
         else if (Lt == LookAhead.Type)
         {
             OutputDerivation("<relationalOperator> -> 'lt'");
-            if(Match(Lt))
-                return OutputProductionRule("<relationalOperator> -> 'lt'");
-            else
-                return false;
+            return Match(Lt);
         }
         else if (Gt == LookAhead.Type)
         {
             OutputDerivation("<relationalOperator> -> 'gt'");
-            if(Match(Gt))
-                return OutputProductionRule("<relationalOperator> -> 'gt'");
-            else
-                return false;
+            return Match(Gt);
         }
         else if (Leq == LookAhead.Type)
         {
             OutputDerivation("<relationalOperator> -> 'leq'");
-            if(Match(Leq))
-                return OutputProductionRule("<relationalOperator> -> 'leq'");
-            else
-                return false;
+            return Match(Leq);
         }
         else if (Geq == LookAhead.Type)
         {
             OutputDerivation("<relationalOperator> -> 'geq'");
-            if(Match(Geq))
-                return OutputProductionRule("<relationalOperator> -> 'geq'");
-            else
-                return false;
+            return Match(Geq);
         }
         else
-            return OutputError(FIRST_RelationalOperator, FOLLOW_RelationalOperator);
+            return false;
     } 
 
     /// <summary>
@@ -1105,18 +964,15 @@ public class Parser : IParser
         if (FIRST_ArgumentParametersTail.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveArgumentParametersTail> -> <argumentParametersTail> <repetitiveArgumentParametersTail>");
-            if(ArgumentParametersTail() && RepetitiveArgumentParametersTail())
-                return OutputProductionRule("<repetitiveArgumentParametersTail> -> <argumentParametersTail> <repetitiveArgumentParametersTail>");
-            else
-                return false;
+            return ArgumentParametersTail() && RepetitiveArgumentParametersTail();
         }
         else if (FOLLOW_RepetitiveArgumentParametersTail.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveArgumentParametersTail> -> EPSILON");
-            return OutputProductionRule("<repetitiveArgumentParametersTail> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveArgumentParametersTail, FOLLOW_RepetitiveArgumentParametersTail);
+            return false;
     } 
 
     /// <summary>
@@ -1130,18 +986,15 @@ public class Parser : IParser
         if (FIRST_ArraySize.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>");
-            if(ArraySize() && RepetitiveArraySizes())
-                return OutputProductionRule("<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>");
-            else
-                return false;
+            return ArraySize() && RepetitiveArraySizes();
         }
         else if (FOLLOW_RepetitiveArraySizes.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveArraySizes> -> EPSILON");
-            return OutputProductionRule("<repetitiveArraySizes> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveArraySizes, FOLLOW_RepetitiveArraySizes);
+            return false;
     } 
 
     /// <summary>
@@ -1155,18 +1008,15 @@ public class Parser : IParser
         if (FIRST_FunctionDefinition.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>");
-            if(FunctionDefinition() && RepetitiveFunctionDefinitions())
-                return OutputProductionRule("<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>");
-            else
-                return false;
+            return FunctionDefinition() && RepetitiveFunctionDefinitions();
         }
         else if (FOLLOW_RepetitiveFunctionDefinitions.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveFunctionDefinitions> -> EPSILON");
-            return OutputProductionRule("<repetitiveFunctionDefinitions> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveFunctionDefinitions, FOLLOW_RepetitiveFunctionDefinitions);
+            return false;
     } 
 
     /// <summary>
@@ -1180,18 +1030,15 @@ public class Parser : IParser
         if (FIRST_FunctionParametersTail.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>");
-            if(FunctionParametersTail() && RepetitiveFunctionParametersTails())
-                return OutputProductionRule("<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>");
-            else
-                return false;
+            return FunctionParametersTail() && RepetitiveFunctionParametersTails();
         }
         else if (FOLLOW_RepetitiveFunctionParametersTails.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveFunctionParametersTails> -> EPSILON");
-            return OutputProductionRule("<repetitiveFunctionParametersTails> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveFunctionParametersTails, FOLLOW_RepetitiveFunctionParametersTails);
+            return false;
     } 
 
     /// <summary>
@@ -1205,18 +1052,15 @@ public class Parser : IParser
         if (FIRST_Indice.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveIndices> -> <indice> <repetitiveIndices>");
-            if(Indice() && RepetitiveIndices())
-                return OutputProductionRule("<repetitiveIndices> -> <indice> <repetitiveIndices>");
-            else
-                return false;
+            return Indice() && RepetitiveIndices();
         }
         else if (FOLLOW_RepetitiveIndices.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveIndices> -> EPSILON");
-            return OutputProductionRule("<repetitiveIndices> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveIndices, FOLLOW_RepetitiveIndices);
+            return false;
     } 
 
     /// <summary>
@@ -1230,21 +1074,15 @@ public class Parser : IParser
         if (FIRST_Indice.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveIndicesStat> -> <indice> <repetitiveIndicesStat>");
-            if(Indice() && RepetitiveIndicesStat())
-                return OutputProductionRule("<repetitiveIndicesStat> -> <indice> <repetitiveIndicesStat>");
-            else
-                return false;
+            return Indice() && RepetitiveIndicesStat();
         }
         else if (FIRST_RepetitiveVariableOrFunctionCallStat_Var.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>");
-            if(RepetitiveVariableOrFunctionCallStat_Var())
-                return OutputProductionRule("<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>");
-            else
-                return false;
+            return RepetitiveVariableOrFunctionCallStat_Var();
         }
         else
-            return OutputError(FIRST_RepetitiveIndicesStat, FOLLOW_RepetitiveIndicesStat);
+            return false;
     } 
 
     /// <summary>
@@ -1258,18 +1096,15 @@ public class Parser : IParser
         if (FIRST_Statement.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveStatements> -> <statement> <repetitiveStatements>");
-            if(Statement() && RepetitiveStatements())
-                return OutputProductionRule("<repetitiveStatements> -> <statement> <repetitiveStatements>");
-            else
-                return false;
+            return Statement() && RepetitiveStatements();
         }
         else if (FOLLOW_RepetitiveStatements.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveStatements> -> EPSILON");
-            return OutputProductionRule("<repetitiveStatements> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveStatements, FOLLOW_RepetitiveStatements);
+            return false;
     } 
 
     /// <summary>
@@ -1283,18 +1118,15 @@ public class Parser : IParser
         if (FIRST_Visibility.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>");
-            if(Visibility() && MemberDeclaration() && RepetitiveStructMemberDeclarations())
-                return OutputProductionRule("<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>");
-            else
-                return false;
+            return Visibility() && MemberDeclaration() && RepetitiveStructMemberDeclarations();
         }
         else if (FOLLOW_RepetitiveStructMemberDeclarations.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveStructMemberDeclarations> -> EPSILON");
-            return OutputProductionRule("<repetitiveStructMemberDeclarations> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveStructMemberDeclarations, FOLLOW_RepetitiveStructMemberDeclarations);
+            return false;
     } 
 
     /// <summary>
@@ -1308,18 +1140,15 @@ public class Parser : IParser
         if (Comma == LookAhead.Type)
         {
             OutputDerivation("<repetitiveStructOptionalInheritances> -> ',' 'id' <repetitiveStructOptionalInheritances>");
-            if(Match(Comma) && Match(Id) && RepetitiveStructOptionalInheritances())
-                return OutputProductionRule("<repetitiveStructOptionalInheritances> -> ',' 'id' <repetitiveStructOptionalInheritances>");
-            else
-                return false;
+            return Match(Comma) && Match(Id) && RepetitiveStructOptionalInheritances();
         }
         else if (FOLLOW_RepetitiveStructOptionalInheritances.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveStructOptionalInheritances> -> EPSILON");
-            return OutputProductionRule("<repetitiveStructOptionalInheritances> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveStructOptionalInheritances, FOLLOW_RepetitiveStructOptionalInheritances);
+            return false;
     } 
 
     /// <summary>
@@ -1333,18 +1162,15 @@ public class Parser : IParser
         if (FIRST_VariableDeclarationOrStatement.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>");
-            if(VariableDeclarationOrStatement() && RepetitiveVariableDeclarationOrStatements())
-                return OutputProductionRule("<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>");
-            else
-                return false;
+            return VariableDeclarationOrStatement() && RepetitiveVariableDeclarationOrStatements();
         }
         else if (FOLLOW_RepetitiveVariableDeclarationOrStatements.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableDeclarationOrStatements> -> EPSILON");
-            return OutputProductionRule("<repetitiveVariableDeclarationOrStatements> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveVariableDeclarationOrStatements, FOLLOW_RepetitiveVariableDeclarationOrStatements);
+            return false;
     } 
 
     /// <summary>
@@ -1358,18 +1184,15 @@ public class Parser : IParser
         if (FIRST_Idnest.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>");
-            if(Idnest() && RepetitiveVariableOrFunctionCall())
-                return OutputProductionRule("<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>");
-            else
-                return false;
+            return Idnest() && RepetitiveVariableOrFunctionCall();
         }
         else if (FOLLOW_RepetitiveVariableOrFunctionCall.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableOrFunctionCall> -> EPSILON");
-            return OutputProductionRule("<repetitiveVariableOrFunctionCall> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveVariableOrFunctionCall, FOLLOW_RepetitiveVariableOrFunctionCall);
+            return false;
     } 
 
     /// <summary>
@@ -1383,18 +1206,15 @@ public class Parser : IParser
         if (FIRST_IdnestStat.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableOrFunctionCallStat_Function> -> <idnestStat>");
-            if(IdnestStat())
-                return OutputProductionRule("<repetitiveVariableOrFunctionCallStat_Function> -> <idnestStat>");
-            else
-                return false;
+            return IdnestStat();
         }
         else if (FOLLOW_RepetitiveVariableOrFunctionCallStat_Function.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableOrFunctionCallStat_Function> -> EPSILON");
-            return OutputProductionRule("<repetitiveVariableOrFunctionCallStat_Function> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveVariableOrFunctionCallStat_Function, FOLLOW_RepetitiveVariableOrFunctionCallStat_Function);
+            return false;
     } 
 
     /// <summary>
@@ -1408,21 +1228,15 @@ public class Parser : IParser
         if (FIRST_IdnestStat.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableOrFunctionCallStat_Var> -> <idnestStat>");
-            if(IdnestStat())
-                return OutputProductionRule("<repetitiveVariableOrFunctionCallStat_Var> -> <idnestStat>");
-            else
-                return false;
+            return IdnestStat();
         }
         else if (FIRST_AssignmentOperator.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariableOrFunctionCallStat_Var> -> <assignmentOperator> <expression>");
-            if(AssignmentOperator() && Expression())
-                return OutputProductionRule("<repetitiveVariableOrFunctionCallStat_Var> -> <assignmentOperator> <expression>");
-            else
-                return false;
+            return AssignmentOperator() && Expression();
         }
         else
-            return OutputError(FIRST_RepetitiveVariableOrFunctionCallStat_Var, FOLLOW_RepetitiveVariableOrFunctionCallStat_Var);
+            return false;
     } 
 
     /// <summary>
@@ -1436,18 +1250,15 @@ public class Parser : IParser
         if (FIRST_VariableIdnest.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariables> -> <variableIdnest> <repetitiveVariables>");
-            if(VariableIdnest() && RepetitiveVariables())
-                return OutputProductionRule("<repetitiveVariables> -> <variableIdnest> <repetitiveVariables>");
-            else
-                return false;
+            return VariableIdnest() && RepetitiveVariables();
         }
         else if (FOLLOW_RepetitiveVariables.Contains(LookAhead.Type))
         {
             OutputDerivation("<repetitiveVariables> -> EPSILON");
-            return OutputProductionRule("<repetitiveVariables> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_RepetitiveVariables, FOLLOW_RepetitiveVariables);
+            return false;
     } 
 
     /// <summary>
@@ -1461,21 +1272,15 @@ public class Parser : IParser
         if (FIRST_Type.Contains(LookAhead.Type))
         {
             OutputDerivation("<returnType> -> <type>");
-            if(Type())
-                return OutputProductionRule("<returnType> -> <type>");
-            else
-                return false;
+            return Type();
         }
         else if (TokenType.Void == LookAhead.Type)
         {
             OutputDerivation("<returnType> -> 'void'");
-            if(Match(TokenType.Void))
-                return OutputProductionRule("<returnType> -> 'void'");
-            else
-                return false;
+            return Match(TokenType.Void);
         }
         else
-            return OutputError(FIRST_ReturnType, FOLLOW_ReturnType);
+            return false;
     } 
 
     /// <summary>
@@ -1489,21 +1294,15 @@ public class Parser : IParser
         if (Plus == LookAhead.Type)
         {
             OutputDerivation("<sign> -> '+'");
-            if(Match(Plus))
-                return OutputProductionRule("<sign> -> '+'");
-            else
-                return false;
+            return Match(Plus);
         }
         else if (Minus == LookAhead.Type)
         {
             OutputDerivation("<sign> -> '-'");
-            if(Match(Minus))
-                return OutputProductionRule("<sign> -> '-'");
-            else
-                return false;
+            return Match(Minus);
         }
         else
-            return OutputError(FIRST_Sign, FOLLOW_Sign);
+            return false;
     } 
 
     /// <summary>
@@ -1517,18 +1316,15 @@ public class Parser : IParser
         if (FIRST_StructOrImplOrFunction.Contains(LookAhead.Type))
         {
             OutputDerivation("<START> -> <structOrImplOrFunction> <START>");
-            if(StructOrImplOrFunction() && Start())
-                return OutputProductionRule("<START> -> <structOrImplOrFunction> <START>");
-            else
-                return false;
+            return StructOrImplOrFunction() && Start();
         }
         else if (FOLLOW_Start.Contains(LookAhead.Type))
         {
             OutputDerivation("<START> -> EPSILON");
-            return OutputProductionRule("<START> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_Start, FOLLOW_Start);
+            return false;
     } 
 
     /// <summary>
@@ -1542,53 +1338,35 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'id' <statementAlt> ';'");
-            if(Match(Id) && StatementAlt() && Match(Semi))
-                return OutputProductionRule("<statement> -> 'id' <statementAlt> ';'");
-            else
-                return false;
+            return Match(Id) && StatementAlt() && Match(Semi);
         }
         else if (If == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'if' '(' <relationalExpression> ')' 'then' <statementBlock> 'else' <statementBlock> ';'");
-            if(Match(If) && Match(Openpar) && RelationalExpression() && Match(Closepar) && Match(Then) && StatementBlock() && Match(Else) && StatementBlock() && Match(Semi))
-                return OutputProductionRule("<statement> -> 'if' '(' <relationalExpression> ')' 'then' <statementBlock> 'else' <statementBlock> ';'");
-            else
-                return false;
+            return Match(If) && Match(Openpar) && RelationalExpression() && Match(Closepar) && Match(Then) && StatementBlock() && Match(Else) && StatementBlock() && Match(Semi);
         }
         else if (While == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'while' '(' <relationalExpression> ')' <statementBlock> ';'");
-            if(Match(While) && Match(Openpar) && RelationalExpression() && Match(Closepar) && StatementBlock() && Match(Semi))
-                return OutputProductionRule("<statement> -> 'while' '(' <relationalExpression> ')' <statementBlock> ';'");
-            else
-                return false;
+            return Match(While) && Match(Openpar) && RelationalExpression() && Match(Closepar) && StatementBlock() && Match(Semi);
         }
         else if (TokenType.Read == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'read' '(' <variable> ')' ';'");
-            if(Match(TokenType.Read) && Match(Openpar) && Variable() && Match(Closepar) && Match(Semi))
-                return OutputProductionRule("<statement> -> 'read' '(' <variable> ')' ';'");
-            else
-                return false;
+            return Match(TokenType.Read) && Match(Openpar) && Variable() && Match(Closepar) && Match(Semi);
         }
         else if (TokenType.Write == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'write' '(' <expression> ')' ';'");
-            if(Match(TokenType.Write) && Match(Openpar) && Expression() && Match(Closepar) && Match(Semi))
-                return OutputProductionRule("<statement> -> 'write' '(' <expression> ')' ';'");
-            else
-                return false;
+            return Match(TokenType.Write) && Match(Openpar) && Expression() && Match(Closepar) && Match(Semi);
         }
         else if (Return == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'return' '(' <expression> ')' ';'");
-            if(Match(Return) && Match(Openpar) && Expression() && Match(Closepar) && Match(Semi))
-                return OutputProductionRule("<statement> -> 'return' '(' <expression> ')' ';'");
-            else
-                return false;
+            return Match(Return) && Match(Openpar) && Expression() && Match(Closepar) && Match(Semi);
         }
         else
-            return OutputError(FIRST_Statement, FOLLOW_Statement);
+            return false;
     } 
 
     /// <summary>
@@ -1602,21 +1380,15 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<statementAlt> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>");
-            if(Match(Openpar) && ArgumentParameters() && Match(Closepar) && RepetitiveVariableOrFunctionCallStat_Function())
-                return OutputProductionRule("<statementAlt> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>");
-            else
-                return false;
+            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && RepetitiveVariableOrFunctionCallStat_Function();
         }
         else if (FIRST_RepetitiveIndicesStat.Contains(LookAhead.Type))
         {
             OutputDerivation("<statementAlt> -> <repetitiveIndicesStat>");
-            if(RepetitiveIndicesStat())
-                return OutputProductionRule("<statementAlt> -> <repetitiveIndicesStat>");
-            else
-                return false;
+            return RepetitiveIndicesStat();
         }
         else
-            return OutputError(FIRST_StatementAlt, FOLLOW_StatementAlt);
+            return false;
     } 
 
     /// <summary>
@@ -1630,26 +1402,20 @@ public class Parser : IParser
         if (Opencubr == LookAhead.Type)
         {
             OutputDerivation("<statementBlock> -> '{' <repetitiveStatements> '}'");
-            if(Match(Opencubr) && RepetitiveStatements() && Match(Closecubr))
-                return OutputProductionRule("<statementBlock> -> '{' <repetitiveStatements> '}'");
-            else
-                return false;
+            return Match(Opencubr) && RepetitiveStatements() && Match(Closecubr);
         }
         else if (FIRST_Statement.Contains(LookAhead.Type))
         {
             OutputDerivation("<statementBlock> -> <statement>");
-            if(Statement())
-                return OutputProductionRule("<statementBlock> -> <statement>");
-            else
-                return false;
+            return Statement();
         }
         else if (FOLLOW_StatementBlock.Contains(LookAhead.Type))
         {
             OutputDerivation("<statementBlock> -> EPSILON");
-            return OutputProductionRule("<statementBlock> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_StatementBlock, FOLLOW_StatementBlock);
+            return false;
     } 
 
     /// <summary>
@@ -1663,13 +1429,10 @@ public class Parser : IParser
         if (Struct == LookAhead.Type)
         {
             OutputDerivation("<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'");
-            if(Match(Struct) && Match(Id) && StructOptionalInheritance() && Match(Opencubr) && RepetitiveStructMemberDeclarations() && Match(Closecubr) && Match(Semi))
-                return OutputProductionRule("<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'");
-            else
-                return false;
+            return Match(Struct) && Match(Id) && StructOptionalInheritance() && Match(Opencubr) && RepetitiveStructMemberDeclarations() && Match(Closecubr) && Match(Semi);
         }
         else
-            return OutputError(FIRST_StructDeclaration, FOLLOW_StructDeclaration);
+            return false;
     } 
 
     /// <summary>
@@ -1683,18 +1446,15 @@ public class Parser : IParser
         if (Inherits == LookAhead.Type)
         {
             OutputDerivation("<structOptionalInheritance> -> 'inherits' 'id' <repetitiveStructOptionalInheritances>");
-            if(Match(Inherits) && Match(Id) && RepetitiveStructOptionalInheritances())
-                return OutputProductionRule("<structOptionalInheritance> -> 'inherits' 'id' <repetitiveStructOptionalInheritances>");
-            else
-                return false;
+            return Match(Inherits) && Match(Id) && RepetitiveStructOptionalInheritances();
         }
         else if (FOLLOW_StructOptionalInheritance.Contains(LookAhead.Type))
         {
             OutputDerivation("<structOptionalInheritance> -> EPSILON");
-            return OutputProductionRule("<structOptionalInheritance> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_StructOptionalInheritance, FOLLOW_StructOptionalInheritance);
+            return false;
     } 
 
     /// <summary>
@@ -1708,29 +1468,20 @@ public class Parser : IParser
         if (FIRST_StructDeclaration.Contains(LookAhead.Type))
         {
             OutputDerivation("<structOrImplOrFunction> -> <structDeclaration>");
-            if(StructDeclaration())
-                return OutputProductionRule("<structOrImplOrFunction> -> <structDeclaration>");
-            else
-                return false;
+            return StructDeclaration();
         }
         else if (FIRST_ImplDefinition.Contains(LookAhead.Type))
         {
             OutputDerivation("<structOrImplOrFunction> -> <implDefinition>");
-            if(ImplDefinition())
-                return OutputProductionRule("<structOrImplOrFunction> -> <implDefinition>");
-            else
-                return false;
+            return ImplDefinition();
         }
         else if (FIRST_FunctionDefinition.Contains(LookAhead.Type))
         {
             OutputDerivation("<structOrImplOrFunction> -> <functionDefinition>");
-            if(FunctionDefinition())
-                return OutputProductionRule("<structOrImplOrFunction> -> <functionDefinition>");
-            else
-                return false;
+            return FunctionDefinition();
         }
         else
-            return OutputError(FIRST_StructOrImplOrFunction, FOLLOW_StructOrImplOrFunction);
+            return false;
     } 
 
     /// <summary>
@@ -1744,13 +1495,10 @@ public class Parser : IParser
         if (FIRST_Factor.Contains(LookAhead.Type))
         {
             OutputDerivation("<term> -> <factor> <recursiveTerms>");
-            if(Factor() && RecursiveTerms())
-                return OutputProductionRule("<term> -> <factor> <recursiveTerms>");
-            else
-                return false;
+            return Factor() && RecursiveTerms();
         }
         else
-            return OutputError(FIRST_Term, FOLLOW_Term);
+            return false;
     } 
 
     /// <summary>
@@ -1764,29 +1512,20 @@ public class Parser : IParser
         if (Integer == LookAhead.Type)
         {
             OutputDerivation("<type> -> 'integer'");
-            if(Match(Integer))
-                return OutputProductionRule("<type> -> 'integer'");
-            else
-                return false;
+            return Match(Integer);
         }
         else if (Float == LookAhead.Type)
         {
             OutputDerivation("<type> -> 'float'");
-            if(Match(Float))
-                return OutputProductionRule("<type> -> 'float'");
-            else
-                return false;
+            return Match(Float);
         }
         else if (Id == LookAhead.Type)
         {
             OutputDerivation("<type> -> 'id'");
-            if(Match(Id))
-                return OutputProductionRule("<type> -> 'id'");
-            else
-                return false;
+            return Match(Id);
         }
         else
-            return OutputError(FIRST_Type, FOLLOW_Type);
+            return false;
     } 
 
     /// <summary>
@@ -1800,13 +1539,10 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<variable> -> 'id' <variableRest>");
-            if(Match(Id) && VariableRest())
-                return OutputProductionRule("<variable> -> 'id' <variableRest>");
-            else
-                return false;
+            return Match(Id) && VariableRest();
         }
         else
-            return OutputError(FIRST_Variable, FOLLOW_Variable);
+            return false;
     } 
 
     /// <summary>
@@ -1820,13 +1556,10 @@ public class Parser : IParser
         if (Let == LookAhead.Type)
         {
             OutputDerivation("<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'");
-            if(Match(Let) && Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes() && Match(Semi))
-                return OutputProductionRule("<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'");
-            else
-                return false;
+            return Match(Let) && Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes() && Match(Semi);
         }
         else
-            return OutputError(FIRST_VariableDeclaration, FOLLOW_VariableDeclaration);
+            return false;
     } 
 
     /// <summary>
@@ -1840,21 +1573,15 @@ public class Parser : IParser
         if (FIRST_VariableDeclaration.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableDeclarationOrStatement> -> <variableDeclaration>");
-            if(VariableDeclaration())
-                return OutputProductionRule("<variableDeclarationOrStatement> -> <variableDeclaration>");
-            else
-                return false;
+            return VariableDeclaration();
         }
         else if (FIRST_Statement.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableDeclarationOrStatement> -> <statement>");
-            if(Statement())
-                return OutputProductionRule("<variableDeclarationOrStatement> -> <statement>");
-            else
-                return false;
+            return Statement();
         }
         else
-            return OutputError(FIRST_VariableDeclarationOrStatement, FOLLOW_VariableDeclarationOrStatement);
+            return false;
     } 
 
     /// <summary>
@@ -1868,13 +1595,10 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<variableIdnest> -> '.' 'id' <variableIdnestRest>");
-            if(Match(Dot) && Match(Id) && VariableIdnestRest())
-                return OutputProductionRule("<variableIdnest> -> '.' 'id' <variableIdnestRest>");
-            else
-                return false;
+            return Match(Dot) && Match(Id) && VariableIdnestRest();
         }
         else
-            return OutputError(FIRST_VariableIdnest, FOLLOW_VariableIdnest);
+            return false;
     } 
 
     /// <summary>
@@ -1888,26 +1612,20 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<variableIdnestRest> -> '(' <argumentParameters> ')' <variableIdnest>");
-            if(Match(Openpar) && ArgumentParameters() && Match(Closepar) && VariableIdnest())
-                return OutputProductionRule("<variableIdnestRest> -> '(' <argumentParameters> ')' <variableIdnest>");
-            else
-                return false;
+            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && VariableIdnest();
         }
         else if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableIdnestRest> -> <repetitiveIndices>");
-            if(RepetitiveIndices())
-                return OutputProductionRule("<variableIdnestRest> -> <repetitiveIndices>");
-            else
-                return false;
+            return RepetitiveIndices();
         }
         else if (FOLLOW_VariableIdnestRest.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableIdnestRest> -> EPSILON");
-            return OutputProductionRule("<variableIdnestRest> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_VariableIdnestRest, FOLLOW_VariableIdnestRest);
+            return false;
     } 
 
     /// <summary>
@@ -1921,34 +1639,25 @@ public class Parser : IParser
         if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableRest> -> <repetitiveIndices> <repetitiveVariables>");
-            if(RepetitiveIndices() && RepetitiveVariables())
-                return OutputProductionRule("<variableRest> -> <repetitiveIndices> <repetitiveVariables>");
-            else
-                return false;
+            return RepetitiveIndices() && RepetitiveVariables();
         }
         else if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<variableRest> -> '(' <argumentParameters> ')' <variableIdnest>");
-            if(Match(Openpar) && ArgumentParameters() && Match(Closepar) && VariableIdnest())
-                return OutputProductionRule("<variableRest> -> '(' <argumentParameters> ')' <variableIdnest>");
-            else
-                return false;
+            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && VariableIdnest();
         }
         else if (FIRST_RepetitiveVariables.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableRest> -> <repetitiveVariables>");
-            if(RepetitiveVariables())
-                return OutputProductionRule("<variableRest> -> <repetitiveVariables>");
-            else
-                return false;
+            return RepetitiveVariables();
         }
         else if (FOLLOW_VariableRest.Contains(LookAhead.Type))
         {
             OutputDerivation("<variableRest> -> EPSILON");
-            return OutputProductionRule("<variableRest> -> EPSILON");
+            return true;
         }
         else
-            return OutputError(FIRST_VariableRest, FOLLOW_VariableRest);
+            return false;
     } 
 
     /// <summary>
@@ -1962,21 +1671,15 @@ public class Parser : IParser
         if (Public == LookAhead.Type)
         {
             OutputDerivation("<visibility> -> 'public'");
-            if(Match(Public))
-                return OutputProductionRule("<visibility> -> 'public'");
-            else
-                return false;
+            return Match(Public);
         }
         else if (Private == LookAhead.Type)
         {
             OutputDerivation("<visibility> -> 'private'");
-            if(Match(Private))
-                return OutputProductionRule("<visibility> -> 'private'");
-            else
-                return false;
+            return Match(Private);
         }
         else
-            return OutputError(FIRST_Visibility, FOLLOW_Visibility);
+            return false;
     }
 
     #endregion Productions

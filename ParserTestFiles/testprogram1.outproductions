@@ -387,5 +387,30 @@
 <recursiveTerms> -> EPSILON
 <recursiveArithmeticExpression> -> EPSILON
 <optionalRelationalExpression> -> EPSILON
+<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>
+<variableDeclarationOrStatement> -> <statement>
+<statement> -> 'id' <statementAlt> ';'
+<statementAlt> -> <repetitiveIndicesStat>
+<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>
+<repetitiveVariableOrFunctionCallStat_Var> -> <assignmentOperator> <expression>
+<assignmentOperator> -> '='
+<expression> -> <arithmeticExpression> <optionalRelationalExpression>
+<arithmeticExpression> -> <term> <recursiveArithmeticExpression>
+<term> -> <factor> <recursiveTerms>
+<factor> -> <sign> <factor>
+<sign> -> '+'
+<factor> -> <sign> <factor>
+<sign> -> '+'
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> <addOperator> <term> <recursiveArithmeticExpression>
+<addOperator> -> '+'
+<term> -> <factor> <recursiveTerms>
+<factor> -> 'intLit'
+<recursiveTerms> -> EPSILON
+<recursiveArithmeticExpression> -> EPSILON
+<optionalRelationalExpression> -> EPSILON
 <repetitiveVariableDeclarationOrStatements> -> EPSILON
-<START> -> EPSILON
+<START> -> <structOrImplOrFunction> <START>
+<structOrImplOrFunction> -> <structDeclaration>
+<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'

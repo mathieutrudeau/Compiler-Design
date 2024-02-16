@@ -67,13 +67,15 @@ a=3.1;
 
 //a().a[2];
 
+a=++3+2;
 }
+struct s
 
 
 /* This is a block comment
    that spans over multiple lines 
    
-   <START>              ::= <prog>   =======================================================
+<START>              ::= <prog>   =======================================================
 <prog>               ::= {{<structOrImplOrfunc>}}    =========================================
 <structOrImplOrFunc> ::= <structDecl> | <implDef> | <funcDef>  ========================================
 <structDecl>         ::= 'struct' 'id' [['inherits' 'id' {{',' 'id'}}]] '{' {{<visibility> <memberDecl>}} '}' ';' ===================

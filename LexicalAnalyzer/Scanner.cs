@@ -95,7 +95,7 @@ public partial class Scanner : IScanner
     {
         // If there are no tokens left, return an end of file token.
         if (!HasTokenLeft())
-            return new Token { Type = TokenType.Eof, Lexeme = "$", Location = LineNumber};
+            return new Token { Type = TokenType.Eof, Lexeme = "End of File", Location = LineNumber};
 
         // The current lexeme being read.
         string currentLexeme = string.Empty;

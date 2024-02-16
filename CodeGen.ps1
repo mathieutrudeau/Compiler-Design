@@ -281,10 +281,7 @@ function Generate-Production-Method {
         if ($start)
         {
             OutputDerivation("$recOutput");
-            if($recMatch)
-                return OutputProductionRule("$recOutput");
-            else
-                return false;
+            return $recMatch;
 "@
         }
         else {
@@ -293,10 +290,7 @@ function Generate-Production-Method {
         else if ($start)
         {
             OutputDerivation("$recOutput");
-            if($recMatch)
-                return OutputProductionRule("$recOutput");
-            else
-                return false;
+            return $recMatch;
 "@
         }
 
@@ -319,7 +313,7 @@ function Generate-Production-Method {
         else if (FOLLOW_$prodName.Contains(LookAhead.Type))
         {
             OutputDerivation("$productionName -> EPSILON");
-            return OutputProductionRule("$productionName -> EPSILON");
+            return true;
         }
 "@                
         }
@@ -329,16 +323,16 @@ function Generate-Production-Method {
         if (FOLLOW_$prodName.Contains(LookAhead.Type))
         {
             OutputDerivation("$productionName -> EPSILON");
-            return OutputProductionRule("$productionName -> EPSILON");
+            return true;
         }
-"@                
+"@  
         }
     }
 
     $methodCode += @"
 
         else
-            return OutputError(FIRST_$prodName, FOLLOW_$prodName);
+            return false;
     }
 "@
             
@@ -647,15 +641,49 @@ namespace SyntacticAnalyzer;
 /// </summary>
 public class Parser : IParser
 {
-    private const bool DEBUG = false;
+    /// <summary>
+    /// The scanner used to scan and tokenize the source file
+    /// </summary>
     private IScanner Scanner { get; }
+
+    /// <summary>
+    /// The current token being looked at
+    /// </summary>
     private Token LookAhead { get; set; }
-    private string Source {get;set;} = "";
-    private string SourceName {get;set;} = "";
-    private IParseTree ParseTree { get; set; }
+
+    /// <summary>
+    /// The source file to parse (with the file extension)
+    /// </summary>
+    private string Source {get;} = "";
+
+    /// <summary>
+    /// The name of the source file to parse
+    /// </summary>
+    private string SourceName {get;} = "";
+    
+    /// <summary>
+    /// The parse list used to track the derivations
+    /// </summary>
+    private IParseList ParseList { get; set; } = new ParseList();
+
+    #region Constants
+
+    /// <summary>
+    /// Extension for the output syntax errors file
+    /// </summary>
     private const string OUT_SYNTAX_ERRORS_EXTENSION = ".outsyntaxerrors";
+
+    /// <summary>
+    /// Extension for the output derivation file
+    /// </summary>
     private const string OUT_DERIVATION_EXTENSION = ".outderivation";
+
+    /// <summary>
+    /// Extension for the output productions file
+    /// </summary>
     private const string OUT_PRODUCTIONS_EXTENSION = ".outproductions";
+
+    #endregion Constants
 
     #region Constructor
 
@@ -680,11 +708,6 @@ public class Parser : IParser
             File.Delete(SourceName + OUT_DERIVATION_EXTENSION);
         if (File.Exists(SourceName + OUT_PRODUCTIONS_EXTENSION))
             File.Delete(SourceName + OUT_PRODUCTIONS_EXTENSION);
-
-        ParseTree = new ParseTree(new ParseNode("<START>",false), SourceName + OUT_DERIVATION_EXTENSION, DEBUG);
-
-        if (DEBUG)
-            WriteLine("Parser initialized...");
     }
 
     #endregion Constructor
@@ -702,16 +725,13 @@ public class Parser : IParser
             LookAhead = Scanner.NextToken();
         while (LookAhead.Type == Blockcmt || LookAhead.Type == Inlinecmt);
 
-        if (DEBUG)
-            WriteLine("Parsing...");
-
+        // Output the derivation to the output file
+        using StreamWriter sw = new(SourceName + OUT_DERIVATION_EXTENSION, true);
+        sw.WriteLine(ParseList.GetDerivation());
+        sw.Close();
+        
         // Parse the source file   
-        bool isParsed = Start() && Match(Eof);
-        
-        // Close the parse tree resources
-        ParseTree.Close();
-        
-        return isParsed;
+        return Start() && Match(Eof);
     }
 
     /// <summary>
@@ -754,10 +774,18 @@ public class Parser : IParser
         else
         {
             // Output an error message, this error can be recovered from
-            string[] expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-            WriteLine($"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.");
+            string[] expectedTokens = firstSet.Contains(Epsilon) ? 
+            firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(Token.TokenTypeToString).ToArray() :
+            firstSet.Distinct().Where(x => x != Epsilon && x!=Eof).Select(Token.TokenTypeToString).ToArray();
+
+            // Define the error message
+            string errorMsg = $"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.";
+
+            // Write the error message to the console and to the output file
+            WriteLine(errorMsg);
+        
             using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
-            sw.WriteLine($"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.");
+            sw.WriteLine(errorMsg);
 
             // Get the next token until it is in the first set or the follow set
             while (!firstSet.Contains(LookAhead.Type) && !followSet.Contains(LookAhead.Type))
@@ -785,47 +813,16 @@ public class Parser : IParser
     /// <param name="productionRuleStr">The production rule to output</param>
     private void OutputDerivation(string productionRuleStr)
     {
-        // Add the production rule to the parse tree and print the parse tree
-        //ParseTree.AddProduction(productionRuleStr);
-        //ParseTree.Print();
+        // Add the production rule to the parse list
+        ParseList.Add(productionRuleStr);
+
+        // Write the derivation to the output file
+        using StreamWriter sw = new(SourceName + OUT_DERIVATION_EXTENSION, true);
+        sw.WriteLine(ParseList.GetDerivation());
 
         // Write the production rule to the output file
-        using StreamWriter sw = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
-        sw.WriteLine(productionRuleStr);
-    }
-
-    /// <summary>
-    /// Outputs a production rule to the console and to the output file
-    /// </summary>
-    /// <param name="productionRuleStr">The production rule to output</param>
-    /// <returns>True</returns>
-    private static bool OutputProductionRule(string productionRuleStr)
-    {
-        if (DEBUG)
-            WriteLine(productionRuleStr);
-        return true;
-    }
-
-    /// <summary>
-    /// Outputs an error message to the console and to the output file
-    /// </summary>
-    /// <returns>False</returns>
-    private bool OutputError(TokenType[] firstSet, TokenType[] followSet)
-    {
-        // Define the error message
-        string[] expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-        if (firstSet.Contains(Epsilon))
-            expectedTokens = firstSet.Concat(followSet).Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-        else
-            expectedTokens = firstSet.Distinct().Where(x => x != Epsilon && x!=Eof).Select(x=>Token.TokenTypeToString(x)).ToArray();
-
-        string errorMsg = $"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.";
-
-        // Write the error message to the console and to the output file
-        WriteLine(errorMsg);
-        using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
-        sw.WriteLine(errorMsg);
-        return false;
+        using StreamWriter sw1 = new(SourceName + OUT_PRODUCTIONS_EXTENSION, true);
+        sw1.WriteLine(productionRuleStr);
     }
 
     #endregion Base Methods
@@ -847,20 +844,7 @@ public class Parser : IParser
 }
 "@
 
-    # IMPORTANT:
-    # Need to add follow whenever there is an epsilon in the first set
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     return $code
-
-    # foreach ($key in $grammarDict.Keys) {
-    #     #Generate-Production-Method -productionName $key -productions $grammarDict[$key]
-    #     $fset = (Generate-Follow-Set -productionName $key -grammarDict $grammarDict)
-    #     Write-Host (Generate-Set-Code -productionName $key -set $fset -isFollow $true)
-
-    # }
-    
-
     
 }
 
