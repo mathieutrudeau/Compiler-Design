@@ -117,7 +117,12 @@ public class Parser : IParser
         bool isMatch = LookAhead.Type == tokenType;
 
         if (!isMatch)
-            WriteLine($"Syntax error: Unexpected '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected {Token.TokenTypeToString(tokenType)}.");
+        {
+            string errorMsg = $"Syntax error: Unexpected '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected {Token.TokenTypeToString(tokenType)}.";
+            WriteLine(errorMsg);
+            using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
+            sw.WriteLine(errorMsg);
+        }
 
         // Get the next token and make sure it is not a Comment
         do

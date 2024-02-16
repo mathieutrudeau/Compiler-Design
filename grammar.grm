@@ -97,26 +97,8 @@
 <statementBlock> ::= <statement> 
 <statementBlock> ::= EPSILON 
 
-# <optionalAssignment> ::= <assignmentOperator> <expression> ';'
-# <optionalAssignment> ::= ';'
-
 <repetitiveStatements> ::= <statement> <repetitiveStatements> 
 <repetitiveStatements> ::= EPSILON 
-
-# <statementAlt> ::= '(' <argumentParameters> ')' 
-# <statementAlt> ::= <repetitiveIndices> 
-# <statementAlt> ::= EPSILON
-
-# <repetitiveVariableOrFunctionCallStat> ::= <idnestStat> <repetitiveVariableOrFunctionCallStat> 
-# <repetitiveVariableOrFunctionCallStat> ::= EPSILON 
-
-# <idnestStat> ::= '.' 'id' <idnestRestStat> 
-
-# <idnestRestStat> ::= '(' <argumentParameters> ')' 
-# <idnestRestStat> ::= <repetitiveIndices> 
-# <idnestRestStat> ::= EPSILON
-
-
 
 <statementAlt> ::= '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function> 
 <statementAlt> ::= <repetitiveIndicesStat> 
@@ -130,9 +112,6 @@
 
 <repetitiveVariableOrFunctionCallStat_Var> ::= <idnestStat> 
 <repetitiveVariableOrFunctionCallStat_Var> ::= <assignmentOperator> <expression>
-
-# <repetitiveVariableOrFunctionCallStat> ::= <idnestStat> <repetitiveVariableOrFunctionCallStat> 
-# <repetitiveVariableOrFunctionCallStat> ::= EPSILON 
 
 <idnestStat> ::= '.' 'id' <idnestRestStat> 
 
