@@ -67,6 +67,8 @@ function Extract-Name {
         $prodName = $symbol.Replace("<", "").Replace(">", "").Trim()
         $prodName = ($prodName.Substring(0, 1).ToUpper() + $prodName.Substring(1)).Trim()
 
+        $prodName = $prodName.Replace("-", "_")
+
         if ($prodName -eq "START") {
             $prodName = "Start"
         }
@@ -149,6 +151,10 @@ function Get-Enum-Value {
         "'public'" { return "Public" }
         "'private'" { return "Private" }
         "$" { return "Eof" }
+        "'arrow'" { return "Arrow" }
+        "'eof'" { return "Eof" }
+        "'intlit'" { return "Intnum" }
+        "'floatlit'" { return "Intnum" }
         Default {}
     }
 
@@ -244,8 +250,15 @@ function Generate-Production-Method {
             $start = "$translatedTerm == LookAhead.Type"
         }
         else {
+            $firstSet = (Generate-First-Set -productionName $start -grammarDict $languageDict)
             $start = Extract-Name -symbol $start
-            $start = "FIRST_$start.Contains(LookAhead.Type)"
+            $startAlt = "FIRST_$start.Contains(LookAhead.Type)"
+
+            if($firstSet.Contains("EPSILON")) {
+                $startAlt = "$startAlt || FOLLOW_$start.Contains(LookAhead.Type)"
+            }
+
+            $start = $startAlt
         }
 
 
@@ -731,7 +744,7 @@ public class Parser : IParser
         sw.Close();
         
         // Parse the source file   
-        return Start() && Match(Eof);
+        return Start();
     }
 
     /// <summary>
@@ -855,7 +868,7 @@ public class Parser : IParser
 
 
 
-$grammar = Get-Content -Path "grammar.grm"
+$grammar = Get-Content -Path "fixedgrammar.grm"
 
 # Loop through each line in the grammar file and process the production
 foreach ($line in $grammar) {

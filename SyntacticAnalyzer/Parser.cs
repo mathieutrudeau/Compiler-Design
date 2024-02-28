@@ -99,7 +99,7 @@ public class Parser : IParser
         sw.Close();
         
         // Parse the source file   
-        return Start() && Match(Eof);
+        return Start();
     }
 
     /// <summary>
@@ -202,132 +202,134 @@ public class Parser : IParser
 
     #region First Sets
     
-    private static readonly TokenType[] FIRST_AddOperator = new TokenType[] { Plus, Minus, Or }; 
-    private static readonly TokenType[] FIRST_ArgumentParameters = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus, Epsilon }; 
-    private static readonly TokenType[] FIRST_ArgumentParametersTail = new TokenType[] { Comma }; 
-    private static readonly TokenType[] FIRST_ArithmeticExpression = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FIRST_AddOp = new TokenType[] { Plus, Minus, Or }; 
+    private static readonly TokenType[] FIRST_AParams = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus, Epsilon }; 
+    private static readonly TokenType[] FIRST_AParamsTail = new TokenType[] { Comma }; 
+    private static readonly TokenType[] FIRST_ArithExpr = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
     private static readonly TokenType[] FIRST_ArraySize = new TokenType[] { Opensqbr }; 
-    private static readonly TokenType[] FIRST_ArraySizeContent = new TokenType[] { Intnum, Closesqbr }; 
-    private static readonly TokenType[] FIRST_AssignmentOperator = new TokenType[] { Assign }; 
-    private static readonly TokenType[] FIRST_Expression = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FIRST_ArraySize2 = new TokenType[] { Intnum, Closesqbr }; 
+    private static readonly TokenType[] FIRST_AssignOp = new TokenType[] { Assign }; 
+    private static readonly TokenType[] FIRST_Expr = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FIRST_Expr2 = new TokenType[] { Eq, Noteq, Lt, Gt, Leq, Geq, Epsilon }; 
     private static readonly TokenType[] FIRST_Factor = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
-    private static readonly TokenType[] FIRST_FactorAlt = new TokenType[] { Openpar, Opensqbr, Epsilon }; 
-    private static readonly TokenType[] FIRST_FunctionBody = new TokenType[] { Opencubr }; 
-    private static readonly TokenType[] FIRST_FunctionDeclaration = new TokenType[] { Func }; 
-    private static readonly TokenType[] FIRST_FunctionDefinition = new TokenType[] { Func }; 
-    private static readonly TokenType[] FIRST_FunctionHeader = new TokenType[] { Func }; 
-    private static readonly TokenType[] FIRST_FunctionParametersTail = new TokenType[] { Comma }; 
-    private static readonly TokenType[] FIRST_FuntionParameters = new TokenType[] { Id, Epsilon }; 
-    private static readonly TokenType[] FIRST_Idnest = new TokenType[] { Dot }; 
-    private static readonly TokenType[] FIRST_IdnestRest = new TokenType[] { Openpar, Opensqbr, Epsilon }; 
-    private static readonly TokenType[] FIRST_IdnestRestStat = new TokenType[] { Openpar, Opensqbr, Dot, Assign }; 
-    private static readonly TokenType[] FIRST_IdnestStat = new TokenType[] { Dot }; 
-    private static readonly TokenType[] FIRST_ImplDefinition = new TokenType[] { Impl }; 
+    private static readonly TokenType[] FIRST_Factor2 = new TokenType[] { Openpar, Opensqbr, Epsilon }; 
+    private static readonly TokenType[] FIRST_FParams = new TokenType[] { Id, Epsilon }; 
+    private static readonly TokenType[] FIRST_FParamsTail = new TokenType[] { Comma }; 
+    private static readonly TokenType[] FIRST_FuncBody = new TokenType[] { Opencubr }; 
+    private static readonly TokenType[] FIRST_FuncDecl = new TokenType[] { Func }; 
+    private static readonly TokenType[] FIRST_FuncDef = new TokenType[] { Func }; 
+    private static readonly TokenType[] FIRST_FuncHead = new TokenType[] { Func }; 
+    private static readonly TokenType[] FIRST_IdNest = new TokenType[] { Dot }; 
+    private static readonly TokenType[] FIRST_IdNest2 = new TokenType[] { Openpar, Opensqbr, Epsilon }; 
+    private static readonly TokenType[] FIRST_ImplDef = new TokenType[] { Impl }; 
     private static readonly TokenType[] FIRST_Indice = new TokenType[] { Opensqbr }; 
-    private static readonly TokenType[] FIRST_MemberDeclaration = new TokenType[] { Func, Let }; 
-    private static readonly TokenType[] FIRST_MultOperator = new TokenType[] { Mult, Div, And }; 
-    private static readonly TokenType[] FIRST_OptionalRelationalExpression = new TokenType[] { Eq, Noteq, Lt, Gt, Leq, Geq, Epsilon }; 
-    private static readonly TokenType[] FIRST_RecursiveArithmeticExpression = new TokenType[] { Plus, Minus, Or, Epsilon }; 
-    private static readonly TokenType[] FIRST_RecursiveTerms = new TokenType[] { Mult, Div, And, Epsilon }; 
-    private static readonly TokenType[] FIRST_RelationalExpression = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
-    private static readonly TokenType[] FIRST_RelationalOperator = new TokenType[] { Eq, Noteq, Lt, Gt, Leq, Geq }; 
-    private static readonly TokenType[] FIRST_RepetitiveArgumentParametersTail = new TokenType[] { Comma, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveArraySizes = new TokenType[] { Opensqbr, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveFunctionDefinitions = new TokenType[] { Func, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveFunctionParametersTails = new TokenType[] { Comma, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveIndices = new TokenType[] { Opensqbr, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveIndicesStat = new TokenType[] { Opensqbr, Dot, Assign }; 
-    private static readonly TokenType[] FIRST_RepetitiveStatements = new TokenType[] { Id, If, While, TokenType.Read, TokenType.Write, Return, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveStructMemberDeclarations = new TokenType[] { Public, Private, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveStructOptionalInheritances = new TokenType[] { Comma, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveVariableDeclarationOrStatements = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveVariableOrFunctionCall = new TokenType[] { Dot, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveVariableOrFunctionCallStat_Function = new TokenType[] { Dot, Epsilon }; 
-    private static readonly TokenType[] FIRST_RepetitiveVariableOrFunctionCallStat_Var = new TokenType[] { Dot, Assign }; 
-    private static readonly TokenType[] FIRST_RepetitiveVariables = new TokenType[] { Dot, Epsilon }; 
+    private static readonly TokenType[] FIRST_MemberDecl = new TokenType[] { Func, Let }; 
+    private static readonly TokenType[] FIRST_MultOp = new TokenType[] { Mult, Div, And }; 
+    private static readonly TokenType[] FIRST_Opt_structDecl2 = new TokenType[] { Inherits, Epsilon }; 
+    private static readonly TokenType[] FIRST_Prog = new TokenType[] { Struct, Impl, Func, Epsilon }; 
+    private static readonly TokenType[] FIRST_RelExpr = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FIRST_RelOp = new TokenType[] { Eq, Noteq, Lt, Gt, Leq, Geq }; 
+    private static readonly TokenType[] FIRST_Rept_aParams1 = new TokenType[] { Comma, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_fParams3 = new TokenType[] { Opensqbr, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_fParams4 = new TokenType[] { Comma, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_fParamsTail4 = new TokenType[] { Opensqbr, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_funcBody1 = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_idnest1 = new TokenType[] { Opensqbr, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_implDef3 = new TokenType[] { Func, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_opt_structDecl22 = new TokenType[] { Comma, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_prog0 = new TokenType[] { Struct, Impl, Func, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_statBlock1 = new TokenType[] { Id, If, While, TokenType.Read, TokenType.Write, Return, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_structDecl4 = new TokenType[] { Public, Private, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_varDecl4 = new TokenType[] { Opensqbr, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_variable = new TokenType[] { Dot, Epsilon }; 
+    private static readonly TokenType[] FIRST_Rept_var_or_funcCall = new TokenType[] { Dot, Epsilon }; 
     private static readonly TokenType[] FIRST_ReturnType = new TokenType[] { Integer, Float, Id, TokenType.Void }; 
+    private static readonly TokenType[] FIRST_Rightrec_arithExpr = new TokenType[] { Epsilon, Plus, Minus, Or }; 
+    private static readonly TokenType[] FIRST_RightRecTerm = new TokenType[] { Epsilon, Mult, Div, And }; 
     private static readonly TokenType[] FIRST_Sign = new TokenType[] { Plus, Minus }; 
     private static readonly TokenType[] FIRST_Start = new TokenType[] { Struct, Impl, Func, Epsilon }; 
+    private static readonly TokenType[] FIRST_StatBlock = new TokenType[] { Opencubr, Id, If, While, TokenType.Read, TokenType.Write, Return, Epsilon }; 
     private static readonly TokenType[] FIRST_Statement = new TokenType[] { Id, If, While, TokenType.Read, TokenType.Write, Return }; 
-    private static readonly TokenType[] FIRST_StatementAlt = new TokenType[] { Openpar, Opensqbr, Dot, Assign }; 
-    private static readonly TokenType[] FIRST_StatementBlock = new TokenType[] { Opencubr, Id, If, While, TokenType.Read, TokenType.Write, Return, Epsilon }; 
-    private static readonly TokenType[] FIRST_StructDeclaration = new TokenType[] { Struct }; 
-    private static readonly TokenType[] FIRST_StructOptionalInheritance = new TokenType[] { Inherits, Epsilon }; 
-    private static readonly TokenType[] FIRST_StructOrImplOrFunction = new TokenType[] { Struct, Impl, Func }; 
+    private static readonly TokenType[] FIRST_Statement_Id_nest = new TokenType[] { Dot, Openpar, Opensqbr, Assign }; 
+    private static readonly TokenType[] FIRST_Statement_Id_nest2 = new TokenType[] { Epsilon, Dot }; 
+    private static readonly TokenType[] FIRST_Statement_Id_nest3 = new TokenType[] { Assign, Dot }; 
+    private static readonly TokenType[] FIRST_StructDecl = new TokenType[] { Struct }; 
+    private static readonly TokenType[] FIRST_StructOrImplOrfunc = new TokenType[] { Struct, Impl, Func }; 
     private static readonly TokenType[] FIRST_Term = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
     private static readonly TokenType[] FIRST_Type = new TokenType[] { Integer, Float, Id }; 
+    private static readonly TokenType[] FIRST_VarDecl = new TokenType[] { Let }; 
+    private static readonly TokenType[] FIRST_VarDeclOrStat = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return }; 
     private static readonly TokenType[] FIRST_Variable = new TokenType[] { Id }; 
-    private static readonly TokenType[] FIRST_VariableDeclaration = new TokenType[] { Let }; 
-    private static readonly TokenType[] FIRST_VariableDeclarationOrStatement = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return }; 
-    private static readonly TokenType[] FIRST_VariableIdnest = new TokenType[] { Dot }; 
-    private static readonly TokenType[] FIRST_VariableIdnestRest = new TokenType[] { Openpar, Opensqbr, Epsilon }; 
-    private static readonly TokenType[] FIRST_VariableRest = new TokenType[] { Opensqbr, Epsilon, Openpar, Dot }; 
+    private static readonly TokenType[] FIRST_Variable2 = new TokenType[] { Opensqbr, Epsilon, Openpar }; 
+    private static readonly TokenType[] FIRST_Var_idNest = new TokenType[] { Dot }; 
+    private static readonly TokenType[] FIRST_Var_idNest2 = new TokenType[] { Openpar, Opensqbr, Epsilon }; 
     private static readonly TokenType[] FIRST_Visibility = new TokenType[] { Public, Private };
 
     #endregion First Sets
 
     #region Follow Sets
     
-    private static readonly TokenType[] FOLLOW_AddOperator = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
-    private static readonly TokenType[] FOLLOW_ArgumentParameters = new TokenType[] { Closepar }; 
-    private static readonly TokenType[] FOLLOW_ArgumentParametersTail = new TokenType[] { Comma, Closepar }; 
-    private static readonly TokenType[] FOLLOW_ArithmeticExpression = new TokenType[] { Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_AddOp = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FOLLOW_AParams = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_AParamsTail = new TokenType[] { Comma, Closepar }; 
+    private static readonly TokenType[] FOLLOW_ArithExpr = new TokenType[] { Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
     private static readonly TokenType[] FOLLOW_ArraySize = new TokenType[] { Opensqbr, Comma, Closepar, Semi }; 
-    private static readonly TokenType[] FOLLOW_ArraySizeContent = new TokenType[] { Opensqbr, Comma, Closepar, Semi }; 
-    private static readonly TokenType[] FOLLOW_AssignmentOperator = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
-    private static readonly TokenType[] FOLLOW_Expression = new TokenType[] { Comma, Closepar, Semi }; 
-    private static readonly TokenType[] FOLLOW_Factor = new TokenType[] { Mult, Div, And, Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_FactorAlt = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_FunctionBody = new TokenType[] { Func, Closecubr, Struct, Impl }; 
-    private static readonly TokenType[] FOLLOW_FunctionDeclaration = new TokenType[] { Public, Private, Closecubr }; 
-    private static readonly TokenType[] FOLLOW_FunctionDefinition = new TokenType[] { Func, Closecubr, Struct, Impl }; 
-    private static readonly TokenType[] FOLLOW_FunctionHeader = new TokenType[] { Opencubr, Semi }; 
-    private static readonly TokenType[] FOLLOW_FunctionParametersTail = new TokenType[] { Comma, Closepar }; 
-    private static readonly TokenType[] FOLLOW_FuntionParameters = new TokenType[] { Closepar }; 
-    private static readonly TokenType[] FOLLOW_Idnest = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_IdnestRest = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_IdnestRestStat = new TokenType[] { Semi }; 
-    private static readonly TokenType[] FOLLOW_IdnestStat = new TokenType[] { Semi }; 
-    private static readonly TokenType[] FOLLOW_ImplDefinition = new TokenType[] { Struct, Impl, Func }; 
-    private static readonly TokenType[] FOLLOW_Indice = new TokenType[] { Opensqbr, Dot, Assign, Closepar, Mult, Div, And, Plus, Minus, Or, Comma, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_MemberDeclaration = new TokenType[] { Public, Private, Closecubr }; 
-    private static readonly TokenType[] FOLLOW_MultOperator = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
-    private static readonly TokenType[] FOLLOW_OptionalRelationalExpression = new TokenType[] { Comma, Closepar, Semi }; 
-    private static readonly TokenType[] FOLLOW_RecursiveArithmeticExpression = new TokenType[] { Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_RecursiveTerms = new TokenType[] { Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_RelationalExpression = new TokenType[] { Closepar }; 
-    private static readonly TokenType[] FOLLOW_RelationalOperator = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveArgumentParametersTail = new TokenType[] { Closepar }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveArraySizes = new TokenType[] { Comma, Closepar, Semi }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveFunctionDefinitions = new TokenType[] { Closecubr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveFunctionParametersTails = new TokenType[] { Closepar }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveIndices = new TokenType[] { Dot, Closepar, Mult, Div, And, Plus, Minus, Or, Comma, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveIndicesStat = new TokenType[] { Semi }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveStatements = new TokenType[] { Closecubr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveStructMemberDeclarations = new TokenType[] { Closecubr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveStructOptionalInheritances = new TokenType[] { Opencubr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveVariableDeclarationOrStatements = new TokenType[] { Closecubr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveVariableOrFunctionCall = new TokenType[] { Mult, Div, And, Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveVariableOrFunctionCallStat_Function = new TokenType[] { Semi }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveVariableOrFunctionCallStat_Var = new TokenType[] { Semi }; 
-    private static readonly TokenType[] FOLLOW_RepetitiveVariables = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_ArraySize2 = new TokenType[] { Opensqbr, Comma, Closepar, Semi }; 
+    private static readonly TokenType[] FOLLOW_AssignOp = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FOLLOW_Expr = new TokenType[] { Closepar, Semi, Comma }; 
+    private static readonly TokenType[] FOLLOW_Expr2 = new TokenType[] { Closepar, Semi, Comma }; 
+    private static readonly TokenType[] FOLLOW_Factor = new TokenType[] { Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_Factor2 = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_FParams = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_FParamsTail = new TokenType[] { Comma, Closepar }; 
+    private static readonly TokenType[] FOLLOW_FuncBody = new TokenType[] { Func, Closecubr, Struct, Impl, Eof }; 
+    private static readonly TokenType[] FOLLOW_FuncDecl = new TokenType[] { Public, Private, Closecubr }; 
+    private static readonly TokenType[] FOLLOW_FuncDef = new TokenType[] { Func, Closecubr, Struct, Impl, Eof }; 
+    private static readonly TokenType[] FOLLOW_FuncHead = new TokenType[] { Opencubr, Semi }; 
+    private static readonly TokenType[] FOLLOW_IdNest = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_IdNest2 = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_ImplDef = new TokenType[] { Struct, Impl, Func, Eof }; 
+    private static readonly TokenType[] FOLLOW_Indice = new TokenType[] { Opensqbr, Dot, Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr, Assign }; 
+    private static readonly TokenType[] FOLLOW_MemberDecl = new TokenType[] { Public, Private, Closecubr }; 
+    private static readonly TokenType[] FOLLOW_MultOp = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FOLLOW_Opt_structDecl2 = new TokenType[] { Opencubr }; 
+    private static readonly TokenType[] FOLLOW_Prog = new TokenType[] { Eof }; 
+    private static readonly TokenType[] FOLLOW_RelExpr = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_RelOp = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
+    private static readonly TokenType[] FOLLOW_Rept_aParams1 = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_Rept_fParams3 = new TokenType[] { Comma, Closepar }; 
+    private static readonly TokenType[] FOLLOW_Rept_fParams4 = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_Rept_fParamsTail4 = new TokenType[] { Comma, Closepar }; 
+    private static readonly TokenType[] FOLLOW_Rept_funcBody1 = new TokenType[] { Closecubr }; 
+    private static readonly TokenType[] FOLLOW_Rept_idnest1 = new TokenType[] { Dot, Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr, Assign }; 
+    private static readonly TokenType[] FOLLOW_Rept_implDef3 = new TokenType[] { Closecubr }; 
+    private static readonly TokenType[] FOLLOW_Rept_opt_structDecl22 = new TokenType[] { Opencubr }; 
+    private static readonly TokenType[] FOLLOW_Rept_prog0 = new TokenType[] { Eof }; 
+    private static readonly TokenType[] FOLLOW_Rept_statBlock1 = new TokenType[] { Closecubr }; 
+    private static readonly TokenType[] FOLLOW_Rept_structDecl4 = new TokenType[] { Closecubr }; 
+    private static readonly TokenType[] FOLLOW_Rept_varDecl4 = new TokenType[] { Semi }; 
+    private static readonly TokenType[] FOLLOW_Rept_variable = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_Rept_var_or_funcCall = new TokenType[] { Mult, Div, And, Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
     private static readonly TokenType[] FOLLOW_ReturnType = new TokenType[] { Opencubr, Semi }; 
+    private static readonly TokenType[] FOLLOW_Rightrec_arithExpr = new TokenType[] { Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_RightRecTerm = new TokenType[] { Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
     private static readonly TokenType[] FOLLOW_Sign = new TokenType[] { Id, Intnum, Floatnum, Openpar, Not, Plus, Minus }; 
     private static readonly TokenType[] FOLLOW_Start = new TokenType[] { Eof }; 
-    private static readonly TokenType[] FOLLOW_Statement = new TokenType[] { Id, If, While, TokenType.Read, TokenType.Write, Return, Closecubr, Let, Else, Semi }; 
-    private static readonly TokenType[] FOLLOW_StatementAlt = new TokenType[] { Semi }; 
-    private static readonly TokenType[] FOLLOW_StatementBlock = new TokenType[] { Else, Semi }; 
-    private static readonly TokenType[] FOLLOW_StructDeclaration = new TokenType[] { Struct, Impl, Func }; 
-    private static readonly TokenType[] FOLLOW_StructOptionalInheritance = new TokenType[] { Opencubr }; 
-    private static readonly TokenType[] FOLLOW_StructOrImplOrFunction = new TokenType[] { Struct, Impl, Func }; 
-    private static readonly TokenType[] FOLLOW_Term = new TokenType[] { Plus, Minus, Or, Comma, Closepar, Semi, Eq, Noteq, Lt, Gt, Leq, Geq, Closesqbr }; 
-    private static readonly TokenType[] FOLLOW_Type = new TokenType[] { Opensqbr, Comma, Closepar, Semi, Opencubr }; 
+    private static readonly TokenType[] FOLLOW_StatBlock = new TokenType[] { Else, Semi }; 
+    private static readonly TokenType[] FOLLOW_Statement = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return, Closecubr, Else, Semi }; 
+    private static readonly TokenType[] FOLLOW_Statement_Id_nest = new TokenType[] { Semi }; 
+    private static readonly TokenType[] FOLLOW_Statement_Id_nest2 = new TokenType[] { Semi }; 
+    private static readonly TokenType[] FOLLOW_Statement_Id_nest3 = new TokenType[] { Semi }; 
+    private static readonly TokenType[] FOLLOW_StructDecl = new TokenType[] { Struct, Impl, Func, Eof }; 
+    private static readonly TokenType[] FOLLOW_StructOrImplOrfunc = new TokenType[] { Struct, Impl, Func, Eof }; 
+    private static readonly TokenType[] FOLLOW_Term = new TokenType[] { Plus, Minus, Or, Eq, Noteq, Lt, Gt, Leq, Geq, Closepar, Semi, Comma, Closesqbr }; 
+    private static readonly TokenType[] FOLLOW_Type = new TokenType[] { Opencubr, Semi, Opensqbr, Comma, Closepar }; 
+    private static readonly TokenType[] FOLLOW_VarDecl = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return, Closecubr, Public, Private }; 
+    private static readonly TokenType[] FOLLOW_VarDeclOrStat = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return, Closecubr }; 
     private static readonly TokenType[] FOLLOW_Variable = new TokenType[] { Closepar }; 
-    private static readonly TokenType[] FOLLOW_VariableDeclaration = new TokenType[] { Public, Private, Closecubr, Let, Id, If, While, TokenType.Read, TokenType.Write, Return }; 
-    private static readonly TokenType[] FOLLOW_VariableDeclarationOrStatement = new TokenType[] { Let, Id, If, While, TokenType.Read, TokenType.Write, Return, Closecubr }; 
-    private static readonly TokenType[] FOLLOW_VariableIdnest = new TokenType[] { Closepar, Dot }; 
-    private static readonly TokenType[] FOLLOW_VariableIdnestRest = new TokenType[] { Closepar, Dot }; 
-    private static readonly TokenType[] FOLLOW_VariableRest = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_Variable2 = new TokenType[] { Closepar }; 
+    private static readonly TokenType[] FOLLOW_Var_idNest = new TokenType[] { Closepar, Dot }; 
+    private static readonly TokenType[] FOLLOW_Var_idNest2 = new TokenType[] { Closepar, Dot }; 
     private static readonly TokenType[] FOLLOW_Visibility = new TokenType[] { Func, Let };
 
     #endregion Follow Sets
@@ -336,26 +338,26 @@ public class Parser : IParser
     
 
     /// <summary>
-    /// AddOperator production rule
+    /// AddOp production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool AddOperator() 
+    private bool AddOp() 
     {
-        if(!SkipErrors(FIRST_AddOperator, FOLLOW_AddOperator))
+        if(!SkipErrors(FIRST_AddOp, FOLLOW_AddOp))
             return false;
         if (Plus == LookAhead.Type)
         {
-            OutputDerivation("<addOperator> -> '+'");
+            OutputDerivation("<addOp> -> '+'");
             return Match(Plus);
         }
         else if (Minus == LookAhead.Type)
         {
-            OutputDerivation("<addOperator> -> '-'");
+            OutputDerivation("<addOp> -> '-'");
             return Match(Minus);
         }
         else if (Or == LookAhead.Type)
         {
-            OutputDerivation("<addOperator> -> 'or'");
+            OutputDerivation("<addOp> -> 'or'");
             return Match(Or);
         }
         else
@@ -363,21 +365,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// ArgumentParameters production rule
+    /// AParams production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool ArgumentParameters() 
+    private bool AParams() 
     {
-        if(!SkipErrors(FIRST_ArgumentParameters, FOLLOW_ArgumentParameters))
+        if(!SkipErrors(FIRST_AParams, FOLLOW_AParams))
             return false;
-        if (FIRST_Expression.Contains(LookAhead.Type))
+        if (FIRST_Expr.Contains(LookAhead.Type))
         {
-            OutputDerivation("<argumentParameters> -> <expression> <repetitiveArgumentParametersTail>");
-            return Expression() && RepetitiveArgumentParametersTail();
+            OutputDerivation("<aParams> -> <expr> <rept-aParams1>");
+            return Expr() && Rept_aParams1();
         }
-        else if (FOLLOW_ArgumentParameters.Contains(LookAhead.Type))
+        else if (FOLLOW_AParams.Contains(LookAhead.Type))
         {
-            OutputDerivation("<argumentParameters> -> EPSILON");
+            OutputDerivation("<aParams> -> EPSILON");
             return true;
         }
         else
@@ -385,34 +387,34 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// ArgumentParametersTail production rule
+    /// AParamsTail production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool ArgumentParametersTail() 
+    private bool AParamsTail() 
     {
-        if(!SkipErrors(FIRST_ArgumentParametersTail, FOLLOW_ArgumentParametersTail))
+        if(!SkipErrors(FIRST_AParamsTail, FOLLOW_AParamsTail))
             return false;
         if (Comma == LookAhead.Type)
         {
-            OutputDerivation("<argumentParametersTail> -> ',' <expression>");
-            return Match(Comma) && Expression();
+            OutputDerivation("<aParamsTail> -> ',' <expr>");
+            return Match(Comma) && Expr();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// ArithmeticExpression production rule
+    /// ArithExpr production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool ArithmeticExpression() 
+    private bool ArithExpr() 
     {
-        if(!SkipErrors(FIRST_ArithmeticExpression, FOLLOW_ArithmeticExpression))
+        if(!SkipErrors(FIRST_ArithExpr, FOLLOW_ArithExpr))
             return false;
         if (FIRST_Term.Contains(LookAhead.Type))
         {
-            OutputDerivation("<arithmeticExpression> -> <term> <recursiveArithmeticExpression>");
-            return Term() && RecursiveArithmeticExpression();
+            OutputDerivation("<arithExpr> -> <term> <rightrec-arithExpr>");
+            return Term() && Rightrec_arithExpr();
         }
         else
             return false;
@@ -428,29 +430,29 @@ public class Parser : IParser
             return false;
         if (Opensqbr == LookAhead.Type)
         {
-            OutputDerivation("<arraySize> -> '[' <arraySizeContent>");
-            return Match(Opensqbr) && ArraySizeContent();
+            OutputDerivation("<arraySize> -> '[' <arraySize2>");
+            return Match(Opensqbr) && ArraySize2();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// ArraySizeContent production rule
+    /// ArraySize2 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool ArraySizeContent() 
+    private bool ArraySize2() 
     {
-        if(!SkipErrors(FIRST_ArraySizeContent, FOLLOW_ArraySizeContent))
+        if(!SkipErrors(FIRST_ArraySize2, FOLLOW_ArraySize2))
             return false;
         if (Intnum == LookAhead.Type)
         {
-            OutputDerivation("<arraySizeContent> -> 'intNum' ']'");
+            OutputDerivation("<arraySize2> -> 'intlit' ']'");
             return Match(Intnum) && Match(Closesqbr);
         }
         else if (Closesqbr == LookAhead.Type)
         {
-            OutputDerivation("<arraySizeContent> -> ']'");
+            OutputDerivation("<arraySize2> -> ']'");
             return Match(Closesqbr);
         }
         else
@@ -458,16 +460,16 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// AssignmentOperator production rule
+    /// AssignOp production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool AssignmentOperator() 
+    private bool AssignOp() 
     {
-        if(!SkipErrors(FIRST_AssignmentOperator, FOLLOW_AssignmentOperator))
+        if(!SkipErrors(FIRST_AssignOp, FOLLOW_AssignOp))
             return false;
         if (Assign == LookAhead.Type)
         {
-            OutputDerivation("<assignmentOperator> -> '='");
+            OutputDerivation("<assignOp> -> '='");
             return Match(Assign);
         }
         else
@@ -475,17 +477,39 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// Expression production rule
+    /// Expr production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool Expression() 
+    private bool Expr() 
     {
-        if(!SkipErrors(FIRST_Expression, FOLLOW_Expression))
+        if(!SkipErrors(FIRST_Expr, FOLLOW_Expr))
             return false;
-        if (FIRST_ArithmeticExpression.Contains(LookAhead.Type))
+        if (FIRST_ArithExpr.Contains(LookAhead.Type))
         {
-            OutputDerivation("<expression> -> <arithmeticExpression> <optionalRelationalExpression>");
-            return ArithmeticExpression() && OptionalRelationalExpression();
+            OutputDerivation("<expr> -> <arithExpr> <expr2>");
+            return ArithExpr() && Expr2();
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// Expr2 production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool Expr2() 
+    {
+        if(!SkipErrors(FIRST_Expr2, FOLLOW_Expr2))
+            return false;
+        if (FIRST_RelOp.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<expr2> -> <relOp> <arithExpr>");
+            return RelOp() && ArithExpr();
+        }
+        else if (FOLLOW_Expr2.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<expr2> -> EPSILON");
+            return true;
         }
         else
             return false;
@@ -501,23 +525,23 @@ public class Parser : IParser
             return false;
         if (Id == LookAhead.Type)
         {
-            OutputDerivation("<factor> -> 'id' <factorAlt> <repetitiveVariableOrFunctionCall>");
-            return Match(Id) && FactorAlt() && RepetitiveVariableOrFunctionCall();
+            OutputDerivation("<factor> -> 'id' <factor2> <rept-var-or-funcCall>");
+            return Match(Id) && Factor2() && Rept_var_or_funcCall();
         }
         else if (Intnum == LookAhead.Type)
         {
-            OutputDerivation("<factor> -> 'intLit'");
+            OutputDerivation("<factor> -> 'intlit'");
             return Match(Intnum);
         }
         else if (Floatnum == LookAhead.Type)
         {
-            OutputDerivation("<factor> -> 'floatLit'");
+            OutputDerivation("<factor> -> 'floatlit'");
             return Match(Floatnum);
         }
         else if (Openpar == LookAhead.Type)
         {
-            OutputDerivation("<factor> -> '(' <arithmeticExpression> ')'");
-            return Match(Openpar) && ArithmeticExpression() && Match(Closepar);
+            OutputDerivation("<factor> -> '(' <arithExpr> ')'");
+            return Match(Openpar) && ArithExpr() && Match(Closepar);
         }
         else if (Not == LookAhead.Type)
         {
@@ -534,133 +558,43 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// FactorAlt production rule
+    /// Factor2 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FactorAlt() 
+    private bool Factor2() 
     {
-        if(!SkipErrors(FIRST_FactorAlt, FOLLOW_FactorAlt))
+        if(!SkipErrors(FIRST_Factor2, FOLLOW_Factor2))
             return false;
         if (Openpar == LookAhead.Type)
         {
-            OutputDerivation("<factorAlt> -> '(' <argumentParameters> ')'");
-            return Match(Openpar) && ArgumentParameters() && Match(Closepar);
+            OutputDerivation("<factor2> -> '(' <aParams> ')'");
+            return Match(Openpar) && AParams() && Match(Closepar);
         }
-        else if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
+        else if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
-            OutputDerivation("<factorAlt> -> <repetitiveIndices>");
-            return RepetitiveIndices();
-        }
-        else if (FOLLOW_FactorAlt.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<factorAlt> -> EPSILON");
-            return true;
+            OutputDerivation("<factor2> -> <rept-idnest1>");
+            return Rept_idnest1();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// FunctionBody production rule
+    /// FParams production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FunctionBody() 
+    private bool FParams() 
     {
-        if(!SkipErrors(FIRST_FunctionBody, FOLLOW_FunctionBody))
-            return false;
-        if (Opencubr == LookAhead.Type)
-        {
-            OutputDerivation("<functionBody> -> '{' <repetitiveVariableDeclarationOrStatements> '}'");
-            return Match(Opencubr) && RepetitiveVariableDeclarationOrStatements() && Match(Closecubr);
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// FunctionDeclaration production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FunctionDeclaration() 
-    {
-        if(!SkipErrors(FIRST_FunctionDeclaration, FOLLOW_FunctionDeclaration))
-            return false;
-        if (FIRST_FunctionHeader.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<functionDeclaration> -> <functionHeader> ';'");
-            return FunctionHeader() && Match(Semi);
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// FunctionDefinition production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FunctionDefinition() 
-    {
-        if(!SkipErrors(FIRST_FunctionDefinition, FOLLOW_FunctionDefinition))
-            return false;
-        if (FIRST_FunctionHeader.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<functionDefinition> -> <functionHeader> <functionBody>");
-            return FunctionHeader() && FunctionBody();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// FunctionHeader production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FunctionHeader() 
-    {
-        if(!SkipErrors(FIRST_FunctionHeader, FOLLOW_FunctionHeader))
-            return false;
-        if (Func == LookAhead.Type)
-        {
-            OutputDerivation("<functionHeader> -> 'func' 'id' '(' <funtionParameters> ')' '->' <returnType>");
-            return Match(Func) && Match(Id) && Match(Openpar) && FuntionParameters() && Match(Closepar) && Match(Arrow) && ReturnType();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// FunctionParametersTail production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FunctionParametersTail() 
-    {
-        if(!SkipErrors(FIRST_FunctionParametersTail, FOLLOW_FunctionParametersTail))
-            return false;
-        if (Comma == LookAhead.Type)
-        {
-            OutputDerivation("<functionParametersTail> -> ',' 'id' ':' <type> <repetitiveArraySizes>");
-            return Match(Comma) && Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// FuntionParameters production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool FuntionParameters() 
-    {
-        if(!SkipErrors(FIRST_FuntionParameters, FOLLOW_FuntionParameters))
+        if(!SkipErrors(FIRST_FParams, FOLLOW_FParams))
             return false;
         if (Id == LookAhead.Type)
         {
-            OutputDerivation("<funtionParameters> -> 'id' ':' <type> <repetitiveArraySizes> <repetitiveFunctionParametersTails>");
-            return Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes() && RepetitiveFunctionParametersTails();
+            OutputDerivation("<fParams> -> 'id' ':' <type> <rept-fParams3> <rept-fParams4>");
+            return Match(Id) && Match(Colon) && Type() && Rept_fParams3() && Rept_fParams4();
         }
-        else if (FOLLOW_FuntionParameters.Contains(LookAhead.Type))
+        else if (FOLLOW_FParams.Contains(LookAhead.Type))
         {
-            OutputDerivation("<funtionParameters> -> EPSILON");
+            OutputDerivation("<fParams> -> EPSILON");
             return true;
         }
         else
@@ -668,100 +602,141 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// Idnest production rule
+    /// FParamsTail production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool Idnest() 
+    private bool FParamsTail() 
     {
-        if(!SkipErrors(FIRST_Idnest, FOLLOW_Idnest))
+        if(!SkipErrors(FIRST_FParamsTail, FOLLOW_FParamsTail))
+            return false;
+        if (Comma == LookAhead.Type)
+        {
+            OutputDerivation("<fParamsTail> -> ',' 'id' ':' <type> <rept-fParamsTail4>");
+            return Match(Comma) && Match(Id) && Match(Colon) && Type() && Rept_fParamsTail4();
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// FuncBody production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool FuncBody() 
+    {
+        if(!SkipErrors(FIRST_FuncBody, FOLLOW_FuncBody))
+            return false;
+        if (Opencubr == LookAhead.Type)
+        {
+            OutputDerivation("<funcBody> -> '{' <rept-funcBody1> '}'");
+            return Match(Opencubr) && Rept_funcBody1() && Match(Closecubr);
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// FuncDecl production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool FuncDecl() 
+    {
+        if(!SkipErrors(FIRST_FuncDecl, FOLLOW_FuncDecl))
+            return false;
+        if (FIRST_FuncHead.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<funcDecl> -> <funcHead> ';'");
+            return FuncHead() && Match(Semi);
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// FuncDef production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool FuncDef() 
+    {
+        if(!SkipErrors(FIRST_FuncDef, FOLLOW_FuncDef))
+            return false;
+        if (FIRST_FuncHead.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<funcDef> -> <funcHead> <funcBody>");
+            return FuncHead() && FuncBody();
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// FuncHead production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool FuncHead() 
+    {
+        if(!SkipErrors(FIRST_FuncHead, FOLLOW_FuncHead))
+            return false;
+        if (Func == LookAhead.Type)
+        {
+            OutputDerivation("<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>");
+            return Match(Func) && Match(Id) && Match(Openpar) && FParams() && Match(Closepar) && Match(Arrow) && ReturnType();
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// IdNest production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool IdNest() 
+    {
+        if(!SkipErrors(FIRST_IdNest, FOLLOW_IdNest))
             return false;
         if (Dot == LookAhead.Type)
         {
-            OutputDerivation("<idnest> -> '.' 'id' <idnestRest>");
-            return Match(Dot) && Match(Id) && IdnestRest();
+            OutputDerivation("<idNest> -> '.' 'id' <idNest2>");
+            return Match(Dot) && Match(Id) && IdNest2();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// IdnestRest production rule
+    /// IdNest2 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool IdnestRest() 
+    private bool IdNest2() 
     {
-        if(!SkipErrors(FIRST_IdnestRest, FOLLOW_IdnestRest))
+        if(!SkipErrors(FIRST_IdNest2, FOLLOW_IdNest2))
             return false;
         if (Openpar == LookAhead.Type)
         {
-            OutputDerivation("<idnestRest> -> '(' <argumentParameters> ')'");
-            return Match(Openpar) && ArgumentParameters() && Match(Closepar);
+            OutputDerivation("<idNest2> -> '(' <aParams> ')'");
+            return Match(Openpar) && AParams() && Match(Closepar);
         }
-        else if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
+        else if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
-            OutputDerivation("<idnestRest> -> <repetitiveIndices>");
-            return RepetitiveIndices();
-        }
-        else if (FOLLOW_IdnestRest.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<idnestRest> -> EPSILON");
-            return true;
+            OutputDerivation("<idNest2> -> <rept-idnest1>");
+            return Rept_idnest1();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// IdnestRestStat production rule
+    /// ImplDef production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool IdnestRestStat() 
+    private bool ImplDef() 
     {
-        if(!SkipErrors(FIRST_IdnestRestStat, FOLLOW_IdnestRestStat))
-            return false;
-        if (Openpar == LookAhead.Type)
-        {
-            OutputDerivation("<idnestRestStat> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>");
-            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && RepetitiveVariableOrFunctionCallStat_Function();
-        }
-        else if (FIRST_RepetitiveIndicesStat.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<idnestRestStat> -> <repetitiveIndicesStat>");
-            return RepetitiveIndicesStat();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// IdnestStat production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool IdnestStat() 
-    {
-        if(!SkipErrors(FIRST_IdnestStat, FOLLOW_IdnestStat))
-            return false;
-        if (Dot == LookAhead.Type)
-        {
-            OutputDerivation("<idnestStat> -> '.' 'id' <idnestRestStat>");
-            return Match(Dot) && Match(Id) && IdnestRestStat();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// ImplDefinition production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool ImplDefinition() 
-    {
-        if(!SkipErrors(FIRST_ImplDefinition, FOLLOW_ImplDefinition))
+        if(!SkipErrors(FIRST_ImplDef, FOLLOW_ImplDef))
             return false;
         if (Impl == LookAhead.Type)
         {
-            OutputDerivation("<implDefinition> -> 'impl' 'id' '{' <repetitiveFunctionDefinitions> '}'");
-            return Match(Impl) && Match(Id) && Match(Opencubr) && RepetitiveFunctionDefinitions() && Match(Closecubr);
+            OutputDerivation("<implDef> -> 'impl' 'id' '{' <rept-implDef3> '}'");
+            return Match(Impl) && Match(Id) && Match(Opencubr) && Rept_implDef3() && Match(Closecubr);
         }
         else
             return false;
@@ -777,56 +752,56 @@ public class Parser : IParser
             return false;
         if (Opensqbr == LookAhead.Type)
         {
-            OutputDerivation("<indice> -> '[' <arithmeticExpression> ']'");
-            return Match(Opensqbr) && ArithmeticExpression() && Match(Closesqbr);
+            OutputDerivation("<indice> -> '[' <arithExpr> ']'");
+            return Match(Opensqbr) && ArithExpr() && Match(Closesqbr);
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// MemberDeclaration production rule
+    /// MemberDecl production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool MemberDeclaration() 
+    private bool MemberDecl() 
     {
-        if(!SkipErrors(FIRST_MemberDeclaration, FOLLOW_MemberDeclaration))
+        if(!SkipErrors(FIRST_MemberDecl, FOLLOW_MemberDecl))
             return false;
-        if (FIRST_FunctionDeclaration.Contains(LookAhead.Type))
+        if (FIRST_FuncDecl.Contains(LookAhead.Type))
         {
-            OutputDerivation("<memberDeclaration> -> <functionDeclaration>");
-            return FunctionDeclaration();
+            OutputDerivation("<memberDecl> -> <funcDecl>");
+            return FuncDecl();
         }
-        else if (FIRST_VariableDeclaration.Contains(LookAhead.Type))
+        else if (FIRST_VarDecl.Contains(LookAhead.Type))
         {
-            OutputDerivation("<memberDeclaration> -> <variableDeclaration>");
-            return VariableDeclaration();
+            OutputDerivation("<memberDecl> -> <varDecl>");
+            return VarDecl();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// MultOperator production rule
+    /// MultOp production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool MultOperator() 
+    private bool MultOp() 
     {
-        if(!SkipErrors(FIRST_MultOperator, FOLLOW_MultOperator))
+        if(!SkipErrors(FIRST_MultOp, FOLLOW_MultOp))
             return false;
         if (Mult == LookAhead.Type)
         {
-            OutputDerivation("<multOperator> -> '*'");
+            OutputDerivation("<multOp> -> '*'");
             return Match(Mult);
         }
         else if (Div == LookAhead.Type)
         {
-            OutputDerivation("<multOperator> -> '/'");
+            OutputDerivation("<multOp> -> '/'");
             return Match(Div);
         }
         else if (And == LookAhead.Type)
         {
-            OutputDerivation("<multOperator> -> 'and'");
+            OutputDerivation("<multOp> -> 'and'");
             return Match(And);
         }
         else
@@ -834,21 +809,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// OptionalRelationalExpression production rule
+    /// Opt_structDecl2 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool OptionalRelationalExpression() 
+    private bool Opt_structDecl2() 
     {
-        if(!SkipErrors(FIRST_OptionalRelationalExpression, FOLLOW_OptionalRelationalExpression))
+        if(!SkipErrors(FIRST_Opt_structDecl2, FOLLOW_Opt_structDecl2))
             return false;
-        if (FIRST_RelationalOperator.Contains(LookAhead.Type))
+        if (Inherits == LookAhead.Type)
         {
-            OutputDerivation("<optionalRelationalExpression> -> <relationalOperator> <arithmeticExpression>");
-            return RelationalOperator() && ArithmeticExpression();
+            OutputDerivation("<opt-structDecl2> -> 'inherits' 'id' <rept-opt-structDecl22>");
+            return Match(Inherits) && Match(Id) && Rept_opt_structDecl22();
         }
-        else if (FOLLOW_OptionalRelationalExpression.Contains(LookAhead.Type))
+        else if (FOLLOW_Opt_structDecl2.Contains(LookAhead.Type))
         {
-            OutputDerivation("<optionalRelationalExpression> -> EPSILON");
+            OutputDerivation("<opt-structDecl2> -> EPSILON");
             return true;
         }
         else
@@ -856,102 +831,75 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RecursiveArithmeticExpression production rule
+    /// Prog production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RecursiveArithmeticExpression() 
+    private bool Prog() 
     {
-        if(!SkipErrors(FIRST_RecursiveArithmeticExpression, FOLLOW_RecursiveArithmeticExpression))
+        if(!SkipErrors(FIRST_Prog, FOLLOW_Prog))
             return false;
-        if (FIRST_AddOperator.Contains(LookAhead.Type))
+        if (FIRST_Rept_prog0.Contains(LookAhead.Type) || FOLLOW_Rept_prog0.Contains(LookAhead.Type))
         {
-            OutputDerivation("<recursiveArithmeticExpression> -> <addOperator> <term> <recursiveArithmeticExpression>");
-            return AddOperator() && Term() && RecursiveArithmeticExpression();
-        }
-        else if (FOLLOW_RecursiveArithmeticExpression.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<recursiveArithmeticExpression> -> EPSILON");
-            return true;
+            OutputDerivation("<prog> -> <rept-prog0>");
+            return Rept_prog0();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// RecursiveTerms production rule
+    /// RelExpr production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RecursiveTerms() 
+    private bool RelExpr() 
     {
-        if(!SkipErrors(FIRST_RecursiveTerms, FOLLOW_RecursiveTerms))
+        if(!SkipErrors(FIRST_RelExpr, FOLLOW_RelExpr))
             return false;
-        if (FIRST_MultOperator.Contains(LookAhead.Type))
+        if (FIRST_ArithExpr.Contains(LookAhead.Type))
         {
-            OutputDerivation("<recursiveTerms> -> <multOperator> <factor> <recursiveTerms>");
-            return MultOperator() && Factor() && RecursiveTerms();
-        }
-        else if (FOLLOW_RecursiveTerms.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<recursiveTerms> -> EPSILON");
-            return true;
+            OutputDerivation("<relExpr> -> <arithExpr> <relOp> <arithExpr>");
+            return ArithExpr() && RelOp() && ArithExpr();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// RelationalExpression production rule
+    /// RelOp production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RelationalExpression() 
+    private bool RelOp() 
     {
-        if(!SkipErrors(FIRST_RelationalExpression, FOLLOW_RelationalExpression))
-            return false;
-        if (FIRST_ArithmeticExpression.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<relationalExpression> -> <arithmeticExpression> <relationalOperator> <arithmeticExpression>");
-            return ArithmeticExpression() && RelationalOperator() && ArithmeticExpression();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// RelationalOperator production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RelationalOperator() 
-    {
-        if(!SkipErrors(FIRST_RelationalOperator, FOLLOW_RelationalOperator))
+        if(!SkipErrors(FIRST_RelOp, FOLLOW_RelOp))
             return false;
         if (Eq == LookAhead.Type)
         {
-            OutputDerivation("<relationalOperator> -> 'eq'");
+            OutputDerivation("<relOp> -> 'eq'");
             return Match(Eq);
         }
         else if (Noteq == LookAhead.Type)
         {
-            OutputDerivation("<relationalOperator> -> 'neq'");
+            OutputDerivation("<relOp> -> 'neq'");
             return Match(Noteq);
         }
         else if (Lt == LookAhead.Type)
         {
-            OutputDerivation("<relationalOperator> -> 'lt'");
+            OutputDerivation("<relOp> -> 'lt'");
             return Match(Lt);
         }
         else if (Gt == LookAhead.Type)
         {
-            OutputDerivation("<relationalOperator> -> 'gt'");
+            OutputDerivation("<relOp> -> 'gt'");
             return Match(Gt);
         }
         else if (Leq == LookAhead.Type)
         {
-            OutputDerivation("<relationalOperator> -> 'leq'");
+            OutputDerivation("<relOp> -> 'leq'");
             return Match(Leq);
         }
         else if (Geq == LookAhead.Type)
         {
-            OutputDerivation("<relationalOperator> -> 'geq'");
+            OutputDerivation("<relOp> -> 'geq'");
             return Match(Geq);
         }
         else
@@ -959,21 +907,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveArgumentParametersTail production rule
+    /// Rept_aParams1 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveArgumentParametersTail() 
+    private bool Rept_aParams1() 
     {
-        if(!SkipErrors(FIRST_RepetitiveArgumentParametersTail, FOLLOW_RepetitiveArgumentParametersTail))
+        if(!SkipErrors(FIRST_Rept_aParams1, FOLLOW_Rept_aParams1))
             return false;
-        if (FIRST_ArgumentParametersTail.Contains(LookAhead.Type))
+        if (FIRST_AParamsTail.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveArgumentParametersTail> -> <argumentParametersTail> <repetitiveArgumentParametersTail>");
-            return ArgumentParametersTail() && RepetitiveArgumentParametersTail();
+            OutputDerivation("<rept-aParams1> -> <aParamsTail> <rept-aParams1>");
+            return AParamsTail() && Rept_aParams1();
         }
-        else if (FOLLOW_RepetitiveArgumentParametersTail.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_aParams1.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveArgumentParametersTail> -> EPSILON");
+            OutputDerivation("<rept-aParams1> -> EPSILON");
             return true;
         }
         else
@@ -981,21 +929,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveArraySizes production rule
+    /// Rept_fParams3 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveArraySizes() 
+    private bool Rept_fParams3() 
     {
-        if(!SkipErrors(FIRST_RepetitiveArraySizes, FOLLOW_RepetitiveArraySizes))
+        if(!SkipErrors(FIRST_Rept_fParams3, FOLLOW_Rept_fParams3))
             return false;
         if (FIRST_ArraySize.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveArraySizes> -> <arraySize> <repetitiveArraySizes>");
-            return ArraySize() && RepetitiveArraySizes();
+            OutputDerivation("<rept-fParams3> -> <arraySize> <rept-fParams3>");
+            return ArraySize() && Rept_fParams3();
         }
-        else if (FOLLOW_RepetitiveArraySizes.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_fParams3.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveArraySizes> -> EPSILON");
+            OutputDerivation("<rept-fParams3> -> EPSILON");
             return true;
         }
         else
@@ -1003,21 +951,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveFunctionDefinitions production rule
+    /// Rept_fParams4 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveFunctionDefinitions() 
+    private bool Rept_fParams4() 
     {
-        if(!SkipErrors(FIRST_RepetitiveFunctionDefinitions, FOLLOW_RepetitiveFunctionDefinitions))
+        if(!SkipErrors(FIRST_Rept_fParams4, FOLLOW_Rept_fParams4))
             return false;
-        if (FIRST_FunctionDefinition.Contains(LookAhead.Type))
+        if (FIRST_FParamsTail.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveFunctionDefinitions> -> <functionDefinition> <repetitiveFunctionDefinitions>");
-            return FunctionDefinition() && RepetitiveFunctionDefinitions();
+            OutputDerivation("<rept-fParams4> -> <fParamsTail> <rept-fParams4>");
+            return FParamsTail() && Rept_fParams4();
         }
-        else if (FOLLOW_RepetitiveFunctionDefinitions.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_fParams4.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveFunctionDefinitions> -> EPSILON");
+            OutputDerivation("<rept-fParams4> -> EPSILON");
             return true;
         }
         else
@@ -1025,21 +973,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveFunctionParametersTails production rule
+    /// Rept_fParamsTail4 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveFunctionParametersTails() 
+    private bool Rept_fParamsTail4() 
     {
-        if(!SkipErrors(FIRST_RepetitiveFunctionParametersTails, FOLLOW_RepetitiveFunctionParametersTails))
+        if(!SkipErrors(FIRST_Rept_fParamsTail4, FOLLOW_Rept_fParamsTail4))
             return false;
-        if (FIRST_FunctionParametersTail.Contains(LookAhead.Type))
+        if (FIRST_ArraySize.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveFunctionParametersTails> -> <functionParametersTail> <repetitiveFunctionParametersTails>");
-            return FunctionParametersTail() && RepetitiveFunctionParametersTails();
+            OutputDerivation("<rept-fParamsTail4> -> <arraySize> <rept-fParamsTail4>");
+            return ArraySize() && Rept_fParamsTail4();
         }
-        else if (FOLLOW_RepetitiveFunctionParametersTails.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_fParamsTail4.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveFunctionParametersTails> -> EPSILON");
+            OutputDerivation("<rept-fParamsTail4> -> EPSILON");
             return true;
         }
         else
@@ -1047,21 +995,43 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveIndices production rule
+    /// Rept_funcBody1 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveIndices() 
+    private bool Rept_funcBody1() 
     {
-        if(!SkipErrors(FIRST_RepetitiveIndices, FOLLOW_RepetitiveIndices))
+        if(!SkipErrors(FIRST_Rept_funcBody1, FOLLOW_Rept_funcBody1))
+            return false;
+        if (FIRST_VarDeclOrStat.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>");
+            return VarDeclOrStat() && Rept_funcBody1();
+        }
+        else if (FOLLOW_Rept_funcBody1.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rept-funcBody1> -> EPSILON");
+            return true;
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// Rept_idnest1 production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool Rept_idnest1() 
+    {
+        if(!SkipErrors(FIRST_Rept_idnest1, FOLLOW_Rept_idnest1))
             return false;
         if (FIRST_Indice.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveIndices> -> <indice> <repetitiveIndices>");
-            return Indice() && RepetitiveIndices();
+            OutputDerivation("<rept-idnest1> -> <indice> <rept-idnest1>");
+            return Indice() && Rept_idnest1();
         }
-        else if (FOLLOW_RepetitiveIndices.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveIndices> -> EPSILON");
+            OutputDerivation("<rept-idnest1> -> EPSILON");
             return true;
         }
         else
@@ -1069,43 +1039,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveIndicesStat production rule
+    /// Rept_implDef3 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveIndicesStat() 
+    private bool Rept_implDef3() 
     {
-        if(!SkipErrors(FIRST_RepetitiveIndicesStat, FOLLOW_RepetitiveIndicesStat))
+        if(!SkipErrors(FIRST_Rept_implDef3, FOLLOW_Rept_implDef3))
             return false;
-        if (FIRST_Indice.Contains(LookAhead.Type))
+        if (FIRST_FuncDef.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveIndicesStat> -> <indice> <repetitiveIndicesStat>");
-            return Indice() && RepetitiveIndicesStat();
+            OutputDerivation("<rept-implDef3> -> <funcDef> <rept-implDef3>");
+            return FuncDef() && Rept_implDef3();
         }
-        else if (FIRST_RepetitiveVariableOrFunctionCallStat_Var.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_implDef3.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveIndicesStat> -> <repetitiveVariableOrFunctionCallStat_Var>");
-            return RepetitiveVariableOrFunctionCallStat_Var();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// RepetitiveStatements production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveStatements() 
-    {
-        if(!SkipErrors(FIRST_RepetitiveStatements, FOLLOW_RepetitiveStatements))
-            return false;
-        if (FIRST_Statement.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<repetitiveStatements> -> <statement> <repetitiveStatements>");
-            return Statement() && RepetitiveStatements();
-        }
-        else if (FOLLOW_RepetitiveStatements.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<repetitiveStatements> -> EPSILON");
+            OutputDerivation("<rept-implDef3> -> EPSILON");
             return true;
         }
         else
@@ -1113,43 +1061,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveStructMemberDeclarations production rule
+    /// Rept_opt_structDecl22 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveStructMemberDeclarations() 
+    private bool Rept_opt_structDecl22() 
     {
-        if(!SkipErrors(FIRST_RepetitiveStructMemberDeclarations, FOLLOW_RepetitiveStructMemberDeclarations))
-            return false;
-        if (FIRST_Visibility.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<repetitiveStructMemberDeclarations> -> <visibility> <memberDeclaration> <repetitiveStructMemberDeclarations>");
-            return Visibility() && MemberDeclaration() && RepetitiveStructMemberDeclarations();
-        }
-        else if (FOLLOW_RepetitiveStructMemberDeclarations.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<repetitiveStructMemberDeclarations> -> EPSILON");
-            return true;
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// RepetitiveStructOptionalInheritances production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveStructOptionalInheritances() 
-    {
-        if(!SkipErrors(FIRST_RepetitiveStructOptionalInheritances, FOLLOW_RepetitiveStructOptionalInheritances))
+        if(!SkipErrors(FIRST_Rept_opt_structDecl22, FOLLOW_Rept_opt_structDecl22))
             return false;
         if (Comma == LookAhead.Type)
         {
-            OutputDerivation("<repetitiveStructOptionalInheritances> -> ',' 'id' <repetitiveStructOptionalInheritances>");
-            return Match(Comma) && Match(Id) && RepetitiveStructOptionalInheritances();
+            OutputDerivation("<rept-opt-structDecl22> -> ',' 'id' <rept-opt-structDecl22>");
+            return Match(Comma) && Match(Id) && Rept_opt_structDecl22();
         }
-        else if (FOLLOW_RepetitiveStructOptionalInheritances.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_opt_structDecl22.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveStructOptionalInheritances> -> EPSILON");
+            OutputDerivation("<rept-opt-structDecl22> -> EPSILON");
             return true;
         }
         else
@@ -1157,21 +1083,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveVariableDeclarationOrStatements production rule
+    /// Rept_prog0 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveVariableDeclarationOrStatements() 
+    private bool Rept_prog0() 
     {
-        if(!SkipErrors(FIRST_RepetitiveVariableDeclarationOrStatements, FOLLOW_RepetitiveVariableDeclarationOrStatements))
+        if(!SkipErrors(FIRST_Rept_prog0, FOLLOW_Rept_prog0))
             return false;
-        if (FIRST_VariableDeclarationOrStatement.Contains(LookAhead.Type))
+        if (FIRST_StructOrImplOrfunc.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableDeclarationOrStatements> -> <variableDeclarationOrStatement> <repetitiveVariableDeclarationOrStatements>");
-            return VariableDeclarationOrStatement() && RepetitiveVariableDeclarationOrStatements();
+            OutputDerivation("<rept-prog0> -> <structOrImplOrfunc> <rept-prog0>");
+            return StructOrImplOrfunc() && Rept_prog0();
         }
-        else if (FOLLOW_RepetitiveVariableDeclarationOrStatements.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_prog0.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableDeclarationOrStatements> -> EPSILON");
+            OutputDerivation("<rept-prog0> -> EPSILON");
             return true;
         }
         else
@@ -1179,21 +1105,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveVariableOrFunctionCall production rule
+    /// Rept_statBlock1 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveVariableOrFunctionCall() 
+    private bool Rept_statBlock1() 
     {
-        if(!SkipErrors(FIRST_RepetitiveVariableOrFunctionCall, FOLLOW_RepetitiveVariableOrFunctionCall))
+        if(!SkipErrors(FIRST_Rept_statBlock1, FOLLOW_Rept_statBlock1))
             return false;
-        if (FIRST_Idnest.Contains(LookAhead.Type))
+        if (FIRST_Statement.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableOrFunctionCall> -> <idnest> <repetitiveVariableOrFunctionCall>");
-            return Idnest() && RepetitiveVariableOrFunctionCall();
+            OutputDerivation("<rept-statBlock1> -> <statement> <rept-statBlock1>");
+            return Statement() && Rept_statBlock1();
         }
-        else if (FOLLOW_RepetitiveVariableOrFunctionCall.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_statBlock1.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableOrFunctionCall> -> EPSILON");
+            OutputDerivation("<rept-statBlock1> -> EPSILON");
             return true;
         }
         else
@@ -1201,21 +1127,21 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveVariableOrFunctionCallStat_Function production rule
+    /// Rept_structDecl4 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveVariableOrFunctionCallStat_Function() 
+    private bool Rept_structDecl4() 
     {
-        if(!SkipErrors(FIRST_RepetitiveVariableOrFunctionCallStat_Function, FOLLOW_RepetitiveVariableOrFunctionCallStat_Function))
+        if(!SkipErrors(FIRST_Rept_structDecl4, FOLLOW_Rept_structDecl4))
             return false;
-        if (FIRST_IdnestStat.Contains(LookAhead.Type))
+        if (FIRST_Visibility.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableOrFunctionCallStat_Function> -> <idnestStat>");
-            return IdnestStat();
+            OutputDerivation("<rept-structDecl4> -> <visibility> <memberDecl> <rept-structDecl4>");
+            return Visibility() && MemberDecl() && Rept_structDecl4();
         }
-        else if (FOLLOW_RepetitiveVariableOrFunctionCallStat_Function.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_structDecl4.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableOrFunctionCallStat_Function> -> EPSILON");
+            OutputDerivation("<rept-structDecl4> -> EPSILON");
             return true;
         }
         else
@@ -1223,43 +1149,65 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// RepetitiveVariableOrFunctionCallStat_Var production rule
+    /// Rept_varDecl4 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveVariableOrFunctionCallStat_Var() 
+    private bool Rept_varDecl4() 
     {
-        if(!SkipErrors(FIRST_RepetitiveVariableOrFunctionCallStat_Var, FOLLOW_RepetitiveVariableOrFunctionCallStat_Var))
+        if(!SkipErrors(FIRST_Rept_varDecl4, FOLLOW_Rept_varDecl4))
             return false;
-        if (FIRST_IdnestStat.Contains(LookAhead.Type))
+        if (FIRST_ArraySize.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableOrFunctionCallStat_Var> -> <idnestStat>");
-            return IdnestStat();
+            OutputDerivation("<rept-varDecl4> -> <arraySize> <rept-varDecl4>");
+            return ArraySize() && Rept_varDecl4();
         }
-        else if (FIRST_AssignmentOperator.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_varDecl4.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariableOrFunctionCallStat_Var> -> <assignmentOperator> <expression>");
-            return AssignmentOperator() && Expression();
+            OutputDerivation("<rept-varDecl4> -> EPSILON");
+            return true;
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// RepetitiveVariables production rule
+    /// Rept_variable production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool RepetitiveVariables() 
+    private bool Rept_variable() 
     {
-        if(!SkipErrors(FIRST_RepetitiveVariables, FOLLOW_RepetitiveVariables))
+        if(!SkipErrors(FIRST_Rept_variable, FOLLOW_Rept_variable))
             return false;
-        if (FIRST_VariableIdnest.Contains(LookAhead.Type))
+        if (FIRST_Var_idNest.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariables> -> <variableIdnest> <repetitiveVariables>");
-            return VariableIdnest() && RepetitiveVariables();
+            OutputDerivation("<rept-variable> -> <var-idNest> <rept-variable>");
+            return Var_idNest() && Rept_variable();
         }
-        else if (FOLLOW_RepetitiveVariables.Contains(LookAhead.Type))
+        else if (FOLLOW_Rept_variable.Contains(LookAhead.Type))
         {
-            OutputDerivation("<repetitiveVariables> -> EPSILON");
+            OutputDerivation("<rept-variable> -> EPSILON");
+            return true;
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// Rept_var_or_funcCall production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool Rept_var_or_funcCall() 
+    {
+        if(!SkipErrors(FIRST_Rept_var_or_funcCall, FOLLOW_Rept_var_or_funcCall))
+            return false;
+        if (FIRST_IdNest.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rept-var-or-funcCall> -> <idNest> <rept-var-or-funcCall>");
+            return IdNest() && Rept_var_or_funcCall();
+        }
+        else if (FOLLOW_Rept_var_or_funcCall.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rept-var-or-funcCall> -> EPSILON");
             return true;
         }
         else
@@ -1283,6 +1231,50 @@ public class Parser : IParser
         {
             OutputDerivation("<returnType> -> 'void'");
             return Match(TokenType.Void);
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// Rightrec_arithExpr production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool Rightrec_arithExpr() 
+    {
+        if(!SkipErrors(FIRST_Rightrec_arithExpr, FOLLOW_Rightrec_arithExpr))
+            return false;
+        if (FIRST_AddOp.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>");
+            return AddOp() && Term() && Rightrec_arithExpr();
+        }
+        else if (FOLLOW_Rightrec_arithExpr.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rightrec-arithExpr> -> EPSILON");
+            return true;
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// RightRecTerm production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool RightRecTerm() 
+    {
+        if(!SkipErrors(FIRST_RightRecTerm, FOLLOW_RightRecTerm))
+            return false;
+        if (FIRST_MultOp.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rightRecTerm> -> <multOp> <factor> <rightRecTerm>");
+            return MultOp() && Factor() && RightRecTerm();
+        }
+        else if (FOLLOW_RightRecTerm.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<rightRecTerm> -> EPSILON");
+            return true;
         }
         else
             return false;
@@ -1318,14 +1310,36 @@ public class Parser : IParser
     {
         if(!SkipErrors(FIRST_Start, FOLLOW_Start))
             return false;
-        if (FIRST_StructOrImplOrFunction.Contains(LookAhead.Type))
+        if (FIRST_Prog.Contains(LookAhead.Type) || FOLLOW_Prog.Contains(LookAhead.Type))
         {
-            OutputDerivation("<START> -> <structOrImplOrFunction> <START>");
-            return StructOrImplOrFunction() && Start();
+            OutputDerivation("<START> -> <prog> 'eof'");
+            return Prog() && Match(Eof);
         }
-        else if (FOLLOW_Start.Contains(LookAhead.Type))
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// StatBlock production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool StatBlock() 
+    {
+        if(!SkipErrors(FIRST_StatBlock, FOLLOW_StatBlock))
+            return false;
+        if (Opencubr == LookAhead.Type)
         {
-            OutputDerivation("<START> -> EPSILON");
+            OutputDerivation("<statBlock> -> '{' <rept-statBlock1> '}'");
+            return Match(Opencubr) && Rept_statBlock1() && Match(Closecubr);
+        }
+        else if (FIRST_Statement.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<statBlock> -> <statement>");
+            return Statement();
+        }
+        else if (FOLLOW_StatBlock.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<statBlock> -> EPSILON");
             return true;
         }
         else
@@ -1342,18 +1356,18 @@ public class Parser : IParser
             return false;
         if (Id == LookAhead.Type)
         {
-            OutputDerivation("<statement> -> 'id' <statementAlt> ';'");
-            return Match(Id) && StatementAlt() && Match(Semi);
+            OutputDerivation("<statement> -> 'id' <statement-Id-nest> ';'");
+            return Match(Id) && Statement_Id_nest() && Match(Semi);
         }
         else if (If == LookAhead.Type)
         {
-            OutputDerivation("<statement> -> 'if' '(' <relationalExpression> ')' 'then' <statementBlock> 'else' <statementBlock> ';'");
-            return Match(If) && Match(Openpar) && RelationalExpression() && Match(Closepar) && Match(Then) && StatementBlock() && Match(Else) && StatementBlock() && Match(Semi);
+            OutputDerivation("<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'");
+            return Match(If) && Match(Openpar) && RelExpr() && Match(Closepar) && Match(Then) && StatBlock() && Match(Else) && StatBlock() && Match(Semi);
         }
         else if (While == LookAhead.Type)
         {
-            OutputDerivation("<statement> -> 'while' '(' <relationalExpression> ')' <statementBlock> ';'");
-            return Match(While) && Match(Openpar) && RelationalExpression() && Match(Closepar) && StatementBlock() && Match(Semi);
+            OutputDerivation("<statement> -> 'while' '(' <relExpr> ')' <statBlock> ';'");
+            return Match(While) && Match(Openpar) && RelExpr() && Match(Closepar) && StatBlock() && Match(Semi);
         }
         else if (TokenType.Read == LookAhead.Type)
         {
@@ -1362,61 +1376,66 @@ public class Parser : IParser
         }
         else if (TokenType.Write == LookAhead.Type)
         {
-            OutputDerivation("<statement> -> 'write' '(' <expression> ')' ';'");
-            return Match(TokenType.Write) && Match(Openpar) && Expression() && Match(Closepar) && Match(Semi);
+            OutputDerivation("<statement> -> 'write' '(' <expr> ')' ';'");
+            return Match(TokenType.Write) && Match(Openpar) && Expr() && Match(Closepar) && Match(Semi);
         }
         else if (Return == LookAhead.Type)
         {
-            OutputDerivation("<statement> -> 'return' '(' <expression> ')' ';'");
-            return Match(Return) && Match(Openpar) && Expression() && Match(Closepar) && Match(Semi);
+            OutputDerivation("<statement> -> 'return' '(' <expr> ')' ';'");
+            return Match(Return) && Match(Openpar) && Expr() && Match(Closepar) && Match(Semi);
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// StatementAlt production rule
+    /// Statement_Id_nest production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool StatementAlt() 
+    private bool Statement_Id_nest() 
     {
-        if(!SkipErrors(FIRST_StatementAlt, FOLLOW_StatementAlt))
+        if(!SkipErrors(FIRST_Statement_Id_nest, FOLLOW_Statement_Id_nest))
             return false;
-        if (Openpar == LookAhead.Type)
+        if (Dot == LookAhead.Type)
         {
-            OutputDerivation("<statementAlt> -> '(' <argumentParameters> ')' <repetitiveVariableOrFunctionCallStat_Function>");
-            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && RepetitiveVariableOrFunctionCallStat_Function();
+            OutputDerivation("<statement-Id-nest> -> '.' 'id' <statement-Id-nest>");
+            return Match(Dot) && Match(Id) && Statement_Id_nest();
         }
-        else if (FIRST_RepetitiveIndicesStat.Contains(LookAhead.Type))
+        else if (Openpar == LookAhead.Type)
         {
-            OutputDerivation("<statementAlt> -> <repetitiveIndicesStat>");
-            return RepetitiveIndicesStat();
+            OutputDerivation("<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>");
+            return Match(Openpar) && AParams() && Match(Closepar) && Statement_Id_nest2();
+        }
+        else if (FIRST_Indice.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>");
+            return Indice() && Rept_idnest1() && Statement_Id_nest3();
+        }
+        else if (FIRST_AssignOp.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<statement-Id-nest> -> <assignOp> <expr>");
+            return AssignOp() && Expr();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// StatementBlock production rule
+    /// Statement_Id_nest2 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool StatementBlock() 
+    private bool Statement_Id_nest2() 
     {
-        if(!SkipErrors(FIRST_StatementBlock, FOLLOW_StatementBlock))
+        if(!SkipErrors(FIRST_Statement_Id_nest2, FOLLOW_Statement_Id_nest2))
             return false;
-        if (Opencubr == LookAhead.Type)
+        if (Dot == LookAhead.Type)
         {
-            OutputDerivation("<statementBlock> -> '{' <repetitiveStatements> '}'");
-            return Match(Opencubr) && RepetitiveStatements() && Match(Closecubr);
+            OutputDerivation("<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>");
+            return Match(Dot) && Match(Id) && Statement_Id_nest();
         }
-        else if (FIRST_Statement.Contains(LookAhead.Type))
+        else if (FOLLOW_Statement_Id_nest2.Contains(LookAhead.Type))
         {
-            OutputDerivation("<statementBlock> -> <statement>");
-            return Statement();
-        }
-        else if (FOLLOW_StatementBlock.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<statementBlock> -> EPSILON");
+            OutputDerivation("<statement-Id-nest2> -> EPSILON");
             return true;
         }
         else
@@ -1424,66 +1443,66 @@ public class Parser : IParser
     } 
 
     /// <summary>
-    /// StructDeclaration production rule
+    /// Statement_Id_nest3 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool StructDeclaration() 
+    private bool Statement_Id_nest3() 
     {
-        if(!SkipErrors(FIRST_StructDeclaration, FOLLOW_StructDeclaration))
+        if(!SkipErrors(FIRST_Statement_Id_nest3, FOLLOW_Statement_Id_nest3))
+            return false;
+        if (FIRST_AssignOp.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<statement-Id-nest3> -> <assignOp> <expr>");
+            return AssignOp() && Expr();
+        }
+        else if (Dot == LookAhead.Type)
+        {
+            OutputDerivation("<statement-Id-nest3> -> '.' 'id' <statement-Id-nest>");
+            return Match(Dot) && Match(Id) && Statement_Id_nest();
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// StructDecl production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool StructDecl() 
+    {
+        if(!SkipErrors(FIRST_StructDecl, FOLLOW_StructDecl))
             return false;
         if (Struct == LookAhead.Type)
         {
-            OutputDerivation("<structDeclaration> -> 'struct' 'id' <structOptionalInheritance> '{' <repetitiveStructMemberDeclarations> '}' ';'");
-            return Match(Struct) && Match(Id) && StructOptionalInheritance() && Match(Opencubr) && RepetitiveStructMemberDeclarations() && Match(Closecubr) && Match(Semi);
+            OutputDerivation("<structDecl> -> 'struct' 'id' <opt-structDecl2> '{' <rept-structDecl4> '}' ';'");
+            return Match(Struct) && Match(Id) && Opt_structDecl2() && Match(Opencubr) && Rept_structDecl4() && Match(Closecubr) && Match(Semi);
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// StructOptionalInheritance production rule
+    /// StructOrImplOrfunc production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool StructOptionalInheritance() 
+    private bool StructOrImplOrfunc() 
     {
-        if(!SkipErrors(FIRST_StructOptionalInheritance, FOLLOW_StructOptionalInheritance))
+        if(!SkipErrors(FIRST_StructOrImplOrfunc, FOLLOW_StructOrImplOrfunc))
             return false;
-        if (Inherits == LookAhead.Type)
+        if (FIRST_StructDecl.Contains(LookAhead.Type))
         {
-            OutputDerivation("<structOptionalInheritance> -> 'inherits' 'id' <repetitiveStructOptionalInheritances>");
-            return Match(Inherits) && Match(Id) && RepetitiveStructOptionalInheritances();
+            OutputDerivation("<structOrImplOrfunc> -> <structDecl>");
+            return StructDecl();
         }
-        else if (FOLLOW_StructOptionalInheritance.Contains(LookAhead.Type))
+        else if (FIRST_ImplDef.Contains(LookAhead.Type))
         {
-            OutputDerivation("<structOptionalInheritance> -> EPSILON");
-            return true;
+            OutputDerivation("<structOrImplOrfunc> -> <implDef>");
+            return ImplDef();
         }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// StructOrImplOrFunction production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool StructOrImplOrFunction() 
-    {
-        if(!SkipErrors(FIRST_StructOrImplOrFunction, FOLLOW_StructOrImplOrFunction))
-            return false;
-        if (FIRST_StructDeclaration.Contains(LookAhead.Type))
+        else if (FIRST_FuncDef.Contains(LookAhead.Type))
         {
-            OutputDerivation("<structOrImplOrFunction> -> <structDeclaration>");
-            return StructDeclaration();
-        }
-        else if (FIRST_ImplDefinition.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<structOrImplOrFunction> -> <implDefinition>");
-            return ImplDefinition();
-        }
-        else if (FIRST_FunctionDefinition.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<structOrImplOrFunction> -> <functionDefinition>");
-            return FunctionDefinition();
+            OutputDerivation("<structOrImplOrfunc> -> <funcDef>");
+            return FuncDef();
         }
         else
             return false;
@@ -1499,8 +1518,8 @@ public class Parser : IParser
             return false;
         if (FIRST_Factor.Contains(LookAhead.Type))
         {
-            OutputDerivation("<term> -> <factor> <recursiveTerms>");
-            return Factor() && RecursiveTerms();
+            OutputDerivation("<term> -> <factor> <rightRecTerm>");
+            return Factor() && RightRecTerm();
         }
         else
             return false;
@@ -1534,6 +1553,45 @@ public class Parser : IParser
     } 
 
     /// <summary>
+    /// VarDecl production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool VarDecl() 
+    {
+        if(!SkipErrors(FIRST_VarDecl, FOLLOW_VarDecl))
+            return false;
+        if (Let == LookAhead.Type)
+        {
+            OutputDerivation("<varDecl> -> 'let' 'id' ':' <type> <rept-varDecl4> ';'");
+            return Match(Let) && Match(Id) && Match(Colon) && Type() && Rept_varDecl4() && Match(Semi);
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// VarDeclOrStat production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool VarDeclOrStat() 
+    {
+        if(!SkipErrors(FIRST_VarDeclOrStat, FOLLOW_VarDeclOrStat))
+            return false;
+        if (FIRST_VarDecl.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<varDeclOrStat> -> <varDecl>");
+            return VarDecl();
+        }
+        else if (FIRST_Statement.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<varDeclOrStat> -> <statement>");
+            return Statement();
+        }
+        else
+            return false;
+    } 
+
+    /// <summary>
     /// Variable production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
@@ -1543,123 +1601,69 @@ public class Parser : IParser
             return false;
         if (Id == LookAhead.Type)
         {
-            OutputDerivation("<variable> -> 'id' <variableRest>");
-            return Match(Id) && VariableRest();
+            OutputDerivation("<variable> -> 'id' <variable2>");
+            return Match(Id) && Variable2();
         }
         else
             return false;
     } 
 
     /// <summary>
-    /// VariableDeclaration production rule
+    /// Variable2 production rule
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool VariableDeclaration() 
+    private bool Variable2() 
     {
-        if(!SkipErrors(FIRST_VariableDeclaration, FOLLOW_VariableDeclaration))
+        if(!SkipErrors(FIRST_Variable2, FOLLOW_Variable2))
             return false;
-        if (Let == LookAhead.Type)
+        if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
-            OutputDerivation("<variableDeclaration> -> 'let' 'id' ':' <type> <repetitiveArraySizes> ';'");
-            return Match(Let) && Match(Id) && Match(Colon) && Type() && RepetitiveArraySizes() && Match(Semi);
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// VariableDeclarationOrStatement production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool VariableDeclarationOrStatement() 
-    {
-        if(!SkipErrors(FIRST_VariableDeclarationOrStatement, FOLLOW_VariableDeclarationOrStatement))
-            return false;
-        if (FIRST_VariableDeclaration.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<variableDeclarationOrStatement> -> <variableDeclaration>");
-            return VariableDeclaration();
-        }
-        else if (FIRST_Statement.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<variableDeclarationOrStatement> -> <statement>");
-            return Statement();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// VariableIdnest production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool VariableIdnest() 
-    {
-        if(!SkipErrors(FIRST_VariableIdnest, FOLLOW_VariableIdnest))
-            return false;
-        if (Dot == LookAhead.Type)
-        {
-            OutputDerivation("<variableIdnest> -> '.' 'id' <variableIdnestRest>");
-            return Match(Dot) && Match(Id) && VariableIdnestRest();
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// VariableIdnestRest production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool VariableIdnestRest() 
-    {
-        if(!SkipErrors(FIRST_VariableIdnestRest, FOLLOW_VariableIdnestRest))
-            return false;
-        if (Openpar == LookAhead.Type)
-        {
-            OutputDerivation("<variableIdnestRest> -> '(' <argumentParameters> ')' <variableIdnest>");
-            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && VariableIdnest();
-        }
-        else if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<variableIdnestRest> -> <repetitiveIndices>");
-            return RepetitiveIndices();
-        }
-        else if (FOLLOW_VariableIdnestRest.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<variableIdnestRest> -> EPSILON");
-            return true;
-        }
-        else
-            return false;
-    } 
-
-    /// <summary>
-    /// VariableRest production rule
-    /// </summary>
-    /// <returns>True if the production rule is matched, false otherwise</returns>
-    private bool VariableRest() 
-    {
-        if(!SkipErrors(FIRST_VariableRest, FOLLOW_VariableRest))
-            return false;
-        if (FIRST_RepetitiveIndices.Contains(LookAhead.Type))
-        {
-            OutputDerivation("<variableRest> -> <repetitiveIndices> <repetitiveVariables>");
-            return RepetitiveIndices() && RepetitiveVariables();
+            OutputDerivation("<variable2> -> <rept-idnest1> <rept-variable>");
+            return Rept_idnest1() && Rept_variable();
         }
         else if (Openpar == LookAhead.Type)
         {
-            OutputDerivation("<variableRest> -> '(' <argumentParameters> ')' <variableIdnest>");
-            return Match(Openpar) && ArgumentParameters() && Match(Closepar) && VariableIdnest();
+            OutputDerivation("<variable2> -> '(' <aParams> ')' <var-idNest>");
+            return Match(Openpar) && AParams() && Match(Closepar) && Var_idNest();
         }
-        else if (FIRST_RepetitiveVariables.Contains(LookAhead.Type))
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// Var_idNest production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool Var_idNest() 
+    {
+        if(!SkipErrors(FIRST_Var_idNest, FOLLOW_Var_idNest))
+            return false;
+        if (Dot == LookAhead.Type)
         {
-            OutputDerivation("<variableRest> -> <repetitiveVariables>");
-            return RepetitiveVariables();
+            OutputDerivation("<var-idNest> -> '.' 'id' <var-idNest2>");
+            return Match(Dot) && Match(Id) && Var_idNest2();
         }
-        else if (FOLLOW_VariableRest.Contains(LookAhead.Type))
+        else
+            return false;
+    } 
+
+    /// <summary>
+    /// Var_idNest2 production rule
+    /// </summary>
+    /// <returns>True if the production rule is matched, false otherwise</returns>
+    private bool Var_idNest2() 
+    {
+        if(!SkipErrors(FIRST_Var_idNest2, FOLLOW_Var_idNest2))
+            return false;
+        if (Openpar == LookAhead.Type)
         {
-            OutputDerivation("<variableRest> -> EPSILON");
-            return true;
+            OutputDerivation("<var-idNest2> -> '(' <aParams> ')' <var-idNest>");
+            return Match(Openpar) && AParams() && Match(Closepar) && Var_idNest();
+        }
+        else if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
+        {
+            OutputDerivation("<var-idNest2> -> <rept-idnest1>");
+            return Rept_idnest1();
         }
         else
             return false;

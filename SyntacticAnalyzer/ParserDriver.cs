@@ -26,8 +26,6 @@ public static class ParserDriver
             // Create a parser for the file and parse it
             Parser parser = new(testFile);
 
-            parser.Parse();
-
             if (parser.Parse())
                 WriteLine("Parsing successful");
             else
