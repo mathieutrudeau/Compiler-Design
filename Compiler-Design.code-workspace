@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.preferredDarkColorTheme": "Chocolate (rainglow)",
+		"workbench.colorTheme": "Shrek Contrast (rainglow)"
+	}
+}

@@ -2,5 +2,6 @@
     "editor.formatOnType": true,
     "[lisp]": {
         "editor.wordSeparators": "`|;:'\",()"
-    }
+    },
+    "workbench.colorTheme": "Shrek Contrast (rainglow)"
 }
