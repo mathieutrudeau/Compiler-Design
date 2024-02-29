@@ -1,4 +1,6 @@
-﻿using LexicalAnalyzer;
+﻿using System.Runtime.Intrinsics.X86;
+using AbstractSyntaxTreeGeneration;
+using LexicalAnalyzer;
 using static System.Console;
 using static LexicalAnalyzer.TokenType;
     
@@ -33,6 +35,8 @@ public class Parser : IParser
     /// The parse list used to track the derivations
     /// </summary>
     private IParseList ParseList { get; set; } = new ParseList();
+
+    private Stack<IASTNode> SementicStack { get; set; } = new Stack<IASTNode>();
 
     #region Constants
 
@@ -97,7 +101,7 @@ public class Parser : IParser
         using StreamWriter sw = new(SourceName + OUT_DERIVATION_EXTENSION, true);
         sw.WriteLine(ParseList.GetDerivation());
         sw.Close();
-        
+
         // Parse the source file   
         return Start();
     }
@@ -1307,7 +1311,7 @@ public class Parser : IParser
     /// </summary>
     /// <returns>True if the production rule is matched, false otherwise</returns>
     private bool Start() 
-    {
+    {        
         if(!SkipErrors(FIRST_Start, FOLLOW_Start))
             return false;
         if (FIRST_Prog.Contains(LookAhead.Type) || FOLLOW_Prog.Contains(LookAhead.Type))

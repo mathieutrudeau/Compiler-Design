@@ -1,0 +1,12 @@
+/**
+* (leaf) <Composite>
+*
+**/
+
+prog -> <ImplOrStructOrFuncList> ... <ImplOrStructOrFuncList>
+
+
+<ImplOrStructOrFuncList> :
+StructDecl -> (id) <structInherits> <structVisibility>
+ImplDef -> (id) <funcDefList>
+funcDef ->
