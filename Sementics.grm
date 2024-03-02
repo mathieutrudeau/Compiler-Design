@@ -1,12 +1,258 @@
-/**
-* (leaf) <Composite>
-*
-**/
+<START> ::= <prog> 'eof'   
 
-prog -> <ImplOrStructOrFuncList> ... <ImplOrStructOrFuncList>
+<addOp> ::= '+'    
+<addOp> ::= '-'   
+<addOp> ::= 'or'   
+
+<aParams> ::= <expr> <rept-aParams1>   
+<aParams> ::= EPSILON
+
+<aParamsTail>  ::= ',' <expr>   
+
+<arithExpr>  ::= <term>  <rightrec-arithExpr>    
+
+<arraySize>  ::= '[' <arraySize2>    
+
+<arraySize2>  ::= 'intlit' ']' T4
+<arraySize2>  ::= ']'  
+
+<assignOp>  ::= '='   
+
+<expr> ::= <arithExpr>  <expr2>   
+
+<expr2>  ::= <relOp> T5  <arithExpr> E0   
+<expr2>  ::= EPSILON
+
+<factor>  ::= 'id' T1 <factor2>  <rept-var-or-funcCall>    
+<factor>  ::= 'intlit' T4
+<factor>  ::= 'floatlit' T7   
+<factor>  ::= '(' <arithExpr>  ')'   
+<factor>  ::= 'not' <factor> E3     
+<factor>  ::= <sign> T9 <factor> E4   
+
+<factor2>  ::= '(' <aParams> ')'   
+<factor2>  ::= <rept-idnest1>   
+
+<fParams>  ::= 'id' T1 ':' <type> T0 <rept-fParams3> A0 F3 <rept-fParams4>   
+<fParams>  ::= EPSILON
+
+<fParamsTail> ::= ',' 'id' T1 ':' <type> T0 <rept-fParamsTail4> A0 F3   
+
+<funcBody> ::= '{'T0 <rept-funcBody1> F4 '}'  
+
+<funcDecl> ::= <funcHead> ';'   
+
+<funcDef> ::= <funcHead> <funcBody>   
+
+<funcHead> ::= 'func' 'id' T1 T0 '(' <fParams> ')' 'arrow' F2 <returnType> F1   
+
+<statement> ::= 'id' T1 T0 <statement-Id-nest> ';'  
+<statement> ::= 'if' '(' <relExpr> ')' 'then' T0 <statBlock> F5 T0 'else' <statBlock> ';' F5 B0
+<statement> ::= 'while' '(' <relExpr> ')' T0 <statBlock> ';' F5 B1  
+<statement> ::= 'read' '(' <variable> ')' ';' B2
+<statement> ::= 'write' '(' <expr> ')' ';' B3  
+<statement> ::= 'return' '(' <expr> ')' ';' B4   
 
 
-<ImplOrStructOrFuncList> :
-StructDecl -> (id) <structInherits> <structVisibility>
-ImplDef -> (id) <funcDefList>
-funcDef ->
+<statement-Id-nest> ::= V1 V6 '.' T10 'id' T1 T0 <statement-Id-nest>   
+<statement-Id-nest> ::= '(' <aParams> ')' F7 V3 V6 <statement-Id-nest2>  
+<statement-Id-nest> ::= <indice> <rept-idnest1> V1 V6 <statement-Id-nest3>  
+<statement-Id-nest> ::= <assignOp> <expr> F6  
+
+<statement-Id-nest2> ::= EPSILON V7
+<statement-Id-nest2> ::= '.' T10 'id' T1 T0 <statement-Id-nest>   
+
+<statement-Id-nest3> ::= <assignOp> <expr> F6
+<statement-Id-nest3> ::= '.' T10 'id' T1 T0 <statement-Id-nest>   
+
+<rept-idnest1> ::= <indice> <rept-idnest1>   
+<rept-idnest1> ::= EPSILON
+
+<rept-var-or-funcCall>  ::=  <idNest> <rept-var-or-funcCall>    
+<rept-var-or-funcCall>  ::=  EPSILON
+
+<idNest> ::= '.' 'id' <idNest2>   
+
+<idNest2> ::= '(' <aParams> ')'   
+<idNest2> ::= <rept-idnest1>   
+
+
+<implDef> ::= 'impl' 'id' '{' <rept-implDef3> '}'   
+
+<indice> ::= '[' <arithExpr>  ']'   
+
+<memberDecl> ::= <funcDecl>   
+<memberDecl> ::= <varDecl>   
+
+<multOp> ::= '*'   
+<multOp> ::= '/'   
+<multOp> ::= 'and'   
+
+<opt-structDecl2> ::= 'inherits' 'id' T1 <rept-opt-structDecl22>   
+<opt-structDecl2> ::= EPSILON
+
+<prog> ::= T0 <rept-prog0> P0 
+
+<relExpr> ::= <arithExpr>  <relOp> T5  <arithExpr> E0    
+
+<relOp>  ::= 'eq'   
+<relOp>  ::= 'neq'   
+<relOp>  ::= 'lt'   
+<relOp>  ::= 'gt'   
+<relOp>  ::= 'leq'   
+<relOp>  ::= 'geq'   
+
+<rept-aParams1> ::= <aParamsTail>  <rept-aParams1>   
+<rept-aParams1> ::= EPSILON
+
+<rept-fParams3> ::= <arraySize>  <rept-fParams3>   
+<rept-fParams3> ::= EPSILON
+
+<rept-fParams4> ::= <fParamsTail> <rept-fParams4>   
+<rept-fParams4> ::= EPSILON
+
+<rept-fParamsTail4> ::= <arraySize>  <rept-fParamsTail4>   
+<rept-fParamsTail4> ::= EPSILON
+
+<rept-funcBody1> ::= <varDeclOrStat> <rept-funcBody1>   
+<rept-funcBody1> ::= EPSILON
+
+<rept-implDef3> ::= <funcDef> <rept-implDef3>   
+<rept-implDef3> ::= EPSILON
+
+<rept-opt-structDecl22> ::= ',' 'id' T1 <rept-opt-structDecl22>   
+<rept-opt-structDecl22> ::= EPSILON
+
+<rept-prog0> ::= <structOrImplOrfunc> P1 <rept-prog0>   
+<rept-prog0> ::= EPSILON
+
+<rept-statBlock1> ::= <statement> <rept-statBlock1>   
+<rept-statBlock1> ::= EPSILON
+
+<rept-structDecl4> ::= <visibility> T2 <memberDecl> <rept-structDecl4>   
+<rept-structDecl4> ::= EPSILON
+
+<rept-varDecl4> ::= <arraySize>  <rept-varDecl4>   
+<rept-varDecl4> ::= EPSILON
+
+
+
+<returnType> ::= <type>   
+<returnType> ::= 'void'   
+
+<rightrec-arithExpr>  ::= EPSILON
+<rightrec-arithExpr>  ::= <addOp> T6 <term>  <rightrec-arithExpr>    
+
+<rightRecTerm>  ::= EPSILON
+<rightRecTerm>  ::= <multOp> T8 <factor> <rightRecTerm>    
+
+<sign> ::= '+'    
+<sign> ::= '-'   
+
+<statBlock> ::= '{' <rept-statBlock1> '}'   
+<statBlock> ::= <statement>   
+<statBlock> ::= EPSILON
+
+
+
+<structDecl> ::= 'struct' 'id' T1 T0 <opt-structDecl2> '{' S1 T0 <rept-structDecl4> '}' ';' S2   
+
+<structOrImplOrfunc> ::= <structDecl> S0   
+<structOrImplOrfunc> ::= <implDef>   
+<structOrImplOrfunc> ::= <funcDef>   
+
+<term>  ::= <factor>  <rightRecTerm>    
+
+<type> ::= 'integer'   
+<type> ::= 'float'   
+<type> ::= 'id'   
+
+<varDecl> ::= 'let' 'id' T1 ':' <type> T0 <rept-varDecl4> ';' A0 V0   
+
+<varDeclOrStat> ::= <varDecl>   
+<varDeclOrStat> ::= <statement>   
+
+<variable> ::=  'id' T1 <variable2> V4
+
+<variable2> ::=  T0 <rept-idnest1> V1 V2 <rept-variable>    
+<variable2> ::= T0 '(' <aParams> ')' F7 V3 <var-idNest>    
+
+<rept-variable> ::=  <var-idNest> <rept-variable>   
+<rept-variable> ::=  EPSILON
+
+<var-idNest> ::= '.' 'id' T1 <var-idNest2>   
+
+<var-idNest2> ::= T0 '(' <aParams> ')' F7 V3 V5 <var-idNest>   
+<var-idNest2> ::= T0 <rept-idnest1> V1 V2 V5  
+
+
+<visibility> ::= 'public'   
+<visibility> ::= 'private'   
+
+
+
+// SEMENTIC ACTIONS
+
+T0: push(MakeNode())                : Empty Node
+T1: push(MakeNode(Id))              : Id 
+T2: push(MakeNode(Visibility))      : Visibility
+T3: push(MakeNode(Type))            : Type
+T4: push(MakeNode(intlit))          : Intlit
+T5: push(MakeNode(relOp))           : Relative Operator
+T6: push(MakeNode(addOp))           : Add Operator
+T7: push(MakeNode(floatlit))        : Floatlit
+T8: push(MakeNode(multOp))          : Mult Operator
+T9: push(MakeNode(sign))            : Sign
+T10: push(MakeNode(), pop)          : Pop then push Empty node, then push pop value 
+
+
+
+
+P0: push(MakeFamily(Program, popUntilEmpty))
+P1: push(MakeFamily(StructOrImplOrFunc, pop))
+
+
+S0: push(MakeFamily(StructDecl, pop, pop, pop))
+S1: push(MakeFamily(StructInheritOpt, popUntilEmpty))
+S2: push(MakeFamily(StructMemberList, popUntilEmpty))
+S3: push(MakeFamily(StructMember, pop, pop))
+
+
+I0: push(MakeFamily(ImplDef, pop, pop))
+
+
+F0: push(MakeFamily(FuncDef, pop, pop))
+F1: push(MakeFamily(FuncHead, pop, pop, pop))
+F2: push(MakeFamily(FParamList, popUntilEmpty))
+F3: push(MakeFamily(FParam, pop, pop, pop))
+F4: push(MakeFamily(VarDeclOrStatList, popUntilEmpty))
+F5: push(MakeFamily(StatBlock, popUntilEmpty))
+F6: push(MakeFamily(AssignStat, pop, pop, pop))
+F7: push(MakeFamily(AParamList, popUntilEmpty))
+
+
+B0: push(MakeFamily(IfStat, pop, pop, pop))
+B1: push(MakeFamily(WhileStat, pop, pop))
+B2: push(MakeFamily(ReadStat, pop))
+B3: push(MakeFamily(WriteStat, pop))
+B4: push(MakeFamily(ReturnStat, pop))
+
+
+A0: push(MakeFamily(ArraySize, popUntilEmpty))
+
+
+V0: push(MakeFamily(VarDecl, pop, pop, pop))
+V1: push(MakeFamily(IndexList, popUntilEmpty))
+V2: push(MakeFamily(DataMember, pop, pop))
+V3: push(MakeFamily(FuncCall, pop, pop))
+V4: push(MakeFamily(Variable, popUntilEmpty))
+V5: push(MakeFamily(DotChain, pop, pop))
+V6: Some Special stuff...
+V7: push(MakeFamily(FuncCall, pop))
+
+
+E0: push(MakeFamily(RelExpr, pop, pop, pop))
+E1: push(MakeFamily(AddExpr, pop, pop, pop))
+E2: push(MakeFamily(MultExpr, pop, pop, pop))
+E3: push(MakeFamily(NotFactor), pop)
+E4: push(MakeFamily(SignFactor), pop, pop)

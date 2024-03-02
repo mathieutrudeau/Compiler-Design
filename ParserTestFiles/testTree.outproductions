@@ -1,0 +1,97 @@
+<START> -> <prog> 'eof'
+<prog> -> <rept-prog0>
+<rept-prog0> -> <structOrImplOrfunc> <rept-prog0>
+<structOrImplOrfunc> -> <funcDef>
+<funcDef> -> <funcHead> <funcBody>
+<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>
+<fParams> -> EPSILON
+<returnType> -> 'void'
+<funcBody> -> '{' <rept-funcBody1> '}'
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'neq'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> '{' <rept-statBlock1> '}'
+<rept-statBlock1> -> EPSILON
+<statBlock> -> '{' <rept-statBlock1> '}'
+<rept-statBlock1> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'while' '(' <relExpr> ')' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'gt'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> '{' <rept-statBlock1> '}'
+<rept-statBlock1> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'write' '(' <expr> ')' ';'
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'not' <factor>
+<factor> -> <sign> <factor>
+<sign> -> '-'
+<factor> -> 'floatlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'return' '(' <expr> ')' ';'
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> <relOp> <arithExpr>
+<relOp> -> 'geq'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'not' <factor>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> EPSILON
+<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> EPSILON
+<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <assignOp> <expr>

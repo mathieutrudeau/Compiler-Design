@@ -1,0 +1,840 @@
+<START> -> <prog> 'eof'
+<prog> -> <rept-prog0>
+<rept-prog0> -> <structOrImplOrfunc> <rept-prog0>
+<structOrImplOrfunc> -> <funcDef>
+<funcDef> -> <funcHead> <funcBody>
+<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>
+<fParams> -> EPSILON
+<returnType> -> 'void'
+<funcBody> -> '{' <rept-funcBody1> '}'
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <varDecl>
+<varDecl> -> 'let' 'id' ':' <type> <rept-varDecl4> ';'
+<type> -> 'float'
+<rept-varDecl4> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> EPSILON
+<statement-Id-nest2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '+'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> <aParamsTail> <rept-aParams1>
+<aParamsTail> -> ',' <expr>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> <relOp> <arithExpr>
+<relOp> -> 'gt'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <varDecl>
+<varDecl> -> 'let' 'id' ':' <type> <rept-varDecl4> ';'
+<type> -> 'float'
+<rept-varDecl4> -> <arraySize> <rept-varDecl4>
+<arraySize> -> '[' <arraySize2>
+<arraySize2> -> 'intlit' ']'
+<rept-varDecl4> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> EPSILON
+<statement-Id-nest2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '+'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '-'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> <multOp> <factor> <rightRecTerm>
+<multOp> -> '*'
+<factor> -> 'intlit'
+<rightRecTerm> -> <multOp> <factor> <rightRecTerm>
+<multOp> -> '/'
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<statement-Id-nest3> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '+'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> <multOp> <factor> <rightRecTerm>
+<multOp> -> '*'
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'gt'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> <multOp> <factor> <rightRecTerm>
+<multOp> -> '/'
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '-'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> EPSILON
+<statBlock> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'neq'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'not' <factor>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> EPSILON
+<statBlock> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'geq'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> <sign> <factor>
+<sign> -> '-'
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '+'
+<term> -> <factor> <rightRecTerm>
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> <sign> <factor>
+<sign> -> '+'
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> EPSILON
+<statBlock> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'return' '(' <expr> ')' ';'
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> '(' <aParams> ')'
+<aParams> -> <expr> <rept-aParams1>
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> <idNest> <rept-var-or-funcCall>
+<idNest> -> '.' 'id' <idNest2>
+<idNest2> -> <rept-idnest1>
+<rept-idnest1> -> <indice> <rept-idnest1>
+<indice> -> '[' <arithExpr> ']'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-aParams1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '+'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'not' <factor>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> <relOp> <arithExpr>
+<relOp> -> 'eq'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '+'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>
+<addOp> -> '-'
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> <multOp> <factor> <rightRecTerm>
+<multOp> -> '*'
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> <sign> <factor>
+<sign> -> '-'
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> <multOp> <factor> <rightRecTerm>
+<multOp> -> '/'
+<factor> -> '(' <arithExpr> ')'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> <sign> <factor>
+<sign> -> '+'
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<rept-funcBody1> -> EPSILON
+<rept-prog0> -> <structOrImplOrfunc> <rept-prog0>
+<structOrImplOrfunc> -> <funcDef>
+<funcDef> -> <funcHead> <funcBody>
+<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>
+<fParams> -> EPSILON
+<returnType> -> <type>
+<type> -> 'id'
+<funcBody> -> '{' <rept-funcBody1> '}'
+<rept-funcBody1> -> EPSILON
+<rept-prog0> -> <structOrImplOrfunc> <rept-prog0>
+<structOrImplOrfunc> -> <funcDef>
+<funcDef> -> <funcHead> <funcBody>
+<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>
+<fParams> -> EPSILON
+<returnType> -> <type>
+<type> -> 'id'
+<funcBody> -> '{' <rept-funcBody1> '}'
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'read' '(' <variable> ')' ';'
+<variable> -> 'id' <variable2>
+<variable2> -> <rept-idnest1> <rept-variable>
+<rept-idnest1> -> EPSILON
+<rept-variable> -> EPSILON
+<rept-funcBody1> -> EPSILON
+<rept-prog0> -> <structOrImplOrfunc> <rept-prog0>
+<structOrImplOrfunc> -> <funcDef>
+<funcDef> -> <funcHead> <funcBody>
+<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>
+<fParams> -> EPSILON
+<returnType> -> <type>
+<type> -> 'id'
+<funcBody> -> '{' <rept-funcBody1> '}'
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'gt'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> '{' <rept-statBlock1> '}'
+<rept-statBlock1> -> <statement> <rept-statBlock1>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-statBlock1> -> EPSILON
+<statBlock> -> '{' <rept-statBlock1> '}'
+<rept-statBlock1> -> <statement> <rept-statBlock1>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-statBlock1> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'while' '(' <relExpr> ')' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'neq'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <varDecl>
+<varDecl> -> 'let' 'id' ':' <type> <rept-varDecl4> ';'
+<type> -> 'integer'
+<rept-varDecl4> -> EPSILON
+<rept-funcBody1> -> <varDeclOrStat> <rept-funcBody1>
+<varDeclOrStat> -> <statement>
+<statement> -> 'while' '(' <relExpr> ')' <statBlock> ';'
+<relExpr> -> <arithExpr> <relOp> <arithExpr>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<relOp> -> 'lt'
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<statBlock> -> '{' <rept-statBlock1> '}'
+<rept-statBlock1> -> <statement> <rept-statBlock1>
+<statement> -> 'id' <statement-Id-nest> ';'
+<statement-Id-nest> -> <assignOp> <expr>
+<assignOp> -> '='
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'intlit'
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-statBlock1> -> <statement> <rept-statBlock1>
+<statement> -> 'write' '(' <expr> ')' ';'
+<expr> -> <arithExpr> <expr2>
+<arithExpr> -> <term> <rightrec-arithExpr>
+<term> -> <factor> <rightRecTerm>
+<factor> -> 'id' <factor2> <rept-var-or-funcCall>
+<factor2> -> <rept-idnest1>
+<rept-idnest1> -> EPSILON
+<rept-var-or-funcCall> -> EPSILON
+<rightRecTerm> -> EPSILON
+<rightrec-arithExpr> -> EPSILON
+<expr2> -> EPSILON
+<rept-statBlock1> -> EPSILON

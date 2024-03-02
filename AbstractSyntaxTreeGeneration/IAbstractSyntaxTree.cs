@@ -1,3 +1,5 @@
+using LexicalAnalyzer;
+
 namespace AbstractSyntaxTreeGeneration;
 
 public interface IASTNode
@@ -9,6 +11,8 @@ public interface IASTNode
     public IASTNode? LeftMostChild { get; set; }
 
     public IASTNode? RightSibling { get; set; }
+
+    public Token? Token { get; set; }
 
     /// <summary>
     /// Gets the leftmost sibling of the current node.
@@ -29,4 +33,5 @@ public interface IASTNode
     /// <param name="childNode"> The child node to add to the child list of the current node. </param>
     /// <returns> The current node. </returns>
     public IASTNode AdoptChildren(IASTNode childNode);
+
 }

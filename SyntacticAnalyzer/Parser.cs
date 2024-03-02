@@ -1,8 +1,8 @@
-﻿using System.Runtime.Intrinsics.X86;
-using AbstractSyntaxTreeGeneration;
+﻿using AbstractSyntaxTreeGeneration;
 using LexicalAnalyzer;
 using static System.Console;
 using static LexicalAnalyzer.TokenType;
+using static AbstractSyntaxTreeGeneration.SementicOperation;
     
 namespace SyntacticAnalyzer;
 
@@ -21,6 +21,8 @@ public class Parser : IParser
     /// </summary>
     private Token LookAhead { get; set; }
 
+    private Token LookBehind { get; set; }
+
     /// <summary>
     /// The source file to parse (with the file extension)
     /// </summary>
@@ -30,13 +32,17 @@ public class Parser : IParser
     /// The name of the source file to parse
     /// </summary>
     private string SourceName {get;} = "";
+
+    private int Scope { get; set; } = 0;
     
     /// <summary>
     /// The parse list used to track the derivations
     /// </summary>
     private IParseList ParseList { get; set; } = new ParseList();
 
-    private Stack<IASTNode> SementicStack { get; set; } = new Stack<IASTNode>();
+    private SementicStack SemStack { get; set; } = new SementicStack();
+
+    //private LinkedList<Symbol> SymbolTable { get; set; } = new LinkedList<Symbol>();
 
     #region Constants
 
@@ -68,6 +74,7 @@ public class Parser : IParser
         // Create a new scanner and get the first token
         Scanner = new Scanner(sourceFileName);
         LookAhead = new Token();
+        LookBehind = new Token();
 
         // Set the source file 
         Source = sourceFileName;
@@ -103,7 +110,16 @@ public class Parser : IParser
         sw.Close();
 
         // Parse the source file   
-        return Start();
+        bool res = Start();
+
+        // Get the AST root node from the stack
+        IASTNode root = SemStack.Pop();
+
+        // Output the AST to the console
+        WriteLine(root.ToString());
+
+        // Return the result
+        return res;
     }
 
     /// <summary>
@@ -119,6 +135,7 @@ public class Parser : IParser
 
         // Check if the current token matches the expected token
         bool isMatch = LookAhead.Type == tokenType;
+        LookBehind = LookAhead;
 
         if (!isMatch)
         {
@@ -452,7 +469,13 @@ public class Parser : IParser
         if (Intnum == LookAhead.Type)
         {
             OutputDerivation("<arraySize2> -> 'intlit' ']'");
-            return Match(Intnum) && Match(Closesqbr);
+
+            bool res = Match(Intnum);
+            
+            if(res)
+                SemStack.PushNode(IntLit, LookBehind);
+                        
+            return res && Match(Closesqbr);
         }
         else if (Closesqbr == LookAhead.Type)
         {
@@ -508,7 +531,18 @@ public class Parser : IParser
         if (FIRST_RelOp.Contains(LookAhead.Type))
         {
             OutputDerivation("<expr2> -> <relOp> <arithExpr>");
-            return RelOp() && ArithExpr();
+            
+            bool res = RelOp(); 
+            
+            if(res)
+                SemStack.PushNode(SementicOperation.RelOp, LookBehind);
+
+            res = res && ArithExpr();
+
+            if(res)
+                SemStack.PushNextX(SementicOperation.RelExpr, 3);
+
+            return res;
         }
         else if (FOLLOW_Expr2.Contains(LookAhead.Type))
         {
@@ -530,17 +564,35 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'id' <factor2> <rept-var-or-funcCall>");
-            return Match(Id) && Factor2() && Rept_var_or_funcCall();
+
+            bool res = Match(Id);
+
+            if(res)
+                SemStack.PushNode(Identifier, LookBehind);
+
+            return res && Factor2() && Rept_var_or_funcCall();
         }
         else if (Intnum == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'intlit'");
-            return Match(Intnum);
+
+            bool res = Match(Intnum);
+
+            if(res)
+                SemStack.PushNode(IntLit, LookBehind);
+
+            return res;
         }
         else if (Floatnum == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'floatlit'");
-            return Match(Floatnum);
+
+            bool res = Match(Floatnum);
+
+            if(res)
+                SemStack.PushNode(FloatLit, LookBehind);
+
+            return res;
         }
         else if (Openpar == LookAhead.Type)
         {
@@ -550,12 +602,29 @@ public class Parser : IParser
         else if (Not == LookAhead.Type)
         {
             OutputDerivation("<factor> -> 'not' <factor>");
-            return Match(Not) && Factor();
+            
+            bool res = Match(Not) && Factor();
+
+            if(res)
+                SemStack.PushNextX(SementicOperation.NotFactor, 1);
+
+            return res;
         }
         else if (FIRST_Sign.Contains(LookAhead.Type))
         {
             OutputDerivation("<factor> -> <sign> <factor>");
-            return Sign() && Factor();
+
+            bool res = Sign();
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Sign, LookBehind); 
+            
+            res = res && Factor();
+
+            if(res)
+                SemStack.PushNextX(SementicOperation.SignFactor, 2);
+
+            return res;
         }
         else
             return false;
@@ -594,7 +663,26 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<fParams> -> 'id' ':' <type> <rept-fParams3> <rept-fParams4>");
-            return Match(Id) && Match(Colon) && Type() && Rept_fParams3() && Rept_fParams4();
+
+            bool res = Match(Id);
+
+            if (res)
+                SemStack.PushNode(Identifier, LookBehind);
+
+            res = res && Match(Colon) && Type();
+
+            if (res)
+                SemStack.PushEmptyNode();
+
+            res = res && Rept_fParams3();
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.ArraySize);
+                SemStack.PushNextX(SementicOperation.FParam, 3);
+            }
+
+            return res && Rept_fParams4();
         }
         else if (FOLLOW_FParams.Contains(LookAhead.Type))
         {
@@ -616,7 +704,26 @@ public class Parser : IParser
         if (Comma == LookAhead.Type)
         {
             OutputDerivation("<fParamsTail> -> ',' 'id' ':' <type> <rept-fParamsTail4>");
-            return Match(Comma) && Match(Id) && Match(Colon) && Type() && Rept_fParamsTail4();
+
+            bool res = Match(Comma) && Match(Id);
+
+            if (res)
+                SemStack.PushNode(Identifier, LookBehind);
+
+            res = res && Match(Colon) && Type();
+
+            if (res)
+                SemStack.PushEmptyNode();
+
+            res = res && Rept_fParamsTail4();
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.ArraySize);
+                SemStack.PushNextX(SementicOperation.FParam, 3);
+            }
+
+            return res;
         }
         else
             return false;
@@ -633,7 +740,20 @@ public class Parser : IParser
         if (Opencubr == LookAhead.Type)
         {
             OutputDerivation("<funcBody> -> '{' <rept-funcBody1> '}'");
-            return Match(Opencubr) && Rept_funcBody1() && Match(Closecubr);
+
+
+
+            bool res = Match(Opencubr);
+
+            if (res)
+                SemStack.PushEmptyNode();
+
+            res = res && Rept_funcBody1();
+
+            if (res)
+                SemStack.PushUntilEmptyNode(VarDeclOrStatList);
+
+            return res && Match(Closecubr);
         }
         else
             return false;
@@ -684,7 +804,26 @@ public class Parser : IParser
         if (Func == LookAhead.Type)
         {
             OutputDerivation("<funcHead> -> 'func' 'id' '(' <fParams> ')' 'arrow' <returnType>");
-            return Match(Func) && Match(Id) && Match(Openpar) && FParams() && Match(Closepar) && Match(Arrow) && ReturnType();
+
+            bool res = Match(Func) && Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+
+            res =  res && Match(Openpar) && FParams() && Match(Closepar) && Match(Arrow);
+
+            if (res)
+                SemStack.PushUntilEmptyNode(FParamList);
+            
+            res = res && ReturnType();
+
+            if (res)
+                SemStack.PushNextX(SementicOperation.FuncHead, 3);
+
+            return res;
         }
         else
             return false;
@@ -823,7 +962,14 @@ public class Parser : IParser
         if (Inherits == LookAhead.Type)
         {
             OutputDerivation("<opt-structDecl2> -> 'inherits' 'id' <rept-opt-structDecl22>");
-            return Match(Inherits) && Match(Id) && Rept_opt_structDecl22();
+            
+            bool res = Match(Inherits) && Match(Id);
+            
+            if(res)
+                SemStack.PushNode(Identifier,LookBehind);
+            
+            return res && Rept_opt_structDecl22();
+
         }
         else if (FOLLOW_Opt_structDecl2.Contains(LookAhead.Type))
         {
@@ -840,12 +986,22 @@ public class Parser : IParser
     /// <returns>True if the production rule is matched, false otherwise</returns>
     private bool Prog() 
     {
+        // Add an empty node to the stack
+        SemStack.PushEmptyNode();
+
         if(!SkipErrors(FIRST_Prog, FOLLOW_Prog))
             return false;
         if (FIRST_Rept_prog0.Contains(LookAhead.Type) || FOLLOW_Rept_prog0.Contains(LookAhead.Type))
         {
             OutputDerivation("<prog> -> <rept-prog0>");
-            return Rept_prog0();
+            
+            // Call the production rule for Rept_prog0
+            bool res = Rept_prog0();
+
+            // If the production rule was matched, push the node to the stack
+            if (res)
+                SemStack.PushUntilEmptyNode(Program);
+            return res;
         }
         else
             return false;
@@ -862,7 +1018,18 @@ public class Parser : IParser
         if (FIRST_ArithExpr.Contains(LookAhead.Type))
         {
             OutputDerivation("<relExpr> -> <arithExpr> <relOp> <arithExpr>");
-            return ArithExpr() && RelOp() && ArithExpr();
+
+            bool res = ArithExpr() && RelOp();
+            
+            if (res)
+                SemStack.PushNode(SementicOperation.RelOp, LookBehind);
+
+            res = res && ArithExpr();
+
+            if (res)
+                SemStack.PushNextX(SementicOperation.RelExpr, 3);
+
+            return res;
         }
         else
             return false;
@@ -1075,7 +1242,13 @@ public class Parser : IParser
         if (Comma == LookAhead.Type)
         {
             OutputDerivation("<rept-opt-structDecl22> -> ',' 'id' <rept-opt-structDecl22>");
-            return Match(Comma) && Match(Id) && Rept_opt_structDecl22();
+
+            bool res = Match(Comma) && Match(Id);
+            
+            if(res)
+                SemStack.PushNode(Identifier,LookBehind);
+            
+            return res && Rept_opt_structDecl22();
         }
         else if (FOLLOW_Rept_opt_structDecl22.Contains(LookAhead.Type))
         {
@@ -1141,7 +1314,13 @@ public class Parser : IParser
         if (FIRST_Visibility.Contains(LookAhead.Type))
         {
             OutputDerivation("<rept-structDecl4> -> <visibility> <memberDecl> <rept-structDecl4>");
-            return Visibility() && MemberDecl() && Rept_structDecl4();
+
+            bool res = Visibility() && MemberDecl();
+
+            if (res)
+                SemStack.PushNextX(StructMember, 2);
+            
+            return res && Rept_structDecl4();
         }
         else if (FOLLOW_Rept_structDecl4.Contains(LookAhead.Type))
         {
@@ -1234,7 +1413,13 @@ public class Parser : IParser
         else if (TokenType.Void == LookAhead.Type)
         {
             OutputDerivation("<returnType> -> 'void'");
-            return Match(TokenType.Void);
+
+            bool res = Match(TokenType.Void);
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Type,LookBehind);
+
+            return res;
         }
         else
             return false;
@@ -1251,7 +1436,18 @@ public class Parser : IParser
         if (FIRST_AddOp.Contains(LookAhead.Type))
         {
             OutputDerivation("<rightrec-arithExpr> -> <addOp> <term> <rightrec-arithExpr>");
-            return AddOp() && Term() && Rightrec_arithExpr();
+
+            bool res = AddOp();
+
+            if(res)
+                SemStack.PushNode(SementicOperation.AddOp, LookBehind);
+
+            res = res && Term();
+            
+            if(res)
+                SemStack.PushNextX(SementicOperation.AddExpr, 3);
+            
+            return res && Rightrec_arithExpr();
         }
         else if (FOLLOW_Rightrec_arithExpr.Contains(LookAhead.Type))
         {
@@ -1273,7 +1469,18 @@ public class Parser : IParser
         if (FIRST_MultOp.Contains(LookAhead.Type))
         {
             OutputDerivation("<rightRecTerm> -> <multOp> <factor> <rightRecTerm>");
-            return MultOp() && Factor() && RightRecTerm();
+            
+            bool res = MultOp();
+            
+            if(res)
+                SemStack.PushNode(SementicOperation.MultOp, LookBehind);
+            
+            res = res && Factor();
+            
+            if(res)
+                SemStack.PushNextX(SementicOperation.MultExpr, 3);
+
+            return res && RightRecTerm();
         }
         else if (FOLLOW_RightRecTerm.Contains(LookAhead.Type))
         {
@@ -1361,32 +1568,97 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'id' <statement-Id-nest> ';'");
-            return Match(Id) && Statement_Id_nest() && Match(Semi);
+
+            bool res = Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+
+            res =res&& Statement_Id_nest() && Match(Semi);
+
+            return res;
         }
         else if (If == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'if' '(' <relExpr> ')' 'then' <statBlock> 'else' <statBlock> ';'");
-            return Match(If) && Match(Openpar) && RelExpr() && Match(Closepar) && Match(Then) && StatBlock() && Match(Else) && StatBlock() && Match(Semi);
+
+            bool res = Match(If) && Match(Openpar) && RelExpr() && Match(Closepar) && Match(Then);
+
+            if (res)
+                SemStack.PushEmptyNode();
+
+            res = res && StatBlock();
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.StatBlock);
+                SemStack.PushEmptyNode();
+            }
+
+            res = res && Match(Else) && StatBlock() && Match(Semi);
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.StatBlock);
+                SemStack.PushNextX(IfStat, 3);
+            }
+
+            return res;
         }
         else if (While == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'while' '(' <relExpr> ')' <statBlock> ';'");
-            return Match(While) && Match(Openpar) && RelExpr() && Match(Closepar) && StatBlock() && Match(Semi);
+
+            bool res = Match(While) && Match(Openpar) && RelExpr() && Match(Closepar); 
+            
+            if(res)
+                SemStack.PushEmptyNode();
+
+            res = res && StatBlock() && Match(Semi);
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.StatBlock);
+                SemStack.PushNextX(WhileStat, 2);
+            }
+
+            return res;
         }
         else if (TokenType.Read == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'read' '(' <variable> ')' ';'");
-            return Match(TokenType.Read) && Match(Openpar) && Variable() && Match(Closepar) && Match(Semi);
+        
+            bool res = Match(TokenType.Read) && Match(Openpar) && Variable() && Match(Closepar) && Match(Semi);
+        
+            if(res)
+                SemStack.PushNextX(ReadStat, 1);
+
+            return res;
         }
         else if (TokenType.Write == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'write' '(' <expr> ')' ';'");
-            return Match(TokenType.Write) && Match(Openpar) && Expr() && Match(Closepar) && Match(Semi);
+            
+            bool res = Match(TokenType.Write) && Match(Openpar) && Expr() && Match(Closepar) && Match(Semi);
+        
+            if(res)
+                SemStack.PushNextX(WriteStat, 1);
+
+            return res;
         }
         else if (Return == LookAhead.Type)
         {
             OutputDerivation("<statement> -> 'return' '(' <expr> ')' ';'");
-            return Match(Return) && Match(Openpar) && Expr() && Match(Closepar) && Match(Semi);
+
+            bool res= Match(Return) && Match(Openpar) && Expr() && Match(Closepar) && Match(Semi);
+        
+            if(res)
+                SemStack.PushNextX(ReturnStat, 1);
+
+            return res;
         }
         else
             return false;
@@ -1403,22 +1675,58 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<statement-Id-nest> -> '.' 'id' <statement-Id-nest>");
-            return Match(Dot) && Match(Id) && Statement_Id_nest();
+            
+            SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+
+            bool res = Match(Dot) && Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+
+            return res && Statement_Id_nest();
         }
         else if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<statement-Id-nest> -> '(' <aParams> ')' <statement-Id-nest2>");
-            return Match(Openpar) && AParams() && Match(Closepar) && Statement_Id_nest2();
+            
+
+
+            bool res = Match(Openpar) && AParams() && Match(Closepar);
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
+                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+                SemStack.PushIfXEmpty(DotChain, 2);
+            }
+
+            return res && Statement_Id_nest2();
         }
         else if (FIRST_Indice.Contains(LookAhead.Type))
         {
             OutputDerivation("<statement-Id-nest> -> <indice> <rept-idnest1> <statement-Id-nest3>");
-            return Indice() && Rept_idnest1() && Statement_Id_nest3();
+
+
+            bool res = Indice() && Rept_idnest1();
+            
+            if(res)
+                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+            
+            return res && Statement_Id_nest3();
         }
         else if (FIRST_AssignOp.Contains(LookAhead.Type))
         {
             OutputDerivation("<statement-Id-nest> -> <assignOp> <expr>");
-            return AssignOp() && Expr();
+            
+            bool res = AssignOp() && Expr();
+
+            if(res)
+                SemStack.PushNextX(SementicOperation.AssignStat, 2);
+
+            return res;
         }
         else
             return false;
@@ -1435,11 +1743,28 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<statement-Id-nest2> -> '.' 'id' <statement-Id-nest>");
-            return Match(Dot) && Match(Id) && Statement_Id_nest();
+
+            bool res = Match(Dot);
+
+            if (res)
+                SemStack.PushEmptyBeforeX(1);
+            
+            res = res && Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+
+            return res && Statement_Id_nest();
         }
         else if (FOLLOW_Statement_Id_nest2.Contains(LookAhead.Type))
         {
             OutputDerivation("<statement-Id-nest2> -> EPSILON");
+
+            SemStack.PushNextX(SementicOperation.FuncCall, 1);
+
             return true;
         }
         else
@@ -1457,12 +1782,32 @@ public class Parser : IParser
         if (FIRST_AssignOp.Contains(LookAhead.Type))
         {
             OutputDerivation("<statement-Id-nest3> -> <assignOp> <expr>");
-            return AssignOp() && Expr();
+
+            bool res = AssignOp() && Expr();
+
+            if(res)
+                SemStack.PushNextX(SementicOperation.AssignStat, 2);
+
+            return res;
         }
         else if (Dot == LookAhead.Type)
         {
             OutputDerivation("<statement-Id-nest3> -> '.' 'id' <statement-Id-nest>");
-            return Match(Dot) && Match(Id) && Statement_Id_nest();
+
+            bool res = Match(Dot);
+
+            if (res)
+                SemStack.PushEmptyBeforeX(1);
+            
+            res = res && Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+
+            return res && Statement_Id_nest();
         }
         else
             return false;
@@ -1479,7 +1824,37 @@ public class Parser : IParser
         if (Struct == LookAhead.Type)
         {
             OutputDerivation("<structDecl> -> 'struct' 'id' <opt-structDecl2> '{' <rept-structDecl4> '}' ';'");
-            return Match(Struct) && Match(Id) && Opt_structDecl2() && Match(Opencubr) && Rept_structDecl4() && Match(Closecubr) && Match(Semi);
+
+            bool res = Match(Struct) && Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+            else
+                return false;
+
+            res = res && Opt_structDecl2() && Match(Opencubr);
+            
+            if(res)
+            {
+                SemStack.PushUntilEmptyNode(StructInheritList);
+                SemStack.PushEmptyNode();
+            }
+            else
+                return false;
+
+            
+            res = res && Rept_structDecl4() && Match(Closecubr) && Match(Semi);
+
+            if(res)
+            {
+                SemStack.PushUntilEmptyNode(StructMemberList);
+            }
+
+
+            return res;
         }
         else
             return false;
@@ -1496,7 +1871,12 @@ public class Parser : IParser
         if (FIRST_StructDecl.Contains(LookAhead.Type))
         {
             OutputDerivation("<structOrImplOrfunc> -> <structDecl>");
-            return StructDecl();
+
+            // Call the production rule for StructDecl
+            bool res = StructDecl();
+            if (res)
+                SemStack.PushNextX(SementicOperation.StructDecl, 3);
+            return res;
         }
         else if (FIRST_ImplDef.Contains(LookAhead.Type))
         {
@@ -1540,17 +1920,34 @@ public class Parser : IParser
         if (Integer == LookAhead.Type)
         {
             OutputDerivation("<type> -> 'integer'");
-            return Match(Integer);
+            bool res = Match(Integer);
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Type,LookBehind);
+
+            return res;
         }
         else if (Float == LookAhead.Type)
         {
             OutputDerivation("<type> -> 'float'");
-            return Match(Float);
+
+            bool res = Match(Float);
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Type, LookBehind);
+
+            return res;
         }
         else if (Id == LookAhead.Type)
         {
             OutputDerivation("<type> -> 'id'");
-            return Match(Id);
+
+            bool res = Match(Id);
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Type,LookBehind);
+
+            return res;
         }
         else
             return false;
@@ -1567,7 +1964,26 @@ public class Parser : IParser
         if (Let == LookAhead.Type)
         {
             OutputDerivation("<varDecl> -> 'let' 'id' ':' <type> <rept-varDecl4> ';'");
-            return Match(Let) && Match(Id) && Match(Colon) && Type() && Rept_varDecl4() && Match(Semi);
+
+            bool res = Match(Let) && Match(Id);
+            
+            if(res)
+                SemStack.PushNode(Identifier,LookBehind);
+
+            res = res && Match(Colon) && Type();
+
+            if(res)
+                SemStack.PushEmptyNode();
+
+            res = res && Rept_varDecl4() && Match(Semi);
+
+            if(res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.ArraySize);
+                SemStack.PushNextX(SementicOperation.VarDecl, 3);
+            }
+
+            return res;
         }
         else
             return false;
@@ -1606,7 +2022,20 @@ public class Parser : IParser
         if (Id == LookAhead.Type)
         {
             OutputDerivation("<variable> -> 'id' <variable2>");
-            return Match(Id) && Variable2();
+            
+            SemStack.PushEmptyNode();
+
+            bool res = Match(Id);
+
+            if(res)
+                SemStack.PushNode(Identifier,LookBehind);
+
+            res = res && Variable2();
+
+            if(res)
+                SemStack.PushUntilEmptyNode(SementicOperation.Variable);
+
+            return res;
         }
         else
             return false;
@@ -1618,17 +2047,39 @@ public class Parser : IParser
     /// <returns>True if the production rule is matched, false otherwise</returns>
     private bool Variable2() 
     {
-        if(!SkipErrors(FIRST_Variable2, FOLLOW_Variable2))
+        if(!SkipErrors(FIRST_Variable2.ToList().Union(FIRST_Rept_variable).ToArray(), FOLLOW_Variable2))
             return false;
         if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
             OutputDerivation("<variable2> -> <rept-idnest1> <rept-variable>");
-            return Rept_idnest1() && Rept_variable();
+            
+            SemStack.PushEmptyNode();
+
+            bool res = Rept_idnest1();
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+                SemStack.PushNextX(SementicOperation.DataMember, 2);
+            }
+            
+            return res && Rept_variable();
         }
         else if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<variable2> -> '(' <aParams> ')' <var-idNest>");
-            return Match(Openpar) && AParams() && Match(Closepar) && Var_idNest();
+
+            SemStack.PushEmptyNode();
+
+            bool res = Match(Openpar) && AParams() && Match(Closepar);
+
+            if(res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
+                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+            }
+
+            return res && Var_idNest();
         }
         else
             return false;
@@ -1645,7 +2096,13 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<var-idNest> -> '.' 'id' <var-idNest2>");
-            return Match(Dot) && Match(Id) && Var_idNest2();
+            
+            bool res = Match(Dot) && Match(Id);
+            
+            if(res)
+                SemStack.PushNode(Identifier,LookBehind);
+
+            return res && Var_idNest2();
         }
         else
             return false;
@@ -1662,12 +2119,36 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<var-idNest2> -> '(' <aParams> ')' <var-idNest>");
-            return Match(Openpar) && AParams() && Match(Closepar) && Var_idNest();
+
+            SemStack.PushEmptyNode();
+
+            bool res = Match(Openpar) && AParams() && Match(Closepar);
+            
+            if(res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
+                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+                SemStack.PushNextX(SementicOperation.DotChain, 2);
+            }
+            
+            return res && Var_idNest();
         }
         else if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
             OutputDerivation("<var-idNest2> -> <rept-idnest1>");
-            return Rept_idnest1();
+
+            SemStack.PushEmptyNode();
+
+            bool res = Rept_idnest1();
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+                SemStack.PushNextX(SementicOperation.DataMember, 2);
+                SemStack.PushNextX(SementicOperation.DotChain, 2);
+            }
+
+            return res;
         }
         else
             return false;
@@ -1684,12 +2165,24 @@ public class Parser : IParser
         if (Public == LookAhead.Type)
         {
             OutputDerivation("<visibility> -> 'public'");
-            return Match(Public);
+
+            bool res = Match(Public);
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Visibility,LookBehind);
+
+            return res;
         }
         else if (Private == LookAhead.Type)
         {
             OutputDerivation("<visibility> -> 'private'");
-            return Match(Private);
+
+            bool res = Match(Private);
+
+            if(res)
+                SemStack.PushNode(SementicOperation.Visibility,LookBehind);
+
+            return res;
         }
         else
             return false;
