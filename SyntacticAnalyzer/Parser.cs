@@ -641,12 +641,34 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<factor2> -> '(' <aParams> ')'");
-            return Match(Openpar) && AParams() && Match(Closepar);
+
+            SemStack.PushEmptyNode();
+
+            bool res = Match(Openpar) && AParams() && Match(Closepar);
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(AParamList);
+                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+            }
+
+            return res;
         }
         else if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
             OutputDerivation("<factor2> -> <rept-idnest1>");
-            return Rept_idnest1();
+            
+            SemStack.PushEmptyNode();
+
+            bool res = Rept_idnest1();
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+                SemStack.PushNextX(SementicOperation.DataMember, 2);
+            }
+
+            return res;
         }
         else
             return false;
@@ -787,7 +809,13 @@ public class Parser : IParser
         if (FIRST_FuncHead.Contains(LookAhead.Type))
         {
             OutputDerivation("<funcDef> -> <funcHead> <funcBody>");
-            return FuncHead() && FuncBody();
+            
+            bool res = FuncHead() && FuncBody();
+
+            if(res)
+                SemStack.PushNextX(SementicOperation.FuncDef, 2);
+
+            return res;
         }
         else
             return false;
@@ -840,7 +868,13 @@ public class Parser : IParser
         if (Dot == LookAhead.Type)
         {
             OutputDerivation("<idNest> -> '.' 'id' <idNest2>");
-            return Match(Dot) && Match(Id) && IdNest2();
+
+            bool res = Match(Dot) && Match(Id);
+            
+            if(res)
+                SemStack.PushNode(Identifier, LookBehind);
+            
+            return res && IdNest2();
         }
         else
             return false;
@@ -857,12 +891,37 @@ public class Parser : IParser
         if (Openpar == LookAhead.Type)
         {
             OutputDerivation("<idNest2> -> '(' <aParams> ')'");
-            return Match(Openpar) && AParams() && Match(Closepar);
+
+            SemStack.PushEmptyNode();
+
+            bool res = Match(Openpar) && AParams() && Match(Closepar);
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(AParamList);
+                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+                SemStack.PushNextX(SementicOperation.DotChain, 2);
+            }
+
+            return res;
         }
         else if (FIRST_Rept_idnest1.Contains(LookAhead.Type) || FOLLOW_Rept_idnest1.Contains(LookAhead.Type))
         {
             OutputDerivation("<idNest2> -> <rept-idnest1>");
-            return Rept_idnest1();
+
+            SemStack.PushEmptyNode();
+
+            bool res = Rept_idnest1();
+
+            if(res)
+            {
+                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+                SemStack.PushNextX(SementicOperation.DataMember, 2);
+                SemStack.PushNextX(SementicOperation.DotChain, 2);
+            }
+
+
+            return res;
         }
         else
             return false;
@@ -879,7 +938,24 @@ public class Parser : IParser
         if (Impl == LookAhead.Type)
         {
             OutputDerivation("<implDef> -> 'impl' 'id' '{' <rept-implDef3> '}'");
-            return Match(Impl) && Match(Id) && Match(Opencubr) && Rept_implDef3() && Match(Closecubr);
+
+            bool res = Match(Impl) && Match(Id);
+
+            if (res)
+            {
+                SemStack.PushNode(Identifier, LookBehind);
+                SemStack.PushEmptyNode();
+            }
+
+            res = res && Match(Opencubr) && Rept_implDef3() && Match(Closecubr);
+
+            if (res)
+            {
+                SemStack.PushUntilEmptyNode(FuncDefList);
+                SemStack.PushNextX(SementicOperation.ImplDef, 2);
+            }
+
+            return res;
         }
         else
             return false;
@@ -1677,8 +1753,14 @@ public class Parser : IParser
             OutputDerivation("<statement-Id-nest> -> '.' 'id' <statement-Id-nest>");
             
             SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+            SemStack.PushNextX(SementicOperation.DataMember, 2);
 
-            bool res = Match(Dot) && Match(Id);
+            bool res = Match(Dot);
+            
+            if (res)
+                SemStack.PushEmptyBeforeX(1);
+            
+            res = res && Match(Id);
 
             if (res)
             {
@@ -1711,16 +1793,24 @@ public class Parser : IParser
 
 
             bool res = Indice() && Rept_idnest1();
-            
-            if(res)
+
+            if (res)
+            {
                 SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-            
+                SemStack.PushNextX(SementicOperation.DataMember, 2);
+                SemStack.PushIfXEmpty(DotChain, 2);
+            }
+
             return res && Statement_Id_nest3();
         }
         else if (FIRST_AssignOp.Contains(LookAhead.Type))
         {
             OutputDerivation("<statement-Id-nest> -> <assignOp> <expr>");
             
+            SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
+            SemStack.PushNextX(SementicOperation.DataMember, 2);
+            SemStack.PushIfXEmpty(DotChain, 2);
+
             bool res = AssignOp() && Expr();
 
             if(res)

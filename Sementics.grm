@@ -30,8 +30,8 @@
 <factor>  ::= 'not' <factor> E3     
 <factor>  ::= <sign> T9 <factor> E4   
 
-<factor2>  ::= '(' <aParams> ')'   
-<factor2>  ::= <rept-idnest1>   
+<factor2>  ::= T0 '(' <aParams> ')' F7 V3   
+<factor2>  ::= T0 <rept-idnest1> V1 V2   
 
 <fParams>  ::= 'id' T1 ':' <type> T0 <rept-fParams3> A0 F3 <rept-fParams4>   
 <fParams>  ::= EPSILON
@@ -42,7 +42,7 @@
 
 <funcDecl> ::= <funcHead> ';'   
 
-<funcDef> ::= <funcHead> <funcBody>   
+<funcDef> ::= <funcHead> <funcBody> F0  
 
 <funcHead> ::= 'func' 'id' T1 T0 '(' <fParams> ')' 'arrow' F2 <returnType> F1   
 
@@ -54,10 +54,10 @@
 <statement> ::= 'return' '(' <expr> ')' ';' B4   
 
 
-<statement-Id-nest> ::= V1 V6 '.' T10 'id' T1 T0 <statement-Id-nest>   
+<statement-Id-nest> ::= V1 V2 '.' T10 'id' T1 T0 <statement-Id-nest>   
 <statement-Id-nest> ::= '(' <aParams> ')' F7 V3 V6 <statement-Id-nest2>  
-<statement-Id-nest> ::= <indice> <rept-idnest1> V1 V6 <statement-Id-nest3>  
-<statement-Id-nest> ::= <assignOp> <expr> F6  
+<statement-Id-nest> ::= <indice> <rept-idnest1> V1 V2 V6 <statement-Id-nest3>  
+<statement-Id-nest> ::= V1 V2 V6 <assignOp> <expr> F6  
 
 <statement-Id-nest2> ::= EPSILON V7
 <statement-Id-nest2> ::= '.' T10 'id' T1 T0 <statement-Id-nest>   
@@ -71,13 +71,13 @@
 <rept-var-or-funcCall>  ::=  <idNest> <rept-var-or-funcCall>    
 <rept-var-or-funcCall>  ::=  EPSILON
 
-<idNest> ::= '.' 'id' <idNest2>   
+<idNest> ::= '.' 'id' T1 <idNest2>   
 
-<idNest2> ::= '(' <aParams> ')'   
-<idNest2> ::= <rept-idnest1>   
+<idNest2> ::= T0 '(' <aParams> ')' F7 V3 V5 
+<idNest2> ::= T0 <rept-idnest1> V1 V2 V5
 
 
-<implDef> ::= 'impl' 'id' '{' <rept-implDef3> '}'   
+<implDef> ::= 'impl' 'id' T1 T0 '{' <rept-implDef3> '}' I1 I0  
 
 <indice> ::= '[' <arithExpr>  ']'   
 
@@ -219,6 +219,7 @@ S3: push(MakeFamily(StructMember, pop, pop))
 
 
 I0: push(MakeFamily(ImplDef, pop, pop))
+I1: push(MakeFamily(FuncDefList, popUntilEmpty))
 
 
 F0: push(MakeFamily(FuncDef, pop, pop))
@@ -247,7 +248,7 @@ V2: push(MakeFamily(DataMember, pop, pop))
 V3: push(MakeFamily(FuncCall, pop, pop))
 V4: push(MakeFamily(Variable, popUntilEmpty))
 V5: push(MakeFamily(DotChain, pop, pop))
-V6: Some Special stuff...
+V6: Some Special stuff... push if empty at position X
 V7: push(MakeFamily(FuncCall, pop))
 
 

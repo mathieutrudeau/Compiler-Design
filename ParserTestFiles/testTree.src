@@ -13,16 +13,49 @@ else
 
 };
 
-while(1>3){};
+let a : integer;
+while(1>3){
+    a.a=3;
+    a.a=3;
+    a.a=3;
+};
 
 write(!-32.3);
 
 return(1>=!2);
 
-//read(a(a,b<>2).d);
+read(a(a,b<>2).d);
 
-a().b().csad=3;
+//a.b().csad=0.0;
 
+//a().b(a[22]).a[2]=2+2;
+//a().b(a()).a[2]=2+2.0;
+
+//a.n(a[0].a[2][3].v((a+a)),-1);
 //a.a=3;
 
 }
+
+struct a  inherits b,c,d
+{ 
+  private let a : string; 
+  public let b : float;
+  public let c : float[2][][][];
+  public func f() -> void;
+  private func f() -> float;
+  private func f( a:float[1],d:integer[],g:float) -> newType;
+};
+
+
+impl B {
+func A () -> void {
+  let a : integer;
+}
+func A () -> void {
+
+}
+}
+
+struct QUAD inherits CLASS, A, B {
+
+};

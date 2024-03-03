@@ -356,4 +356,5 @@ public enum SementicOperation
     Variable,
     DotChain,
     AParamList,
+    FuncDefList,
 }
