@@ -1,9 +1,12 @@
 
 func jeff () -> void
 {
+my_function().a();
+
+  /*
 //let b:float[22][];
 
-a=4;
+a=4.4;
 
 if(1<>3) then{
 
@@ -33,9 +36,11 @@ read(a(a,b<>2).d);
 
 //a.n(a[0].a[2][3].v((a+a)),-1);
 //a.a=3;
+*/
 
 }
 
+/*
 struct a  inherits b,c,d
 { 
   private let a : string; 
@@ -59,3 +64,5 @@ func A () -> void {
 struct QUAD inherits CLASS, A, B {
 
 };
+
+*/

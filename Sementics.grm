@@ -203,7 +203,7 @@ T6: push(MakeNode(addOp))           : Add Operator
 T7: push(MakeNode(floatlit))        : Floatlit
 T8: push(MakeNode(multOp))          : Mult Operator
 T9: push(MakeNode(sign))            : Sign
-T10: push(MakeNode(), pop)          : Pop then push Empty node, then push pop value 
+T10: push(MakeNode(placeholder), pop)          : Pop then push placeholder node, then push popped value 
 
 
 
@@ -248,6 +248,7 @@ V2: push(MakeFamily(DataMember, pop, pop))
 V3: push(MakeFamily(FuncCall, pop, pop))
 V4: push(MakeFamily(Variable, popUntilEmpty))
 V5: push(MakeFamily(DotChain, pop, pop))
+V6: push(MakeFamily(DotChain, x popped is placeholder))
 V6: Some Special stuff... push if empty at position X
 V7: push(MakeFamily(FuncCall, pop))
 

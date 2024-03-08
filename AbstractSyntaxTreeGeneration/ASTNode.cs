@@ -1,9 +1,11 @@
-using System.Runtime.InteropServices;
 using LexicalAnalyzer;
 using static AbstractSyntaxTreeGeneration.SementicOperation;
 
 namespace AbstractSyntaxTreeGeneration;
 
+/// <summary>
+/// Implementation of an abstract syntax tree node.
+/// </summary>
 public class ASTNode : IASTNode
 {
 
@@ -17,6 +19,10 @@ public class ASTNode : IASTNode
 
     public Token? Token { get; set; } = null;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ASTNode"/> class.
+    /// By default, the parent, leftmost child, and right sibling are set to null.
+    /// </summary>
     public ASTNode()
     {
         Parent = null;
@@ -25,24 +31,29 @@ public class ASTNode : IASTNode
         Operation = SementicOperation.Null;
     }
 
+    #region Instance Methods
+
     public bool IsLeaf()
     {
+        // If the current node has no leftmost child, it is a leaf node
         return LeftMostChild == null;
     }
 
     public bool IsRoot()
     {
+        // If the current node has no parent, it is the root of the tree
         return Parent == null;
     }
 
     public bool IsLeftMostChild()
     {
+        // If the current node has a parent and the leftmost child of the parent is the current node, the current node is the leftmost child
         return Parent?.LeftMostChild == this;
     }
-    
+
     public IASTNode GetLeftMostSibling()
-    {                   
-        // If the current node has no parent, return the current node
+    {
+        // If the current node has no parent, return the current node (as it is the root of the tree)
         // Otherwise, return the leftmost child of the parent node, which is the current node's leftmost sibling
         return Parent == null ? this : Parent.LeftMostChild!;
     }
@@ -97,6 +108,51 @@ public class ASTNode : IASTNode
     }
 
     /// <summary>
+    /// Returns a string representation of the abstract syntax tree.
+    /// </summary>
+    /// <param name="node"> The root node of the abstract syntax tree. </param>
+    /// <param name="indent"> The indentation for the tree. </param>
+    /// <returns> A string representation of the abstract syntax tree. </returns>
+    private string GetAST(IASTNode node, string indent = "")
+    {
+        // Get the operation of current node
+        string tree = indent + node.Operation.ToString();
+
+        // If the current node is a leaf node, append the token to the output
+        if (node.LeftMostChild == null)
+            if (node.Token != null)
+                tree += " - " + node.Token.Lexeme;
+            else
+                tree += " - null";
+
+        // Append a newline to the output
+        tree += "\n";
+
+        // Get the leftmost child of the current node
+        IASTNode? child = node.LeftMostChild;
+
+        // Recursively get the abstract syntax tree of the leftmost child and its siblings
+        while (child != null)
+        {
+            tree += GetAST(child, indent + "| ");
+            child = child.RightSibling;
+        }
+
+        // Return the string representation of the abstract syntax tree
+        return tree;
+    }
+
+    public override string ToString()
+    {
+        // Get the abstract syntax tree of the current node
+        return GetAST(this);
+    }
+
+    #endregion Instance Methods
+
+    #region Static Methods
+
+    /// <summary>
     /// Creates a new node with the specified operation and makes the specified child nodes the children of the new node.
     /// </summary>
     /// <param name="operation"> The operation of the new node. </param>
@@ -125,90 +181,70 @@ public class ASTNode : IASTNode
         return node;
     }
 
-
-
+    /// <summary>
+    /// Creates a new empty node.
+    /// </summary>
+    /// <returns> The new node. </returns>
     public static IASTNode MakeNode()
     {
         return new ASTNode();
     }
 
+    /// <summary>
+    /// Creates a new node with the specified operation.
+    /// </summary>
+    /// <param name="operation"> The operation of the new node. </param>
+    /// <returns> The new node. </returns>
     public static IASTNode MakeNode(SementicOperation operation)
     {
         return new ASTNode { Operation = operation };
     }
 
+    /// <summary>
+    /// Creates a new node with the specified operation and token.
+    /// </summary>
+    /// <param name="operation"> The operation of the new node. </param>
+    /// <param name="token"> The token of the new node. </param>
+    /// <returns> The new node. </returns>
     public static IASTNode MakeNode(SementicOperation operation, Token token)
     {
-        return new ASTNode { Operation = operation, Token = token};
+        return new ASTNode { Operation = operation, Token = token };
     }
 
-
-    public override string ToString()
-    {
-        return GetAST(this);
-    }
-
-    private string GetAST(IASTNode node, string indent = "")
-    {
-        string tree = indent + node.Operation.ToString();
-
-        if(node.LeftMostChild==null)
-        {
-            if(node.Token!=null)
-            {
-                tree += " - " + node.Token.Lexeme;
-            }
-            else
-            {
-                tree += " - null";
-            }
-        }
-        
-
-
-        tree += "\n";
-
-        IASTNode? child = node.LeftMostChild;
-
-        while (child != null)
-        {
-            tree += GetAST(child, indent + "| ");
-            child = child.RightSibling;
-        }
-
-        return tree;
-    }
-
+    #endregion Static Methods
 }
 
-public class SementicStack
+/// <summary>
+/// Implementation of a stack for the abstract syntax tree.
+/// </summary>
+public class SementicStack : ISementicStack
 {
+    /// <summary>
+    /// Stack to store the nodes of the abstract syntax tree.
+    /// </summary>
     private readonly Stack<IASTNode> _stack;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SementicStack"/> class.
+    /// </summary>
     public SementicStack()
     {
         _stack = new Stack<IASTNode>();
     }
+
+    #region Push Methods
 
     public void Push(IASTNode node)
     {
         _stack.Push(node);
     }
 
-
-    /// <summary>
-    /// Pushes an empty node onto the stack.
-    /// </summary>
     public void PushEmptyNode()
     {
         _stack.Push(ASTNode.MakeNode());
     }
 
-    /// <summary>
-    /// Pushes an empty node onto the stack and then pushes the specified number of nodes onto the stack.
-    /// </summary>
-    /// <param name="x"> The number of nodes to push onto the stack. </param>
-    public void PushEmptyBeforeX(int x)
+    public void PushPlaceholderNodeBeforeX(int x)
     {
         // Create a list to store the nodes
         LinkedList<IASTNode> nodes = new();
@@ -217,68 +253,33 @@ public class SementicStack
         for (int i = 0; i < x; i++)
             nodes.AddFirst(_stack.Pop());
 
-        // Push an empty node
-        _stack.Push(ASTNode.MakeNode());
+        // Push a placeholder node
+        _stack.Push(ASTNode.MakeNode(Placeholder));
 
         // Push the popped nodes back onto the stack
         foreach (IASTNode node in nodes)
             _stack.Push(node);
     }
 
-    public bool IsEmptyNode(int x)
+    public void PushIfXPlaceholder(SementicOperation operation, int x)
     {
-        // Create a list to store the nodes
-        LinkedList<IASTNode> nodes = new();
-
-        // Pop the specified number of nodes
-        for (int i = 0; i < x; i++)
-            nodes.AddFirst(_stack.Pop());
-
-        // Check if the next node is an empty node
-        bool isEmpty = _stack.Peek().Operation == Null;
-
-        // Push the popped nodes back onto the stack
-        foreach (IASTNode node in nodes)
-            _stack.Push(node);
-
-        // Return whether the next node is an empty node
-        return isEmpty;
-    }
-
-
-    public void PushNode(SementicOperation operation, Token token)
-    {
-        _stack.Push(ASTNode.MakeNode(operation, token));
-    }
-
-    public void PushIfXEmpty(SementicOperation operation, int x)
-    {
-        if (IsEmptyNode(x))
+        // Check if the node before the xth node is a placeholder node
+        if (IsPlaceholderNode(x))
         {
+            // Push a new node with the specified operation before the xth node
             PushNextX(operation, x);
 
-            // Remove the empty node
+            // Remove the placeholder node
             IASTNode node = _stack.Pop();
             _stack.Pop();
             _stack.Push(node);
         }
-
     }
 
-    public void PushUntilEmptyNode(SementicOperation operation)
+    public void PushNode(SementicOperation operation, Token token)
     {
-        // Create a list to store the nodes
-        LinkedList<IASTNode> nodes = new();
-
-        // Pop nodes until an empty node is found
-        while (_stack.Peek().Operation != Null)
-            nodes.AddFirst(_stack.Pop());
-
-        // Pop the empty node
-        _stack.Pop();
-        
-        // Push a new node with the specified operation and the popped nodes as children
-        _stack.Push(ASTNode.MakeFamily(operation, nodes.ToArray()));
+        // Push a new node with the specified operation and token
+        _stack.Push(ASTNode.MakeNode(operation, token));
     }
 
     public void PushNextX(SementicOperation operation, int x)
@@ -293,25 +294,55 @@ public class SementicStack
         // Push a new node with the specified operation and the popped nodes as children
         _stack.Push(ASTNode.MakeFamily(operation, nodes.ToArray()));
     }
-    
+
+    public void PushUntilEmptyNode(SementicOperation operation)
+    {
+        // Create a list to store the nodes
+        LinkedList<IASTNode> nodes = new();
+
+        // Pop nodes until an empty node is found
+        while (_stack.Peek().Operation != SementicOperation.Null)
+            nodes.AddFirst(_stack.Pop());
+
+        // Pop the empty node
+        _stack.Pop();
+
+        // Push a new node with the specified operation and the popped nodes as children
+        _stack.Push(ASTNode.MakeFamily(operation, nodes.ToArray()));
+    }
+
+    #endregion Push Methods
+
+    public bool IsPlaceholderNode(int x)
+    {
+        // Create a list to store the nodes
+        LinkedList<IASTNode> nodes = new();
+
+        // Pop the specified number of nodes
+        for (int i = 0; i < x; i++)
+            nodes.AddFirst(_stack.Pop());
+
+        // Check if the next node is a placeholder node
+        bool isPlaceholder = _stack.Peek().Operation == SementicOperation.Placeholder;
+
+        // Push the popped nodes back onto the stack
+        foreach (IASTNode node in nodes)
+            _stack.Push(node);
+
+        // Return whether the next node is a placeholder node
+        return isPlaceholder;
+    }
 
     public IASTNode Pop()
     {
         return _stack.Pop();
     }
-
-    public IASTNode Peek()
-    {
-        return _stack.Peek();
-    }
-
-    public bool IsEmpty()
-    {
-        return _stack.Count == 0;
-    }
-
 }
 
+/// <summary>
+/// Sementic operations for the abstract syntax tree. 
+/// These operations are used to identify the type of node in the abstract syntax tree.
+/// </summary>
 public enum SementicOperation
 {
     Null,
@@ -340,7 +371,7 @@ public enum SementicOperation
     FParam,
     VarDeclOrStatList,
     StatBlock,
-    IfStat, 
+    IfStat,
     WhileStat,
     ReturnStat,
     AssignStat,
@@ -357,4 +388,5 @@ public enum SementicOperation
     DotChain,
     AParamList,
     FuncDefList,
+    Placeholder,
 }

@@ -1758,7 +1758,7 @@ public class Parser : IParser
             bool res = Match(Dot);
             
             if (res)
-                SemStack.PushEmptyBeforeX(1);
+                SemStack.PushPlaceholderNodeBeforeX(1);
             
             res = res && Match(Id);
 
@@ -1782,7 +1782,7 @@ public class Parser : IParser
             {
                 SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
                 SemStack.PushNextX(SementicOperation.FuncCall, 2);
-                SemStack.PushIfXEmpty(DotChain, 2);
+                SemStack.PushIfXPlaceholder(DotChain, 2);
             }
 
             return res && Statement_Id_nest2();
@@ -1798,7 +1798,7 @@ public class Parser : IParser
             {
                 SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
                 SemStack.PushNextX(SementicOperation.DataMember, 2);
-                SemStack.PushIfXEmpty(DotChain, 2);
+                SemStack.PushIfXPlaceholder(DotChain, 2);
             }
 
             return res && Statement_Id_nest3();
@@ -1809,7 +1809,7 @@ public class Parser : IParser
             
             SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
             SemStack.PushNextX(SementicOperation.DataMember, 2);
-            SemStack.PushIfXEmpty(DotChain, 2);
+            SemStack.PushIfXPlaceholder(DotChain, 2);
 
             bool res = AssignOp() && Expr();
 
@@ -1837,7 +1837,7 @@ public class Parser : IParser
             bool res = Match(Dot);
 
             if (res)
-                SemStack.PushEmptyBeforeX(1);
+                SemStack.PushPlaceholderNodeBeforeX(1);
             
             res = res && Match(Id);
 
@@ -1887,7 +1887,7 @@ public class Parser : IParser
             bool res = Match(Dot);
 
             if (res)
-                SemStack.PushEmptyBeforeX(1);
+                SemStack.PushPlaceholderNodeBeforeX(1);
             
             res = res && Match(Id);
 

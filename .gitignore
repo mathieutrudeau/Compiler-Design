@@ -1,2 +1,7 @@
 bin/**
 obj/**
+**.outderivation
+**.outlextokens
+**.outproductions
+**.outsyntaxerrors
+**.outast
