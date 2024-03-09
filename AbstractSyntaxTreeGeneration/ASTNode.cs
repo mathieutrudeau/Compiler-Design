@@ -1,3 +1,4 @@
+using System.Transactions;
 using LexicalAnalyzer;
 using static AbstractSyntaxTreeGeneration.SementicOperation;
 
@@ -18,6 +19,11 @@ public class ASTNode : IASTNode
     public IASTNode? RightSibling { get; set; }
 
     public Token? Token { get; set; } = null;
+
+    /// <summary>
+    /// The next id for the abstract syntax tree.
+    /// </summary>
+    private int _next_id = 0;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ASTNode"/> class.
@@ -146,6 +152,52 @@ public class ASTNode : IASTNode
     {
         // Get the abstract syntax tree of the current node
         return GetAST(this);
+    }
+
+    /// <summary>
+    /// Returns a string representation of the abstract syntax tree in DOT format.
+    /// </summary>
+    /// <returns> A string representation of the abstract syntax tree in DOT format. </returns>
+    public string DotASTString()
+    {
+        // Reset the next id for the abstract syntax tree
+        _next_id = 0;
+
+        // Create the DOT string for the abstract syntax tree
+        string dot = "digraph AST {\n";
+        dot += "node [shape=record];\n";
+        dot += "node [fontname=Sans];charset=\"UTF-8\" splines=true splines=spline rankdir =LR\n";
+        
+        // Get the DOT string for the abstract syntax tree
+        dot += DotASTString(this, _next_id++);
+        dot += "}\n";
+
+        return dot;
+    }
+
+    /// <summary>
+    /// Returns a string representation of the abstract syntax tree in DOT format.
+    /// </summary>
+    /// <param name="node"> The current node. </param>
+    /// <param name="id"> The id of the current node. </param>
+    /// <returns> A string representation of the abstract syntax tree in DOT format. </returns>
+    private string DotASTString(IASTNode node, int id)
+    {       
+        // Create the DOT string for the current node
+        string dot = id + " [label=\"" + node.Operation.ToString()+"\"]\n";
+
+        // Get the DOT string for the leftmost child of the current node and its siblings
+        IASTNode? child = node.LeftMostChild;
+        while (child != null)
+        {
+            // Get the DOT string for the child node
+            int nextId = _next_id++;
+            dot += id + " -> " + nextId + "\n";
+            dot += DotASTString(child, nextId);
+            child = child.RightSibling;
+        }
+
+        return dot;
     }
 
     #endregion Instance Methods

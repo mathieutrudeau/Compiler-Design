@@ -21,28 +21,25 @@ public class Parser : IParser
     /// </summary>
     private Token LookAhead { get; set; }
 
-    private Token LookBehind { get; set; }
-
     /// <summary>
-    /// The source file to parse (with the file extension)
+    /// The token that was looked at before the current token
     /// </summary>
-    private string Source {get;} = "";
+    private Token LookBehind { get; set; }
 
     /// <summary>
     /// The name of the source file to parse
     /// </summary>
     private string SourceName {get;} = "";
 
-    private int Scope { get; set; } = 0;
-    
     /// <summary>
     /// The parse list used to track the derivations
     /// </summary>
     private IParseList ParseList { get; set; } = new ParseList();
 
-    private SementicStack SemStack { get; set; } = new SementicStack();
-
-    //private LinkedList<Symbol> SymbolTable { get; set; } = new LinkedList<Symbol>();
+    /// <summary>
+    /// The sementic stack used to track the AST nodes
+    /// </summary>
+    private ISementicStack SemStack { get; set; } = new SementicStack();
 
     #region Constants
 
@@ -61,6 +58,16 @@ public class Parser : IParser
     /// </summary>
     private const string OUT_PRODUCTIONS_EXTENSION = ".outproductions";
 
+    /// <summary>
+    /// Extension for the output AST file
+    /// </summary>
+    private const string OUT_AST_EXTENSION = ".ast.outast";
+
+    /// <summary>
+    /// Extension for the output DOT AST file
+    /// </summary>
+    private const string OUT_DOT_AST_EXTENSION = ".dot.outast";
+
     #endregion Constants
 
     #region Constructor
@@ -77,7 +84,6 @@ public class Parser : IParser
         LookBehind = new Token();
 
         // Set the source file 
-        Source = sourceFileName;
         SourceName = sourceFileName.Replace(".src", "");
 
         // Delete the output files if they exist
@@ -87,6 +93,10 @@ public class Parser : IParser
             File.Delete(SourceName + OUT_DERIVATION_EXTENSION);
         if (File.Exists(SourceName + OUT_PRODUCTIONS_EXTENSION))
             File.Delete(SourceName + OUT_PRODUCTIONS_EXTENSION);
+        if (File.Exists(SourceName + OUT_AST_EXTENSION))
+            File.Delete(SourceName + OUT_AST_EXTENSION);
+        if (File.Exists(SourceName + OUT_DOT_AST_EXTENSION))
+            File.Delete(SourceName + OUT_DOT_AST_EXTENSION);
     }
 
     #endregion Constructor
@@ -115,8 +125,21 @@ public class Parser : IParser
         // Get the AST root node from the stack
         IASTNode root = SemStack.Pop();
 
+        // Output the AST to the output file
+        using StreamWriter sw1 = new(SourceName + OUT_AST_EXTENSION, true);
+        sw1.WriteLine(root.ToString());
+        sw1.Close();
+
+        // Output the dot AST to the output file
+        using StreamWriter sw2 = new(SourceName + OUT_DOT_AST_EXTENSION, true);
+        sw2.WriteLine(root.DotASTString());
+        sw2.Close();
+
         // Output the AST to the console
-        WriteLine(root.ToString());
+        //WriteLine(root.ToString());
+
+
+        //WriteLine(root.DotASTString());
 
         // Return the result
         return res;
@@ -135,6 +158,8 @@ public class Parser : IParser
 
         // Check if the current token matches the expected token
         bool isMatch = LookAhead.Type == tokenType;
+
+        // Set the LookBehind token to the current token
         LookBehind = LookAhead;
 
         if (!isMatch)
@@ -357,7 +382,6 @@ public class Parser : IParser
 
     #region Productions
     
-
     /// <summary>
     /// AddOp production rule
     /// </summary>

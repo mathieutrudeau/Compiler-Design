@@ -1,5 +1,4 @@
 using static System.Console;
-using LexicalAnalyzer;
 
 namespace SyntacticAnalyzer;
 
@@ -14,7 +13,7 @@ public static class ParserDriver
     public static void ParseFile(string sourceFolder)
     {
         // Get all the test files
-        string[] testFiles = Directory.GetFiles(sourceFolder, "bubblesort.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "*.src");
 
         // Run the parser on each file
         foreach (string testFile in testFiles)

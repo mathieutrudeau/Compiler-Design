@@ -1,4 +1,5 @@
-func main() -> void {
+func main(fa:integer[]) -> void {
+
 
 let a: float;
 

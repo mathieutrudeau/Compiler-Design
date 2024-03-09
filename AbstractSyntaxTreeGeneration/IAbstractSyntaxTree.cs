@@ -61,6 +61,7 @@ public interface ISementicStack
     /// </summary>
     /// <returns> The node that was popped from the top of the stack. </returns>
     public IASTNode Pop();
+
 }
 
 /// <summary>
@@ -125,5 +126,10 @@ public interface IASTNode
     /// <returns> True if the current node is a leaf node, otherwise false. </returns>
     public bool IsLeaf();
 
+    /// <summary>
+    /// Gets the string representation of the abstract syntax tree as a dot file.
+    /// </summary>
+    /// <returns> The string representation of the abstract syntax tree as a dot file. </returns>
+    public string DotASTString();
 
 }
