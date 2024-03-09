@@ -2,7 +2,7 @@
 using LexicalAnalyzer;
 using static System.Console;
 using static LexicalAnalyzer.TokenType;
-using static AbstractSyntaxTreeGeneration.SementicOperation;
+using static AbstractSyntaxTreeGeneration.SemanticOperation;
     
 namespace SyntacticAnalyzer;
 
@@ -39,7 +39,7 @@ public class Parser : IParser
     /// <summary>
     /// The sementic stack used to track the AST nodes
     /// </summary>
-    private ISementicStack SemStack { get; set; } = new SementicStack();
+    private ISemanticStack SemStack { get; set; } = new SemanticStack();
 
     #region Constants
 
@@ -504,6 +504,9 @@ public class Parser : IParser
         else if (Closesqbr == LookAhead.Type)
         {
             OutputDerivation("<arraySize2> -> ']'");
+
+            SemStack.PushNode(SemanticOperation.ArrayIndex, null);
+
             return Match(Closesqbr);
         }
         else
@@ -559,12 +562,12 @@ public class Parser : IParser
             bool res = RelOp(); 
             
             if(res)
-                SemStack.PushNode(SementicOperation.RelOp, LookBehind);
+                SemStack.PushNode(SemanticOperation.RelOp, LookBehind);
 
             res = res && ArithExpr();
 
             if(res)
-                SemStack.PushNextX(SementicOperation.RelExpr, 3);
+                SemStack.PushNextX(SemanticOperation.RelExpr, 3);
 
             return res;
         }
@@ -630,7 +633,7 @@ public class Parser : IParser
             bool res = Match(Not) && Factor();
 
             if(res)
-                SemStack.PushNextX(SementicOperation.NotFactor, 1);
+                SemStack.PushNextX(SemanticOperation.NotFactor, 1);
 
             return res;
         }
@@ -641,12 +644,12 @@ public class Parser : IParser
             bool res = Sign();
 
             if(res)
-                SemStack.PushNode(SementicOperation.Sign, LookBehind); 
+                SemStack.PushNode(SemanticOperation.Sign, LookBehind); 
             
             res = res && Factor();
 
             if(res)
-                SemStack.PushNextX(SementicOperation.SignFactor, 2);
+                SemStack.PushNextX(SemanticOperation.SignFactor, 2);
 
             return res;
         }
@@ -673,7 +676,7 @@ public class Parser : IParser
             if (res)
             {
                 SemStack.PushUntilEmptyNode(AParamList);
-                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+                SemStack.PushNextX(SemanticOperation.FuncCall, 2);
             }
 
             return res;
@@ -688,8 +691,8 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-                SemStack.PushNextX(SementicOperation.DataMember, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+                SemStack.PushNextX(SemanticOperation.DataMember, 2);
             }
 
             return res;
@@ -724,8 +727,8 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.ArraySize);
-                SemStack.PushNextX(SementicOperation.FParam, 3);
+                SemStack.PushUntilEmptyNode(SemanticOperation.ArraySize);
+                SemStack.PushNextX(SemanticOperation.FParam, 3);
             }
 
             return res && Rept_fParams4();
@@ -765,8 +768,8 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.ArraySize);
-                SemStack.PushNextX(SementicOperation.FParam, 3);
+                SemStack.PushUntilEmptyNode(SemanticOperation.ArraySize);
+                SemStack.PushNextX(SemanticOperation.FParam, 3);
             }
 
             return res;
@@ -837,7 +840,7 @@ public class Parser : IParser
             bool res = FuncHead() && FuncBody();
 
             if(res)
-                SemStack.PushNextX(SementicOperation.FuncDef, 2);
+                SemStack.PushNextX(SemanticOperation.FuncDef, 2);
 
             return res;
         }
@@ -873,7 +876,7 @@ public class Parser : IParser
             res = res && ReturnType();
 
             if (res)
-                SemStack.PushNextX(SementicOperation.FuncHead, 3);
+                SemStack.PushNextX(SemanticOperation.FuncHead, 3);
 
             return res;
         }
@@ -923,8 +926,8 @@ public class Parser : IParser
             if (res)
             {
                 SemStack.PushUntilEmptyNode(AParamList);
-                SemStack.PushNextX(SementicOperation.FuncCall, 2);
-                SemStack.PushNextX(SementicOperation.DotChain, 2);
+                SemStack.PushNextX(SemanticOperation.FuncCall, 2);
+                SemStack.PushNextX(SemanticOperation.DotChain, 2);
             }
 
             return res;
@@ -939,9 +942,9 @@ public class Parser : IParser
 
             if(res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-                SemStack.PushNextX(SementicOperation.DataMember, 2);
-                SemStack.PushNextX(SementicOperation.DotChain, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+                SemStack.PushNextX(SemanticOperation.DataMember, 2);
+                SemStack.PushNextX(SemanticOperation.DotChain, 2);
             }
 
 
@@ -976,7 +979,7 @@ public class Parser : IParser
             if (res)
             {
                 SemStack.PushUntilEmptyNode(FuncDefList);
-                SemStack.PushNextX(SementicOperation.ImplDef, 2);
+                SemStack.PushNextX(SemanticOperation.ImplDef, 2);
             }
 
             return res;
@@ -1122,12 +1125,12 @@ public class Parser : IParser
             bool res = ArithExpr() && RelOp();
             
             if (res)
-                SemStack.PushNode(SementicOperation.RelOp, LookBehind);
+                SemStack.PushNode(SemanticOperation.RelOp, LookBehind);
 
             res = res && ArithExpr();
 
             if (res)
-                SemStack.PushNextX(SementicOperation.RelExpr, 3);
+                SemStack.PushNextX(SemanticOperation.RelExpr, 3);
 
             return res;
         }
@@ -1517,7 +1520,7 @@ public class Parser : IParser
             bool res = Match(TokenType.Void);
 
             if(res)
-                SemStack.PushNode(SementicOperation.Type,LookBehind);
+                SemStack.PushNode(SemanticOperation.Type,LookBehind);
 
             return res;
         }
@@ -1540,12 +1543,12 @@ public class Parser : IParser
             bool res = AddOp();
 
             if(res)
-                SemStack.PushNode(SementicOperation.AddOp, LookBehind);
+                SemStack.PushNode(SemanticOperation.AddOp, LookBehind);
 
             res = res && Term();
             
             if(res)
-                SemStack.PushNextX(SementicOperation.AddExpr, 3);
+                SemStack.PushNextX(SemanticOperation.AddExpr, 3);
             
             return res && Rightrec_arithExpr();
         }
@@ -1573,12 +1576,12 @@ public class Parser : IParser
             bool res = MultOp();
             
             if(res)
-                SemStack.PushNode(SementicOperation.MultOp, LookBehind);
+                SemStack.PushNode(SemanticOperation.MultOp, LookBehind);
             
             res = res && Factor();
             
             if(res)
-                SemStack.PushNextX(SementicOperation.MultExpr, 3);
+                SemStack.PushNextX(SemanticOperation.MultExpr, 3);
 
             return res && RightRecTerm();
         }
@@ -1694,7 +1697,7 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.StatBlock);
+                SemStack.PushUntilEmptyNode(SemanticOperation.StatBlock);
                 SemStack.PushEmptyNode();
             }
 
@@ -1702,7 +1705,7 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.StatBlock);
+                SemStack.PushUntilEmptyNode(SemanticOperation.StatBlock);
                 SemStack.PushNextX(IfStat, 3);
             }
 
@@ -1721,7 +1724,7 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.StatBlock);
+                SemStack.PushUntilEmptyNode(SemanticOperation.StatBlock);
                 SemStack.PushNextX(WhileStat, 2);
             }
 
@@ -1776,8 +1779,8 @@ public class Parser : IParser
         {
             OutputDerivation("<statement-Id-nest> -> '.' 'id' <statement-Id-nest>");
             
-            SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-            SemStack.PushNextX(SementicOperation.DataMember, 2);
+            SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+            SemStack.PushNextX(SemanticOperation.DataMember, 2);
 
             bool res = Match(Dot);
             
@@ -1804,8 +1807,8 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
-                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.AParamList);
+                SemStack.PushNextX(SemanticOperation.FuncCall, 2);
                 SemStack.PushIfXPlaceholder(DotChain, 2);
             }
 
@@ -1820,8 +1823,8 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-                SemStack.PushNextX(SementicOperation.DataMember, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+                SemStack.PushNextX(SemanticOperation.DataMember, 2);
                 SemStack.PushIfXPlaceholder(DotChain, 2);
             }
 
@@ -1831,14 +1834,14 @@ public class Parser : IParser
         {
             OutputDerivation("<statement-Id-nest> -> <assignOp> <expr>");
             
-            SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-            SemStack.PushNextX(SementicOperation.DataMember, 2);
+            SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+            SemStack.PushNextX(SemanticOperation.DataMember, 2);
             SemStack.PushIfXPlaceholder(DotChain, 2);
 
             bool res = AssignOp() && Expr();
 
             if(res)
-                SemStack.PushNextX(SementicOperation.AssignStat, 2);
+                SemStack.PushNextX(SemanticOperation.AssignStat, 2);
 
             return res;
         }
@@ -1877,7 +1880,7 @@ public class Parser : IParser
         {
             OutputDerivation("<statement-Id-nest2> -> EPSILON");
 
-            SemStack.PushNextX(SementicOperation.FuncCall, 1);
+            SemStack.PushNextX(SemanticOperation.FuncCall, 1);
 
             return true;
         }
@@ -1900,7 +1903,7 @@ public class Parser : IParser
             bool res = AssignOp() && Expr();
 
             if(res)
-                SemStack.PushNextX(SementicOperation.AssignStat, 2);
+                SemStack.PushNextX(SemanticOperation.AssignStat, 2);
 
             return res;
         }
@@ -1989,7 +1992,7 @@ public class Parser : IParser
             // Call the production rule for StructDecl
             bool res = StructDecl();
             if (res)
-                SemStack.PushNextX(SementicOperation.StructDecl, 3);
+                SemStack.PushNextX(SemanticOperation.StructDecl, 3);
             return res;
         }
         else if (FIRST_ImplDef.Contains(LookAhead.Type))
@@ -2037,7 +2040,7 @@ public class Parser : IParser
             bool res = Match(Integer);
 
             if(res)
-                SemStack.PushNode(SementicOperation.Type,LookBehind);
+                SemStack.PushNode(SemanticOperation.Type,LookBehind);
 
             return res;
         }
@@ -2048,7 +2051,7 @@ public class Parser : IParser
             bool res = Match(Float);
 
             if(res)
-                SemStack.PushNode(SementicOperation.Type, LookBehind);
+                SemStack.PushNode(SemanticOperation.Type, LookBehind);
 
             return res;
         }
@@ -2059,7 +2062,7 @@ public class Parser : IParser
             bool res = Match(Id);
 
             if(res)
-                SemStack.PushNode(SementicOperation.Type,LookBehind);
+                SemStack.PushNode(SemanticOperation.Type,LookBehind);
 
             return res;
         }
@@ -2093,8 +2096,8 @@ public class Parser : IParser
 
             if(res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.ArraySize);
-                SemStack.PushNextX(SementicOperation.VarDecl, 3);
+                SemStack.PushUntilEmptyNode(SemanticOperation.ArraySize);
+                SemStack.PushNextX(SemanticOperation.VarDecl, 3);
             }
 
             return res;
@@ -2147,7 +2150,7 @@ public class Parser : IParser
             res = res && Variable2();
 
             if(res)
-                SemStack.PushUntilEmptyNode(SementicOperation.Variable);
+                SemStack.PushUntilEmptyNode(SemanticOperation.Variable);
 
             return res;
         }
@@ -2173,8 +2176,8 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-                SemStack.PushNextX(SementicOperation.DataMember, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+                SemStack.PushNextX(SemanticOperation.DataMember, 2);
             }
             
             return res && Rept_variable();
@@ -2189,8 +2192,8 @@ public class Parser : IParser
 
             if(res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
-                SemStack.PushNextX(SementicOperation.FuncCall, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.AParamList);
+                SemStack.PushNextX(SemanticOperation.FuncCall, 2);
             }
 
             return res && Var_idNest();
@@ -2240,9 +2243,9 @@ public class Parser : IParser
             
             if(res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.AParamList);
-                SemStack.PushNextX(SementicOperation.FuncCall, 2);
-                SemStack.PushNextX(SementicOperation.DotChain, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.AParamList);
+                SemStack.PushNextX(SemanticOperation.FuncCall, 2);
+                SemStack.PushNextX(SemanticOperation.DotChain, 2);
             }
             
             return res && Var_idNest();
@@ -2257,9 +2260,9 @@ public class Parser : IParser
 
             if (res)
             {
-                SemStack.PushUntilEmptyNode(SementicOperation.IndexList);
-                SemStack.PushNextX(SementicOperation.DataMember, 2);
-                SemStack.PushNextX(SementicOperation.DotChain, 2);
+                SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
+                SemStack.PushNextX(SemanticOperation.DataMember, 2);
+                SemStack.PushNextX(SemanticOperation.DotChain, 2);
             }
 
             return res;
@@ -2283,7 +2286,7 @@ public class Parser : IParser
             bool res = Match(Public);
 
             if(res)
-                SemStack.PushNode(SementicOperation.Visibility,LookBehind);
+                SemStack.PushNode(SemanticOperation.Visibility,LookBehind);
 
             return res;
         }
@@ -2294,7 +2297,7 @@ public class Parser : IParser
             bool res = Match(Private);
 
             if(res)
-                SemStack.PushNode(SementicOperation.Visibility,LookBehind);
+                SemStack.PushNode(SemanticOperation.Visibility,LookBehind);
 
             return res;
         }

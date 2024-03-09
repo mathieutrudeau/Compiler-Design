@@ -1,6 +1,6 @@
 using System.Transactions;
 using LexicalAnalyzer;
-using static AbstractSyntaxTreeGeneration.SementicOperation;
+using static AbstractSyntaxTreeGeneration.SemanticOperation;
 
 namespace AbstractSyntaxTreeGeneration;
 
@@ -10,7 +10,7 @@ namespace AbstractSyntaxTreeGeneration;
 public class ASTNode : IASTNode
 {
 
-    public SementicOperation Operation { get; set; }
+    public SemanticOperation Operation { get; set; }
 
     public IASTNode? Parent { get; set; }
 
@@ -34,7 +34,7 @@ public class ASTNode : IASTNode
         Parent = null;
         LeftMostChild = null;
         RightSibling = null;
-        Operation = SementicOperation.Null;
+        Operation = SemanticOperation.Null;
     }
 
     #region Instance Methods
@@ -210,7 +210,7 @@ public class ASTNode : IASTNode
     /// <param name="operation"> The operation of the new node. </param>
     /// <param name="childNodes"> The child nodes of the new node. </param>
     /// <returns> The new node. </returns>
-    public static IASTNode MakeFamily(SementicOperation operation, params IASTNode[] childNodes)
+    public static IASTNode MakeFamily(SemanticOperation operation, params IASTNode[] childNodes)
     {
         // Create a new node with the specified operation
         IASTNode node = MakeNode(operation);
@@ -247,7 +247,7 @@ public class ASTNode : IASTNode
     /// </summary>
     /// <param name="operation"> The operation of the new node. </param>
     /// <returns> The new node. </returns>
-    public static IASTNode MakeNode(SementicOperation operation)
+    public static IASTNode MakeNode(SemanticOperation operation)
     {
         return new ASTNode { Operation = operation };
     }
@@ -258,7 +258,7 @@ public class ASTNode : IASTNode
     /// <param name="operation"> The operation of the new node. </param>
     /// <param name="token"> The token of the new node. </param>
     /// <returns> The new node. </returns>
-    public static IASTNode MakeNode(SementicOperation operation, Token token)
+    public static IASTNode MakeNode(SemanticOperation operation, Token? token)
     {
         return new ASTNode { Operation = operation, Token = token };
     }
@@ -269,7 +269,7 @@ public class ASTNode : IASTNode
 /// <summary>
 /// Implementation of a stack for the abstract syntax tree.
 /// </summary>
-public class SementicStack : ISementicStack
+public class SemanticStack : ISemanticStack
 {
     /// <summary>
     /// Stack to store the nodes of the abstract syntax tree.
@@ -277,9 +277,9 @@ public class SementicStack : ISementicStack
     private readonly Stack<IASTNode> _stack;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SementicStack"/> class.
+    /// Initializes a new instance of the <see cref="SemanticStack"/> class.
     /// </summary>
-    public SementicStack()
+    public SemanticStack()
     {
         _stack = new Stack<IASTNode>();
     }
@@ -313,7 +313,7 @@ public class SementicStack : ISementicStack
             _stack.Push(node);
     }
 
-    public void PushIfXPlaceholder(SementicOperation operation, int x)
+    public void PushIfXPlaceholder(SemanticOperation operation, int x)
     {
         // Check if the node before the xth node is a placeholder node
         if (IsPlaceholderNode(x))
@@ -328,13 +328,13 @@ public class SementicStack : ISementicStack
         }
     }
 
-    public void PushNode(SementicOperation operation, Token token)
+    public void PushNode(SemanticOperation operation, Token? token)
     {
         // Push a new node with the specified operation and token
         _stack.Push(ASTNode.MakeNode(operation, token));
     }
 
-    public void PushNextX(SementicOperation operation, int x)
+    public void PushNextX(SemanticOperation operation, int x)
     {
         // Create a list to store the nodes
         LinkedList<IASTNode> nodes = new();
@@ -347,13 +347,13 @@ public class SementicStack : ISementicStack
         _stack.Push(ASTNode.MakeFamily(operation, nodes.ToArray()));
     }
 
-    public void PushUntilEmptyNode(SementicOperation operation)
+    public void PushUntilEmptyNode(SemanticOperation operation)
     {
         // Create a list to store the nodes
         LinkedList<IASTNode> nodes = new();
 
         // Pop nodes until an empty node is found
-        while (_stack.Peek().Operation != SementicOperation.Null)
+        while (_stack.Peek().Operation != SemanticOperation.Null)
             nodes.AddFirst(_stack.Pop());
 
         // Pop the empty node
@@ -375,7 +375,7 @@ public class SementicStack : ISementicStack
             nodes.AddFirst(_stack.Pop());
 
         // Check if the next node is a placeholder node
-        bool isPlaceholder = _stack.Peek().Operation == SementicOperation.Placeholder;
+        bool isPlaceholder = _stack.Peek().Operation == SemanticOperation.Placeholder;
 
         // Push the popped nodes back onto the stack
         foreach (IASTNode node in nodes)
@@ -392,10 +392,10 @@ public class SementicStack : ISementicStack
 }
 
 /// <summary>
-/// Sementic operations for the abstract syntax tree. 
+/// Semantic operations for the abstract syntax tree. 
 /// These operations are used to identify the type of node in the abstract syntax tree.
 /// </summary>
-public enum SementicOperation
+public enum SemanticOperation
 {
     Null,
     Program,
@@ -441,4 +441,5 @@ public enum SementicOperation
     AParamList,
     FuncDefList,
     Placeholder,
+    ArrayIndex,
 }

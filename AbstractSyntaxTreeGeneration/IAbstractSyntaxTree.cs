@@ -2,7 +2,7 @@ using LexicalAnalyzer;
 
 namespace AbstractSyntaxTreeGeneration;
 
-public interface ISementicStack
+public interface ISemanticStack
 {   
     /// <summary>
     /// Pushes a node onto the stack.
@@ -26,28 +26,28 @@ public interface ISementicStack
     /// </summary>
     /// <param name="operation"> The operation to push. </param>
     /// <param name="x"> The number of nodes to check before. </param>
-    public void PushIfXPlaceholder(SementicOperation operation, int x);
+    public void PushIfXPlaceholder(SemanticOperation operation, int x);
 
     /// <summary>
     /// Pushes a leaf node with the given operation and token onto the stack.
     /// </summary>
     /// <param name="operation"> The operation to push. </param>
     /// <param name="token"> The token to push. </param>
-    public void PushNode(SementicOperation operation, Token token);
+    public void PushNode(SemanticOperation operation, Token? token);
     
     /// <summary>
     /// Pushes a node with the given operation onto the stack that encompasses the next x nodes as children.
     /// </summary>
     /// <param name="operation"> The operation to push. </param>
     /// <param name="x"> The number of nodes to encompass. </param>
-    public void PushNextX(SementicOperation operation, int x);
+    public void PushNextX(SemanticOperation operation, int x);
 
     
     /// <summary>
     /// Pushes a node with the given operation onto the stack that encompasses all nodes until an empty node is reached.
     /// </summary>
     /// <param name="operation"> The operation to push. </param>
-    public void PushUntilEmptyNode(SementicOperation operation);
+    public void PushUntilEmptyNode(SemanticOperation operation);
 
     /// <summary>
     /// Checks if the xth node is a placeholder node.
@@ -70,9 +70,9 @@ public interface ISementicStack
 public interface IASTNode
 {
     /// <summary>
-    /// Gets or sets the SementicOperation of the node.
+    /// Gets or sets the SemanticOperation of the node.
     /// </summary>
-    public SementicOperation Operation { get; set; }
+    public SemanticOperation Operation { get; set; }
 
     /// <summary>
     /// Gets or sets the parent of the node.
