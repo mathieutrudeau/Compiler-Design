@@ -5,6 +5,12 @@ namespace AbstractSyntaxTreeGeneration;
 public interface ISemanticStack
 {   
     /// <summary>
+    /// Peeks at the top of the stack.
+    /// </summary>
+    /// <returns> The node at the top of the stack. </returns>
+    public IASTNode Peek();
+
+    /// <summary>
     /// Pushes a node onto the stack.
     /// </summary>
     /// <param name="node"> The node to push onto the stack. </param>

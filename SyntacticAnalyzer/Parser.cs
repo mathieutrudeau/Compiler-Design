@@ -123,7 +123,7 @@ public class Parser : IParser
         bool res = Start();
 
         // Get the AST root node from the stack
-        IASTNode root = SemStack.Pop();
+        IASTNode root = SemStack.Peek();
 
         // Output the AST to the output file
         using StreamWriter sw1 = new(SourceName + OUT_AST_EXTENSION, true);
@@ -135,14 +135,13 @@ public class Parser : IParser
         sw2.WriteLine(root.DotASTString());
         sw2.Close();
 
-        // Output the AST to the console
-        //WriteLine(root.ToString());
-
-
-        //WriteLine(root.DotASTString());
-
         // Return the result
         return res;
+    }
+
+    public IASTNode GetAST_Root()
+    {
+        return SemStack.Peek();
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using AbstractSyntaxTreeGeneration;
 using LexicalAnalyzer;
 
 namespace SyntacticAnalyzer;
@@ -12,4 +13,10 @@ public interface IParser
     /// </summary>
     /// <returns>True if the parse was successful, false otherwise.</returns>
     public bool Parse();
+
+    /// <summary>
+    /// Gets the abstract syntax tree root.
+    /// </summary>
+    /// <returns>The abstract syntax tree root.</returns>
+    public IASTNode GetAST_Root();
 }

@@ -385,6 +385,11 @@ public class SemanticStack : ISemanticStack
         return isPlaceholder;
     }
 
+    public IASTNode Peek()
+    {
+        return _stack.Peek();
+    }
+
     public IASTNode Pop()
     {
         return _stack.Pop();
