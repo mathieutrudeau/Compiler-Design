@@ -1,0 +1,18 @@
+
+
+
+func main() -> void
+{
+    let a: float[5];
+
+    let b: integer;
+
+    a[2+1][2+1] = -(+(1+1))/2;
+}
+
+
+
+func notMain() -> float
+{
+
+}

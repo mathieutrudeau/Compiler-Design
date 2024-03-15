@@ -22,6 +22,23 @@ public class SymbolTable : ISymbolTable
         throw new NotImplementedException();
     }
 
+    public ISymbolTableEntry? Lookup(string name)
+    {
+        // Look for the entry in the current symbol table
+        ISymbolTableEntry? entry = Entries.FirstOrDefault(e => e.Name == name);
+        
+        // If the entry is found, return it
+        if (entry != null)
+            return entry;
+        
+        // If the entry is not found, look for it in the parent symbol table
+        if (Parent != null)
+            return Parent.Lookup(name);
+
+        // If the entry is not found in the current symbol table or any of its ancestors, return null
+        return null;
+    }
+
     public override string ToString()
     {
         return PrintSymbolTable(this, 0);
@@ -59,28 +76,30 @@ public class SymbolTable : ISymbolTable
         
         string tableContents = "";
 
-        int maxNameLength = table.Entries.Max(e => e.Name.Length) + 8;
-        int maxKindLength = table.Entries.Max(e => e.Kind.ToString().Length) + 9;
-        int maxTypeLength = table.Entries.Max(e => e.Type.Length) + 9;
-        int maxLinkLength = table.Entries.Max(e => e.Link == null ? 4 : e.Link.Name.Length) + 9;
-        if (maxLinkLength < 13)
-            maxLinkLength = 13;
-
-        foreach (var entry in table.Entries)
+        if (table.Entries.Count != 0)
         {
-            tableContents += start_str + string.Format("| Name: {0}", entry.Name).PadRight(maxNameLength);
-            tableContents += string.Format(" | Kind: {0}", entry.Kind).PadRight(maxKindLength);
-            tableContents += string.Format(" | Type: {0}", entry.Type).PadRight(maxTypeLength);
-            tableContents += string.Format(" | Link: {0}",entry.Link == null ? "None" : entry.Link.Name).PadRight(maxLinkLength);
-            tableContents += "\n";
+            int maxNameLength = table.Entries.Max(e => e.Name.Length) + 8;
+            int maxKindLength = table.Entries.Max(e => e.Kind.ToString().Length) + 9;
+            int maxTypeLength = table.Entries.Max(e => e.Type.Length) + 9;
+            int maxLinkLength = table.Entries.Max(e => e.Link == null ? 4 : e.Link.Name.Length) + 9;
+            if (maxLinkLength < 13)
+                maxLinkLength = 13;
+
+            foreach (var entry in table.Entries)
+            {
+                tableContents += start_str + string.Format("| Name: {0}", entry.Name).PadRight(maxNameLength);
+                tableContents += string.Format(" | Kind: {0}", entry.Kind).PadRight(maxKindLength);
+                tableContents += string.Format(" | Type: {0}", entry.Type).PadRight(maxTypeLength);
+                tableContents += string.Format(" | Link: {0}", entry.Link == null ? "None" : entry.Link.Name).PadRight(maxLinkLength);
+                tableContents += "\n";
 
 
-            if (entry.Link != null)
-                tableContents += PrintSymbolTable(entry.Link, depth + 1);
+                if (entry.Link != null)
+                    tableContents += PrintSymbolTable(entry.Link, depth + 1);
+            }
+
+            tableContents = tableContents.TrimEnd('\n');
         }
-
-        tableContents=tableContents.TrimEnd('\n');
-
         
         // Find the line with the most characters
         int maxLineLength = tableName.Length;
@@ -121,18 +140,28 @@ public class SymbolTableEntry : ISymbolTableEntry
     public SymbolEntryKind Kind { get; }
     public string Type { get; }
     public ISymbolTable? Link { get; }
+    public int Line { get; }
     public VisibilityType Visibility { get; }
 
-    public SymbolTableEntry(string name, SymbolEntryKind kind, string type, ISymbolTable? link)
+    public SymbolTableEntry(string name, SymbolEntryKind kind, string type, ISymbolTable? link, int line)
     {
         Name = name;
         Kind = kind;
         Type = type;
         Link = link;
+        Line = line;
+    }
+
+    public SymbolTableEntry(string name, SymbolEntryKind kind, string type, ISymbolTable? link, VisibilityType visibility, int line)
+    {
+        Name = name;
+        Kind = kind;
+        Type = type;
+        Link = link;
+        Visibility = visibility;
+        Line = line;
     }
 }
-
-
 
 
 public enum VisibilityType
