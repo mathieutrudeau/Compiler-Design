@@ -12,6 +12,8 @@ public interface ISymbolTable
     public ISymbolTable? Parent { get; }
 
     public bool GenerateSymbolTable(IASTNode root);
+
+    public void AddEntry(ISymbolTableEntry entry);
 }
 
 /// <summary>
@@ -35,14 +37,14 @@ public interface ISymbolTableEntry
     public string Type { get; }
     
     /// <summary>
-    /// The offset of the entry.
-    /// </summary>
-    public int Offset { get; }
-    
-    /// <summary>
     /// The link to the symbol table for the entry.
     /// </summary>
     public ISymbolTable? Link { get; }
 
 
+}
+
+public interface IVisitor
+{
+    public void Visit(ISymbolTable currentTable);
 }

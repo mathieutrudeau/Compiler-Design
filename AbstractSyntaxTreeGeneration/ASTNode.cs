@@ -1,6 +1,8 @@
 using System.Transactions;
 using LexicalAnalyzer;
+using SemanticAnalyzer;
 using static AbstractSyntaxTreeGeneration.SemanticOperation;
+using static System.Console;
 
 namespace AbstractSyntaxTreeGeneration;
 
@@ -264,6 +266,124 @@ public class ASTNode : IASTNode
     }
 
     #endregion Static Methods
+
+    public void Visit(ISymbolTable currentTable)
+    {
+        // Print the operation of the current node
+        // WriteLine(Operation);
+
+
+        switch(Operation)
+        {
+            case FuncDef:                
+                // The leftmost child of the current node is the function head
+                IASTNode functionHead = LeftMostChild!;
+
+                // The first child of the function head is the identifier of the function
+                string functionName = functionHead.LeftMostChild!.Token!.Lexeme;
+                
+                // The third child of the function head is the return type of the function
+                string returnType = functionHead.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme;
+
+                // Create a new symbol table for the function
+                ISymbolTable functionTable = new SymbolTable(functionName, currentTable);
+
+                // Create a new symbol table entry for the function
+                ISymbolTableEntry functionEntry = new SymbolTableEntry(functionName, SymbolEntryKind.Function, returnType, functionTable);
+
+                // Add the function entry to the current table
+                currentTable.AddEntry(functionEntry);
+
+                // Update the current table to the function table
+                currentTable = functionTable;
+
+                break;
+            case FParam:
+
+                // Get the identifier of the parameter
+                string paramName = LeftMostChild!.Token!.Lexeme;
+
+                // Get the type of the parameter
+                string paramType = LeftMostChild!.RightSibling!.Token!.Lexeme;
+
+                // Check if the parameter is an array
+                IASTNode arraySize = LeftMostChild!.RightSibling!.RightSibling!;
+
+                // Add the array size to the parameter type
+                if (arraySize.LeftMostChild != null)
+                    if (arraySize.LeftMostChild!.Token != null)
+                        paramType += "["+arraySize.LeftMostChild!.Token!.Lexeme+"]";
+                    else
+                        paramType += "[]";
+
+                //WriteLine("Parameter Name: " + paramName);
+                //WriteLine("Parameter Type: " + paramType);
+
+                // Create a new symbol table entry for the parameter
+                ISymbolTableEntry paramEntry = new SymbolTableEntry(paramName, SymbolEntryKind.Parameter, paramType, null);
+
+                // Add the parameter entry to the current table
+                currentTable.AddEntry(paramEntry);
+
+                break;
+            case VarDecl:
+
+
+                string varName = LeftMostChild!.Token!.Lexeme;
+                string varType = LeftMostChild!.RightSibling!.Token!.Lexeme;
+
+                // Check if the variable is an array
+                IASTNode varArraySize = LeftMostChild!.RightSibling!.RightSibling!;
+
+                // Add the array size to the variable type
+                if (varArraySize.LeftMostChild != null)
+                    if (varArraySize.LeftMostChild!.Token != null)
+                        varType += "["+varArraySize.LeftMostChild!.Token!.Lexeme+"]";
+                    else
+                        varType += "[]";
+
+                // Create a new symbol table entry for the variable
+                ISymbolTableEntry varEntry = new SymbolTableEntry(varName, SymbolEntryKind.Variable, varType, null);
+
+                // Add the variable entry to the current table
+                currentTable.AddEntry(varEntry);
+
+                break;
+            case StructDecl:
+                WriteLine("Struct Declaration");
+
+                // The leftmost child of the current node is the identifier of the struct
+                string structName = LeftMostChild!.Token!.Lexeme;
+
+                // Create a new symbol table for the struct
+                ISymbolTable structTable = new SymbolTable(structName, currentTable);
+
+                // Create a new symbol table entry for the struct
+                ISymbolTableEntry structEntry = new SymbolTableEntry(structName, SymbolEntryKind.Class, structName, structTable);
+
+                // Add the struct entry to the current table
+                currentTable.AddEntry(structEntry);
+
+                // Update the current table to the struct table
+                currentTable = structTable;
+
+
+                break;
+            default:
+                break;
+        }
+
+        
+        // Visit the leftmost child of the current node and its siblings
+        IASTNode? child = LeftMostChild;
+
+        while (child != null)
+        {
+            child.Visit(currentTable);
+            child = child.RightSibling;
+        }
+    }
+
 }
 
 /// <summary>

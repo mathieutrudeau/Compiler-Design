@@ -1,4 +1,5 @@
 using LexicalAnalyzer;
+using SemanticAnalyzer;
 
 namespace AbstractSyntaxTreeGeneration;
 
@@ -73,7 +74,7 @@ public interface ISemanticStack
 /// <summary>
 /// Interface for an abstract syntax tree node.
 /// </summary>
-public interface IASTNode
+public interface IASTNode: IVisitor
 {
     /// <summary>
     /// Gets or sets the SemanticOperation of the node.
