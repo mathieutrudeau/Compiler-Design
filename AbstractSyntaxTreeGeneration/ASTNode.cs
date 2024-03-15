@@ -328,6 +328,9 @@ public class ASTNode : IASTNode
                 break;
             case VarDecl:
 
+                // Make sure the variable is not a member of a struct
+                if (Parent!.Operation == StructMember)
+                    break;
 
                 string varName = LeftMostChild!.Token!.Lexeme;
                 string varType = LeftMostChild!.RightSibling!.Token!.Lexeme;
@@ -367,6 +370,82 @@ public class ASTNode : IASTNode
                 // Update the current table to the struct table
                 currentTable = structTable;
 
+
+                break;
+            case StructInheritList:
+                // Get the leftmost child of the current node (the identifier of the inherited struct)
+                IASTNode? inheritedStruct = LeftMostChild;
+
+                // While there are more inherited structs, add them to the current struct table
+                while (inheritedStruct != null)
+                {
+                    // Get the identifier of the inherited struct
+                    string inheritedStructName = inheritedStruct.Token!.Lexeme;
+
+                    // Create a new symbol table entry for the inherited struct
+                    ISymbolTableEntry inheritedStructEntry = new SymbolTableEntry(inheritedStructName, SymbolEntryKind.Inherit, inheritedStructName, null);
+
+                    // Add the inherited struct entry to the current table
+                    currentTable.AddEntry(inheritedStructEntry);
+
+                    // Get the next inherited struct
+                    inheritedStruct = inheritedStruct.RightSibling;
+                }
+
+
+                break;
+            case StructMember:
+                WriteLine("Struct Member");
+                
+                // The leftmost child of the current node is the visibility of the member
+                string visibility = LeftMostChild!.Token!.Lexeme;
+
+                IASTNode member = LeftMostChild!.RightSibling!;
+
+                // The member is either a variable declaration or a function definition
+                if(member.Operation == VarDecl)
+                {
+                    // The leftmost child of the member is the identifier of the member
+                    string memberName = member.LeftMostChild!.Token!.Lexeme;
+                    string memberType = member.LeftMostChild!.RightSibling!.Token!.Lexeme;
+                    
+                    // Check if the member is an array
+                    IASTNode memberArraySize = member.LeftMostChild!.RightSibling!.RightSibling!;
+                    if (memberArraySize.LeftMostChild != null)
+                        if (memberArraySize.LeftMostChild!.Token != null)
+                            memberType += "["+memberArraySize.LeftMostChild!.Token!.Lexeme+"]";
+                        else
+                            memberType += "[]";
+                    
+                    // Create a new symbol table entry for the member
+                    ISymbolTableEntry memberEntry = new SymbolTableEntry(memberName, SymbolEntryKind.Data, memberType, null);
+
+                    // Add the member entry to the current table
+                    currentTable.AddEntry(memberEntry);
+                }
+                else
+                {
+                    // The leftmost child of the member is the function head
+                    IASTNode methodHead = member;
+
+                    // The first child of the function head is the identifier of the function
+                    string methodName = methodHead.LeftMostChild!.Token!.Lexeme;
+                    
+                    // The third child of the function head is the return type of the function
+                    string methodReturnType = methodHead.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme;
+
+                    // Create a new symbol table for the function
+                    ISymbolTable methodTable = new SymbolTable(methodName, currentTable);
+
+                    // Create a new symbol table entry for the function
+                    ISymbolTableEntry methodEntry = new SymbolTableEntry(methodName, SymbolEntryKind.Method, methodReturnType, methodTable);
+
+                    // Add the function entry to the current table
+                    currentTable.AddEntry(methodEntry);
+
+                    // Update the current table to the function table
+                    currentTable = methodTable;
+                }
 
                 break;
             default:
