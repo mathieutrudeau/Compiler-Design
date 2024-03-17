@@ -48,6 +48,9 @@ public interface ISymbolTable
     /// <param name="parameters">The parameters of the function to check.</param>
     /// <returns>True if the name is already declared, false otherwise.</returns>
     public bool IsAlreadyDeclared(string name, string[] parameters, SymbolEntryKind? kind);
+
+    public bool IsInheritedMethod(string name, string[] parameters, string type);
+
 }
 
 /// <summary>
@@ -89,6 +92,8 @@ public interface ISymbolTableEntry
     /// The number of references to the entry.
     /// </summary>
     public int ReferencesCount { get; set; }
+
+    public VisibilityType Visibility { get; set; }
 }
 
 public interface IVisitor

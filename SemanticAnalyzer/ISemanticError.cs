@@ -15,13 +15,16 @@ public enum SemanticErrorType
     UndefinedMethod,
     MethodNotImplemented,
     UndeclaredMember,
+    UndeclaredMethod,
+    UndeclaredClass,
     MainNotFound,
     MainReturnType,
     MainParameter,
     ArraySizeZero,
     ClassAlreadyDeclared,
     ClassNotFound,
-    DuplicateDeclaration,
+    ClassNotImplemented,
+    InheritedClassNotFound,
     MultipleDefinition,
     
 }

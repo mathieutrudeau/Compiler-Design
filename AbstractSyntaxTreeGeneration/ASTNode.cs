@@ -289,6 +289,26 @@ public class ASTNode : IASTNode
         }
     }
 
+    private string GetVarType(IASTNode node)
+    {
+        string varType = LeftMostChild!.RightSibling!.Token!.Lexeme;
+
+        // Add any array dimensions to the variable type
+        IASTNode? arraySizes = LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
+
+        while (arraySizes != null)
+        {
+            if (arraySizes.Operation == ArrayIndex)
+                varType += "[]";
+            else
+                varType += "[" + arraySizes.Token!.Lexeme + "]";
+
+            arraySizes = arraySizes.RightSibling;
+        }
+
+        return varType;
+    }
+
     private bool ValidateType(IASTNode node, List<ISemanticError> errors)
     {
 
@@ -345,6 +365,26 @@ public class ASTNode : IASTNode
         switch (Operation)
         {
 
+            case ImplDef:
+                /*
+                    Handle class implementation.
+                    The following steps are performed:
+                    - Check if the class is already declared in the current scope
+                    - Set the current table to the class table
+                */
+
+                // Check if the class is already declared in the current scope
+                if (!currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme))
+                {
+                    errors.Add(new SemanticError(SemanticErrorType.UndeclaredClass, LeftMostChild!.Token!.Location, $"No declaration found for class '{LeftMostChild!.Token!.Lexeme}'."));
+                    return;
+                }
+
+                // Set the current table to the class table
+                currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
+
+                break;
+
             case StructDecl:
                 /*
                     Handle class declaration.
@@ -356,7 +396,7 @@ public class ASTNode : IASTNode
 
                 // Check if the class is already declared in the current scope
                 if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme))
-                    errors.Add(new SemanticError(SemanticErrorType.DuplicateDeclaration, LeftMostChild!.Token!.Location, "Class already declared."));
+                    errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Class '{LeftMostChild!.Token!.Lexeme}' already declared."));
 
                 // Add the the class declaration to the global symbol table
                 currentTable.AddEntry(new SymbolTableEntry
@@ -376,7 +416,7 @@ public class ASTNode : IASTNode
 
                 // Set the current table to the class table
                 currentTable = currentTable.Entries.Last().Link!;
-                
+
                 break;
 
 
@@ -390,17 +430,21 @@ public class ASTNode : IASTNode
                     - Set the current table to the function table
 
                     The following steps are performed for a method:
-                    - Set the current table to the class table
+                    - Check if the method is declared in the class table
+                    - If the method is a duplicate definition, add a warning
+                    - Create a new symbol table for the methods
                 */
-            
+
 
                 // Check if the function is a free function
                 if (Parent!.Operation == Program)
                 {
-
                     // Check if the function is already declared in the current scope
-                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme))
-                        errors.Add(new SemanticError(SemanticErrorType.DuplicateDeclaration, LeftMostChild!.LeftMostChild!.Token!.Location, "Function already declared."));
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!), SymbolEntryKind.Function))
+                        errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.LeftMostChild!.Token!.Location, $"Function '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' already declared."));
+                    // Check if the function is overloading another function
+                    else if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme))
+                        warnings.Add(new SemanticWarning(SemanticWarningType.OverloadedFunction, LeftMostChild!.LeftMostChild!.Token!.Location, $"Function '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' overloads another function."));
 
                     // Add the function to the global symbol table
                     currentTable.AddEntry(new SymbolTableEntry
@@ -424,12 +468,47 @@ public class ASTNode : IASTNode
                     currentTable = currentTable.Entries.Last().Link!;
 
                 }
-                else if(Parent!.Operation == FuncDefList)
+                // Check if the function is a method
+                else if (Parent!.Operation == FuncDefList)
                 {
 
+                    // Check if the method is not declared in the class table
+                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!), SymbolEntryKind.MethodDeclaration))
+                    {
+                        // Check if the method is a duplicate definition
+                        if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!), SymbolEntryKind.Method))
+                        {
+                            errors.Add(new SemanticError(SemanticErrorType.MultipleDefinition, LeftMostChild!.LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' already defined."));
+                            return;
+                        }
+                        // Check if the method is a inherited member
+                        else if(currentTable.IsInheritedMethod(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!), LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme))
+                        {
+                            warnings.Add(new SemanticWarning(SemanticWarningType.ShadowedInheritedMember, LeftMostChild!.LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' shadows the inherited method from a parent class."));
 
-                    currentTable = currentTable.Lookup(Parent!.Parent!.LeftMostChild!.Token!.Lexeme)!.Link!;
+                            // Add a new entry to the class table
+                            currentTable.AddEntry(new SymbolTableEntry
+                            {
+                                Name = LeftMostChild!.LeftMostChild!.Token!.Lexeme,
+                                Kind = SymbolEntryKind.MethodDeclaration,
+                                Type = LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme,
+                                Line = LeftMostChild!.LeftMostChild!.Token!.Location,
+                                Parameters = GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!),
+                                Visibility = VisibilityType.Public,
+                            });
+                        }
+                        else
+                        {
+                            errors.Add(new SemanticError(SemanticErrorType.UndeclaredMethod, LeftMostChild!.LeftMostChild!.Token!.Location, $"No declaration found for method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}'."));
+                            return;
+                        }                        
+                    }
 
+                    // Check if the method is already declared in the current scope with the same parameters
+                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!), SymbolEntryKind.MethodDeclaration))
+                        errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, LeftMostChild!.LeftMostChild!.Token!.Location, $"No declaration found for method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}'."));
+
+                    // Create a new symbol table for the method
                     currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link = new SymbolTable
                     {
                         Name = LeftMostChild!.LeftMostChild!.Token!.Lexeme,
@@ -437,6 +516,10 @@ public class ASTNode : IASTNode
                         Parent = currentTable
                     };
 
+                    // Update the Entry Kind to Method
+                    currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Kind = SymbolEntryKind.Method;
+
+                    // Set the current table to the method table
                     currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
                 }
 
@@ -462,12 +545,12 @@ public class ASTNode : IASTNode
                 */
 
                 // Check if the function head is for a method declaration
-                if(Parent!.Operation == StructMember)
+                if (Parent!.Operation == StructMember)
                 {
                     // Check if the method is already declared in the current scope with the same parameters
-                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!),null))
-                        errors.Add(new SemanticError(SemanticErrorType.DuplicateDeclaration, LeftMostChild!.Token!.Location, "Method already declared."));
-                    
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!), null))
+                        errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.Token!.Lexeme}' already declared."));
+
                     // Add the method to the class table
                     currentTable.AddEntry(new SymbolTableEntry
                     {
@@ -479,28 +562,6 @@ public class ASTNode : IASTNode
                         Visibility = Parent!.LeftMostChild!.Token!.Lexeme == "public" ? VisibilityType.Public : VisibilityType.Private,
                     });
 
-                }
-                else if (Parent!.Parent!.Operation == FuncDefList)
-                {
-                    WriteLine("Method Definition");
-
-                    // Check if the method is already declared in the current scope with the same parameters
-                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!), SymbolEntryKind.MethodDeclaration))
-                        errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, LeftMostChild!.Token!.Location, "Method not declared."));
-
-                    // Create a new symbol table for the method
-                    currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link = new SymbolTable
-                    {
-                        Name = LeftMostChild!.Token!.Lexeme,
-                        Entries = new LinkedList<ISymbolTableEntry>(),
-                        Parent = currentTable
-                    };
-
-                    // Update the Entry Kind to Method
-                    currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Kind = SymbolEntryKind.Method;
-
-                    // Set the current table to the method table
-                    currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
                 }
 
                 // Check if the function head is for a function implementation
@@ -542,7 +603,6 @@ public class ASTNode : IASTNode
                 }
 
 
-
                 break;
 
             case VarDecl:
@@ -552,41 +612,38 @@ public class ASTNode : IASTNode
                     The following steps are performed for a variable declaration in a function:
                 */
 
-                string varType = LeftMostChild!.RightSibling!.Token!.Lexeme;
 
-                // Add any array dimensions to the variable type
-                IASTNode? arraySizes = LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
-
-                while (arraySizes != null)
-                {
-                    if (arraySizes.Operation == ArrayIndex)
-                        varType += "[]";
-                    else
-                        varType += "[" + arraySizes.Token!.Lexeme + "]";
-
-                    arraySizes = arraySizes.RightSibling;
-                }
 
                 // Check if the variable is declared in a function or as part of a class
                 if (Parent!.Operation == VarDeclOrStatList)
                 {
+                    // Check if the variable is already declared in the current scope
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme))
+                        errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Variable '{LeftMostChild!.Token!.Lexeme}' already declared."));
+
+                    //WriteLine(currentTable.Name);
+
                     // Add the variable to the function table
                     currentTable.AddEntry(new SymbolTableEntry
                     {
                         Name = LeftMostChild!.Token!.Lexeme,
                         Kind = SymbolEntryKind.Variable,
-                        Type = varType,
+                        Type = GetVarType(LeftMostChild!),
                         Line = LeftMostChild!.Token!.Location
                     });
                 }
                 else if (Parent!.LeftMostChild!.Operation == Visibility)
                 {
+                    // Check if the data member is already declared in the current scope
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme))
+                        errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Data member '{LeftMostChild!.Token!.Lexeme}' already declared."));
+
                     // Add the data member to the class table
                     currentTable.AddEntry(new SymbolTableEntry
                     {
                         Name = LeftMostChild!.Token!.Lexeme,
                         Kind = SymbolEntryKind.Data,
-                        Type = varType,
+                        Type = GetVarType(LeftMostChild!),
                         Line = LeftMostChild!.Token!.Location,
                         Visibility = Parent!.LeftMostChild!.Token!.Lexeme == "public" ? VisibilityType.Public : VisibilityType.Private,
                     });
@@ -594,6 +651,44 @@ public class ASTNode : IASTNode
 
 
                 break;
+
+
+            case StructInheritList:
+                /*
+
+                    The following steps are performed for a class inheritance:
+                    - Check if the class is already declared in the current scope
+                    - Add the inherited class to the current class table and make sure it links to the inherited class table
+
+                */
+
+                // Get the inherited class if it exists
+                IASTNode? inheritedClass = LeftMostChild;
+
+                // While there are inherited classes
+                while (inheritedClass != null)
+                {
+                    // Check if the class is already declared in the current scope
+                    if (!currentTable.IsAlreadyDeclared(inheritedClass.Token!.Lexeme))
+                        errors.Add(new SemanticError(SemanticErrorType.InheritedClassNotFound, inheritedClass.Token!.Location, $"Inherited class '{inheritedClass.Token!.Lexeme}' not found."));
+                    else
+                    {
+                        // Add the inherited class to the current class table and make sure it links to the inherited class table
+                        currentTable.AddEntry(new SymbolTableEntry
+                        {
+                            Name = inheritedClass.Token!.Lexeme,
+                            Kind = SymbolEntryKind.Inherit,
+                            Line = inheritedClass.Token!.Location,
+                            Link = currentTable.Lookup(inheritedClass.Token!.Lexeme)!.Link
+                        });
+                    }
+
+                    // Move to the next inherited class
+                    inheritedClass = inheritedClass.RightSibling;
+                }
+
+                break;
+
 
             default:
                 break;
@@ -621,7 +716,7 @@ public class ASTNode : IASTNode
                 currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!.Entries.ToList().ForEach(e =>
                 {
                     if (e.Kind == SymbolEntryKind.MethodDeclaration)
-                        errors.Add(new SemanticError(SemanticErrorType.MethodNotImplemented, e.Line, "Method not implemented."));
+                        errors.Add(new SemanticError(SemanticErrorType.MethodNotImplemented, e.Line, $"Method '{e.Name}' not implemented."));
                 });
 
                 currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Kind = SymbolEntryKind.Class;
@@ -632,11 +727,35 @@ public class ASTNode : IASTNode
                 /*
 
                     The following steps are performed for the program:
-                    - Make sure the program has a main function
-                    - The main function should be a free function with the name "main" and return type "void"
-                    - Make sure the main function has no paramaters
 
+                    - Make sure that all the classes have been implemented
+
+                    - Make sure the program has a main function
+                    - The main function should be a free function with the name "main" and return type "void" and no parameters
                 */
+
+                // Make sure that all the classes have been implemented
+                currentTable.Entries.ToList().ForEach(e =>
+                {
+                    if (e.Kind == SymbolEntryKind.ClassDeclaration)
+                        errors.Add(new SemanticError(SemanticErrorType.ClassNotImplemented, e.Line, $"Class '{e.Name}' not implemented."));
+                });
+
+                // Make sure the program has a main function
+                if (!currentTable.Entries.Any(e => e.Name == "main" && e.Kind == SymbolEntryKind.Function))
+                {
+                    errors.Add(new SemanticError(SemanticErrorType.MainNotFound, 0, "Main function not found."));
+                }
+                else
+                {
+                    if (!currentTable.Entries.Any(e => e.Name == "main" && e.Kind == SymbolEntryKind.Function && e.Type == "void"))
+                        errors.Add(new SemanticError(SemanticErrorType.MainReturnType, currentTable.Lookup("main")!.Line, "Main function must return void."));
+
+                    if (!currentTable.Entries.Any(e => e.Name == "main" && e.Kind == SymbolEntryKind.Function && e.Parameters.Length == 0))
+                        errors.Add(new SemanticError(SemanticErrorType.MainParameter, currentTable.Lookup("main")!.Line, "Main function must have no parameters."));
+                }
+
+                break;
 
 
             default:
@@ -650,27 +769,9 @@ public class ASTNode : IASTNode
         switch (Operation)
         {
             case Program:
-                // Make sure the program has a main function
-                // The main function should be a free function with the name "main" and return type "void"
-                ISymbolTableEntry? mainEntry = currentTable.Lookup("main");
-
-                if (mainEntry == null)
-                    errors.Add(new SemanticError(SemanticErrorType.MainNotFound, 0, "Main function not found."));
-
-                if (mainEntry != null)
-                {
-                    // Make sure the main function returns void
-                    if (mainEntry.Type != "void")
-                        errors.Add(new SemanticError(SemanticErrorType.MainReturnType, mainEntry.Line, "Main function must return void."));
-
-                    ISymbolTable mainTable = mainEntry.Link!;
-
-                    // Make sure the main function has no paramaters
-                    if (mainTable.Entries.Count > 0 && mainTable.Entries.Any(e => e.Kind == SymbolEntryKind.Parameter))
-                        errors.Add(new SemanticError(SemanticErrorType.MainParameter, mainEntry.Line, "Main function must have no parameters."));
-                }
 
                 break;
+
             case ReturnStat:
                 // Make sure the return type of the function matches the return type of the expression
 
@@ -681,36 +782,13 @@ public class ASTNode : IASTNode
 
             case FuncDef:
 
-                // Make sure the function has a return statement if it is not a void function
-                // If the function is a void function, make sure it does not have a return statement
-                // Make sure the return type of the function matches the return type of the expression
-
-                // Get the function table entry
-                ISymbolTableEntry? functionEntry = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme);
-
-                // Get the function table
-                ISymbolTable functionTable = functionEntry!.Link!;
-
-                // Set the current table to the function table
-                currentTable = functionTable;
 
 
 
                 break;
 
             case AssignStat:
-                // Make sure the type of the variable matches the type of the expression
 
-                IASTNode variable = LeftMostChild!;
-                IASTNode expression = variable.RightSibling!;
-
-                string variableType = currentTable.Lookup(variable.LeftMostChild!.Token!.Lexeme)!.Type;
-
-
-                string expressionType = GetType(expression);
-
-                WriteLine("Variable Type: " + variableType);
-                WriteLine("Expression Type: " + expressionType);
 
 
 

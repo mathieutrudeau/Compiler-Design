@@ -118,6 +118,21 @@ public class SymbolTable : ISymbolTable
         return str;
     }
 
+    public bool IsInheritedMethod(string name, string[] parameters, string type)
+    {
+        // Check if the name is already declared in the current symbol table
+        if (Entries.Any(e => e.Name == name && e.Parameters.SequenceEqual(parameters) && e.Visibility==VisibilityType.Public && e.Type==type && e.Kind == SymbolEntryKind.Method || e.Kind == SymbolEntryKind.MethodDeclaration))
+            return true;
+
+        // If the name is not declared in the current symbol table, check if it is declared in one of the inherited symbol tables
+        foreach (var entry in Entries.Where(e => e.Kind == SymbolEntryKind.Inherit))
+            if (entry.Link != null)
+                if (entry.Link.IsInheritedMethod(name, parameters, type))
+                    return true;
+
+        return false;
+    }
+
     public bool IsAlreadyDeclared(string name)
     {
         // Check if the name is already declared in the current symbol table

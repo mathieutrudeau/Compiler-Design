@@ -1,6 +1,53 @@
-struct Class1
+struct Class1 
 {
+    private let b:integer;
+
+    public let B: integer;
+
+    private let BB: float;
+
+    public func A(a:integer,b:integer) -> void;
 
 };
 
+
+struct Class2 inherits Class1
+{
+    
+};
+
+impl Class1
+{
+    func A(a:integer, b:integer) ->void
+    {
+        let theOldVar: integer;
+    }
+
+    
+}
+
+impl Class2{
+func A(a:integer, b:integer) ->void
+    {
+        let myNewVar: float;
+
+    }
+}
+
+
+
+
+func test1() -> void
+{
+    let a: b;
+    
+}
+
+
+
+
+func main() -> void
+{
+    
+}
 

@@ -14,6 +14,7 @@ public interface ISemanticWarning
 public enum SemanticWarningType
 {
     ShadowedInheritedMember,
-    OverloadedMethodOrFunction,
-    ArraySizeNotSpecified
+    OverloadedMethod,
+    OverloadedFunction,
+    ArraySizeNotSpecified,
 }

@@ -48,9 +48,9 @@ public class SemanticAnalyzer : ISemanticAnalyzer
         // Generate the Symbol Table by visiting each node in the AST
         _astRoot.Visit(_globalSymbolTable, _warnings, _errors);
 
-        //if(_errors.Count == 0)
-            // Perform the semantic analysis once the symbol table has been built
-            //_astRoot.SemanticCheck(_globalSymbolTable, _warnings, _errors);
+        if(_errors.Count == 0)
+            //Perform the semantic analysis once the symbol table has been built
+            _astRoot.SemanticCheck(_globalSymbolTable, _warnings, _errors);
 
 
         if (_warnings.Count > 0)
