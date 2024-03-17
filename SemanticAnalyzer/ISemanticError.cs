@@ -13,9 +13,15 @@ public enum SemanticErrorType
 {
     MultipleDeclaration,
     UndefinedMethod,
+    MethodNotImplemented,
     UndeclaredMember,
     MainNotFound,
     MainReturnType,
     MainParameter,
     ArraySizeZero,
+    ClassAlreadyDeclared,
+    ClassNotFound,
+    DuplicateDeclaration,
+    MultipleDefinition,
+    
 }

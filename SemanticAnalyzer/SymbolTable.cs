@@ -6,16 +6,9 @@ namespace SemanticAnalyzer;
 
 public class SymbolTable : ISymbolTable
 {
-    public string Name { get; }
-    public List<ISymbolTableEntry> Entries { get; }
-    public ISymbolTable? Parent { get; }
-
-    public SymbolTable(string name, ISymbolTable? parent)
-    {
-        Name = name;
-        Parent = parent;
-        Entries = new List<ISymbolTableEntry>();
-    }
+    public string Name { get; set; } = "";
+    public LinkedList<ISymbolTableEntry> Entries { get; set; } = new LinkedList<ISymbolTableEntry>();
+    public ISymbolTable? Parent { get; set; } = null;
 
     public bool GenerateSymbolTable(IASTNode root)
     {
@@ -125,42 +118,55 @@ public class SymbolTable : ISymbolTable
         return str;
     }
 
+    public bool IsAlreadyDeclared(string name)
+    {
+        // Check if the name is already declared in the current symbol table
+        if (Entries.Any(e => e.Name == name))
+            return true;
 
+        // If the name is not declared in the current symbol table, check if it is declared in the parent symbol table
+        if (Parent != null)
+            return Parent.IsAlreadyDeclared(name);
+
+        // If the name is not declared in the current symbol table or any of its ancestors, return false
+        return false;
+    }
+
+    public bool IsAlreadyDeclared(string name, string[] parameters, SymbolEntryKind? kind = null)
+    {
+        // Check if the name is already declared in the current symbol table
+        if ((kind ==null && Entries.Any(e => e.Name == name && e.Parameters.SequenceEqual(parameters)))
+        || (kind != null && Entries.Any(e => e.Name == name && e.Parameters.SequenceEqual(parameters) && e.Kind == kind)))
+            return true;
+
+        // If the name is not declared in the current symbol table, check if it is declared in the parent symbol table
+        if (Parent != null)
+            return Parent.IsAlreadyDeclared(name, parameters, kind);
+
+        // If the name is not declared in the current symbol table or any of its ancestors, return false
+        return false;
+    }
 
     public void AddEntry(ISymbolTableEntry entry)
     {
-        Entries.Add(entry);
+        Entries.AddLast(entry);
     }
 
 }
 
+/// <summary>
+/// Represents an entry in the symbol table.
+/// </summary>
 public class SymbolTableEntry : ISymbolTableEntry
 {
-    public string Name { get; }
-    public SymbolEntryKind Kind { get; }
-    public string Type { get; }
-    public ISymbolTable? Link { get; }
-    public int Line { get; }
-    public VisibilityType Visibility { get; }
-
-    public SymbolTableEntry(string name, SymbolEntryKind kind, string type, ISymbolTable? link, int line)
-    {
-        Name = name;
-        Kind = kind;
-        Type = type;
-        Link = link;
-        Line = line;
-    }
-
-    public SymbolTableEntry(string name, SymbolEntryKind kind, string type, ISymbolTable? link, VisibilityType visibility, int line)
-    {
-        Name = name;
-        Kind = kind;
-        Type = type;
-        Link = link;
-        Visibility = visibility;
-        Line = line;
-    }
+    public string Name { get; set; } = "";
+    public SymbolEntryKind Kind { get; set; }
+    public string Type { get; set; } = "";
+    public ISymbolTable? Link { get; set; }
+    public int Line { get; set; }
+    public VisibilityType Visibility { get; set; }
+    public string[] Parameters { get; set; } = Array.Empty<string>();
+    public int ReferencesCount { get; set; }
 }
 
 
@@ -175,8 +181,10 @@ public enum SymbolEntryKind
     Variable,
     Function,
     Parameter,
+    ClassDeclaration,
     Class,
     Data,
+    MethodDeclaration,
     Method,
     Inherit
 }

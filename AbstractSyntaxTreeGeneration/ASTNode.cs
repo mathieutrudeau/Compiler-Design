@@ -285,8 +285,7 @@ public class ASTNode : IASTNode
             case SemanticOperation.DataMember:
                 return GetType(node.LeftMostChild!);
             default:
-                return "";  
-                break;
+                return "";
         }
     }
 
@@ -297,245 +296,305 @@ public class ASTNode : IASTNode
         return false;
     }
 
+    private string[] GetFunctionParams(IASTNode node)
+    {
+
+        string[] parameters = Array.Empty<string>();
+
+        // Perform the appropriate action based on the operation of the current node
+        switch (node.Operation)
+        {
+
+            case FParamList:
+
+                IASTNode? param = node.LeftMostChild;
+
+                while (param != null)
+                {
+                    string paramType = param.LeftMostChild!.RightSibling!.Token!.Lexeme;
+
+                    // Add any array dimensions to the parameter type
+                    IASTNode? arraySize = param.LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
+
+                    while (arraySize != null)
+                    {
+                        if (arraySize.Operation == ArrayIndex)
+                            paramType += "[]";
+                        else
+                            paramType += "[" + arraySize.Token!.Lexeme + "]";
+
+                        arraySize = arraySize.RightSibling;
+                    }
+
+                    parameters = parameters.Append(paramType).ToArray();
+                    param = param.RightSibling;
+                }
+
+                break;
+
+            default:
+                break;
+        }
+
+        return parameters;
+    }
 
     public void Visit(ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
-        // Perform the appropriate action based on the operation of the current node
+        // Perform the following actions when entering a node based on its operation
         switch (Operation)
         {
-            case ImplDef:
+
+            case StructDecl:
                 /*
-                The current node is a class implementation definition.
-                Perform the following checks:
-                - The class should already be declared in the symbol table
-                
+                    Handle class declaration.
+                    The following steps are performed:
+                    - Check if the class is already declared in the current scope
+                    - Add the class to the global symbol table
+                    - Set the current table to the class table
                 */
 
-                // The leftmost child of the current node is the identifier of the class implementation
-                string implName = LeftMostChild!.Token!.Lexeme;
+                // Check if the class is already declared in the current scope
+                if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme))
+                    errors.Add(new SemanticError(SemanticErrorType.DuplicateDeclaration, LeftMostChild!.Token!.Location, "Class already declared."));
 
-                // The class should already be declared in the symbol table
-                ISymbolTableEntry? implEntry = currentTable.Lookup(implName);
-
-                // If the class is not found, print an error message
-                if (implEntry == null)
+                // Add the the class declaration to the global symbol table
+                currentTable.AddEntry(new SymbolTableEntry
                 {
-                    WriteLine("Error: Class " + implName + " not found");
-                    break;
+                    Name = LeftMostChild!.Token!.Lexeme,
+                    Kind = SymbolEntryKind.ClassDeclaration,
+                    Line = LeftMostChild!.Token!.Location,
+
+                    // Create a new symbol table for the class
+                    Link = new SymbolTable
+                    {
+                        Name = LeftMostChild!.Token!.Lexeme,
+                        Entries = new LinkedList<ISymbolTableEntry>(),
+                        Parent = currentTable
+                    }
+                });
+
+                // Set the current table to the class table
+                currentTable = currentTable.Entries.Last().Link!;
+                
+                break;
+
+
+            case FuncDef:
+                /*
+                    A function can be a free function or a method.
+
+                    The following steps are performed for a free function:
+                    - Check if the function is already declared in the current scope
+                    - Add the function to the global symbol table
+                    - Set the current table to the function table
+
+                    The following steps are performed for a method:
+                    - Set the current table to the class table
+                */
+            
+
+                // Check if the function is a free function
+                if (Parent!.Operation == Program)
+                {
+
+                    // Check if the function is already declared in the current scope
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme))
+                        errors.Add(new SemanticError(SemanticErrorType.DuplicateDeclaration, LeftMostChild!.LeftMostChild!.Token!.Location, "Function already declared."));
+
+                    // Add the function to the global symbol table
+                    currentTable.AddEntry(new SymbolTableEntry
+                    {
+                        Name = LeftMostChild!.LeftMostChild!.Token!.Lexeme,
+                        Kind = SymbolEntryKind.Function,
+                        Type = LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme,
+                        Line = LeftMostChild!.LeftMostChild!.Token!.Location,
+                        Parameters = GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!),
+
+                        // Create a new symbol table for the function
+                        Link = new SymbolTable
+                        {
+                            Name = LeftMostChild!.LeftMostChild!.Token!.Lexeme,
+                            Entries = new LinkedList<ISymbolTableEntry>(),
+                            Parent = currentTable
+                        }
+                    });
+
+                    // Set the current table to the function table
+                    currentTable = currentTable.Entries.Last().Link!;
+
+                }
+                else if(Parent!.Operation == FuncDefList)
+                {
+
+
+                    currentTable = currentTable.Lookup(Parent!.Parent!.LeftMostChild!.Token!.Lexeme)!.Link!;
+
+                    currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link = new SymbolTable
+                    {
+                        Name = LeftMostChild!.LeftMostChild!.Token!.Lexeme,
+                        Entries = new LinkedList<ISymbolTableEntry>(),
+                        Parent = currentTable
+                    };
+
+                    currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
                 }
 
-                // If the class is found, load the symbol table of the class
-                ISymbolTable implTable = implEntry.Link!;
-                currentTable = implTable;
-
                 break;
-            case FuncDef:
 
+            case FuncHead:
                 /*
-                The current node is a function definition.
-                Perform the following checks:
-                - Given that the function is a member of a class, the class should already be declared in the symbol table.
-                - The function should not already be declared in the symbol table if it is a free function.
+                    A function head can be for a function definition, a method definition or a method declaration.
+
+                    The following steps are performed for a method declaration:
+                    - Check if the method with the same params is already declared in the current scope
+                    - Add the method to the class table
+
+                    The following steps are performed for a method definition:
+                    - Check if the method is already declared in the current scope with the same parameters. It should be declared in the class table, otherwise it is a duplicate definition.
+                    - Create a new symbol table for the method
+                    - Update the Entry Kind to Method
+                    - Set the current table to the method table
+
+                    The following steps are performed for a function definition:
+                    - Add the function parameters to the function table
+
                 */
 
-                // The leftmost child of the current node is the function head
-                IASTNode functionHead = LeftMostChild!;
-
-                // The first child of the function head is the identifier of the function
-                string functionName = functionHead.LeftMostChild!.Token!.Lexeme;
-
-                // The third child of the function head is the return type of the function
-                string returnType = functionHead.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme;
-
-                // Check if the function is a member of a class
-                bool isMember = Parent!.Operation == FuncDefList;
-
-                // If the function is a member of a class, the class should already be declared in the symbol table
-                if (isMember)
+                // Check if the function head is for a method declaration
+                if(Parent!.Operation == StructMember)
                 {
-                    // The method should already be declared in the symbol table
-                    ISymbolTableEntry? methodEntry = currentTable.Lookup(functionName);
-
-                    // If the method is not found, print an error message
-                    if (methodEntry == null)
+                    // Check if the method is already declared in the current scope with the same parameters
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!),null))
+                        errors.Add(new SemanticError(SemanticErrorType.DuplicateDeclaration, LeftMostChild!.Token!.Location, "Method already declared."));
+                    
+                    // Add the method to the class table
+                    currentTable.AddEntry(new SymbolTableEntry
                     {
-                        WriteLine("Error: Method " + functionName + " not found");
-                        break;
+                        Name = LeftMostChild!.Token!.Lexeme,
+                        Kind = SymbolEntryKind.MethodDeclaration,
+                        Type = LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme,
+                        Line = LeftMostChild!.Token!.Location,
+                        Parameters = GetFunctionParams(LeftMostChild!.RightSibling!),
+                        Visibility = Parent!.LeftMostChild!.Token!.Lexeme == "public" ? VisibilityType.Public : VisibilityType.Private,
+                    });
+
+                }
+                else if (Parent!.Parent!.Operation == FuncDefList)
+                {
+                    WriteLine("Method Definition");
+
+                    // Check if the method is already declared in the current scope with the same parameters
+                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!), SymbolEntryKind.MethodDeclaration))
+                        errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, LeftMostChild!.Token!.Location, "Method not declared."));
+
+                    // Create a new symbol table for the method
+                    currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link = new SymbolTable
+                    {
+                        Name = LeftMostChild!.Token!.Lexeme,
+                        Entries = new LinkedList<ISymbolTableEntry>(),
+                        Parent = currentTable
+                    };
+
+                    // Update the Entry Kind to Method
+                    currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Kind = SymbolEntryKind.Method;
+
+                    // Set the current table to the method table
+                    currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
+                }
+
+                // Check if the function head is for a function implementation
+                if (Parent!.Operation == FuncDef)
+                {
+                    // Add the function parameters to the function table
+                    IASTNode? param = LeftMostChild!.RightSibling!.LeftMostChild;
+
+                    while (param != null)
+                    {
+                        string paramType = param.LeftMostChild!.RightSibling!.Token!.Lexeme;
+
+                        // Add any array dimensions to the parameter type
+                        IASTNode? arraySize = param.LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
+
+                        while (arraySize != null)
+                        {
+                            if (arraySize.Operation == ArrayIndex)
+                                paramType += "[]";
+                            else
+                                paramType += "[" + arraySize.Token!.Lexeme + "]";
+
+                            arraySize = arraySize.RightSibling;
+                        }
+
+                        // Add the parameter to the function table
+                        currentTable.AddEntry(new SymbolTableEntry
+                        {
+                            Name = param.LeftMostChild!.Token!.Lexeme,
+                            Kind = SymbolEntryKind.Parameter,
+                            Type = paramType,
+                            Line = param.LeftMostChild!.Token!.Location
+                        });
+
+                        param = param.RightSibling;
                     }
 
-                    // If the method is found, load the symbol table of the method
-                    ISymbolTable methodTable = methodEntry.Link!;
-                    currentTable = methodTable;
 
-                    break;
                 }
 
-                // Create a new symbol table for the function
-                ISymbolTable functionTable = new SymbolTable(functionName, currentTable);
 
-                // Create a new symbol table entry for the function
-                ISymbolTableEntry functionEntry = new SymbolTableEntry(functionName, SymbolEntryKind.Function, returnType, functionTable,functionHead.LeftMostChild!.Token!.Location);
-
-                // Add the function entry to the current table
-                currentTable.AddEntry(functionEntry);
-
-                // Update the current table to the function table
-                currentTable = functionTable;
 
                 break;
-            case FParam:
 
-                // Get the identifier of the parameter
-                string paramName = LeftMostChild!.Token!.Lexeme;
-
-                // Get the type of the parameter
-                string paramType = LeftMostChild!.RightSibling!.Token!.Lexeme;
-
-                // Check if the parameter is an array
-                IASTNode arraySize = LeftMostChild!.RightSibling!.RightSibling!;
-
-                // Add the array size to the parameter type
-                if (arraySize.LeftMostChild != null)
-                    if (arraySize.LeftMostChild!.Token != null)
-                        paramType += "[" + arraySize.LeftMostChild!.Token!.Lexeme + "]";
-                    else
-                        paramType += "[]";
-
-                // Create a new symbol table entry for the parameter
-                ISymbolTableEntry paramEntry = new SymbolTableEntry(paramName, SymbolEntryKind.Parameter, paramType, null,LeftMostChild!.Token!.Location);
-
-                // Add the parameter entry to the current table
-                currentTable.AddEntry(paramEntry);
-
-                break;
             case VarDecl:
+                /*
+                    A variable declaration can be part of a function or a class.
 
-                // Make sure the variable is not a member of a struct
-                if (Parent!.Operation == StructMember)
-                    break;
+                    The following steps are performed for a variable declaration in a function:
+                */
 
-                string varName = LeftMostChild!.Token!.Lexeme;
                 string varType = LeftMostChild!.RightSibling!.Token!.Lexeme;
 
-                // Check if the variable is an array
-                IASTNode varArraySize = LeftMostChild!.RightSibling!.RightSibling!;
+                // Add any array dimensions to the variable type
+                IASTNode? arraySizes = LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
 
-                // Add the array size to the variable type
-                if (varArraySize.LeftMostChild != null)
-                    if (varArraySize.LeftMostChild!.Token != null)
-                        if (varArraySize.LeftMostChild!.Token!.Lexeme == "0")
-                            errors.Add(new SemanticError(SemanticErrorType.ArraySizeZero, varArraySize.LeftMostChild!.Token!.Location,"Array size cannot be zero."));
-                        else
-                            varType += "[" + varArraySize.LeftMostChild!.Token!.Lexeme + "]";
-                    else
-                    {
+                while (arraySizes != null)
+                {
+                    if (arraySizes.Operation == ArrayIndex)
                         varType += "[]";
+                    else
+                        varType += "[" + arraySizes.Token!.Lexeme + "]";
 
-                        // If the array size is not specified, then trigger a warning
-                        warnings.Add(new SemanticWarning(SemanticWarningType.ArraySizeNotSpecified, LeftMostChild!.RightSibling!.Token!.Location,"Array size not specified."));    
-                    }
-                // Create a new symbol table entry for the variable
-                ISymbolTableEntry varEntry = new SymbolTableEntry(varName, SymbolEntryKind.Variable, varType, null,LeftMostChild!.Token!.Location);
+                    arraySizes = arraySizes.RightSibling;
+                }
 
-                // Add the variable entry to the current table
-                currentTable.AddEntry(varEntry);
-
-                break;
-            case StructDecl:
-
-                // The leftmost child of the current node is the identifier of the struct
-                string structName = LeftMostChild!.Token!.Lexeme;
-
-                // Create a new symbol table for the struct
-                ISymbolTable structTable = new SymbolTable(structName, currentTable);
-
-                // Create a new symbol table entry for the struct
-                ISymbolTableEntry structEntry = new SymbolTableEntry(structName, SymbolEntryKind.Class, structName, structTable,LeftMostChild!.Token!.Location);
-
-                // Add the struct entry to the current table
-                currentTable.AddEntry(structEntry);
-
-                // Update the current table to the struct table
-                currentTable = structTable;
-
-
-                break;
-            case StructInheritList:
-                // Get the leftmost child of the current node (the identifier of the inherited struct)
-                IASTNode? inheritedStruct = LeftMostChild;
-
-                // While there are more inherited structs, add them to the current struct table
-                while (inheritedStruct != null)
+                // Check if the variable is declared in a function or as part of a class
+                if (Parent!.Operation == VarDeclOrStatList)
                 {
-                    // Get the identifier of the inherited struct
-                    string inheritedStructName = inheritedStruct.Token!.Lexeme;
-
-                    // Create a new symbol table entry for the inherited struct
-                    ISymbolTableEntry inheritedStructEntry = new SymbolTableEntry(inheritedStructName, SymbolEntryKind.Inherit, inheritedStructName, null,inheritedStruct.Token!.Location);
-
-                    // Add the inherited struct entry to the current table
-                    currentTable.AddEntry(inheritedStructEntry);
-
-                    // Get the next inherited struct
-                    inheritedStruct = inheritedStruct.RightSibling;
+                    // Add the variable to the function table
+                    currentTable.AddEntry(new SymbolTableEntry
+                    {
+                        Name = LeftMostChild!.Token!.Lexeme,
+                        Kind = SymbolEntryKind.Variable,
+                        Type = varType,
+                        Line = LeftMostChild!.Token!.Location
+                    });
+                }
+                else if (Parent!.LeftMostChild!.Operation == Visibility)
+                {
+                    // Add the data member to the class table
+                    currentTable.AddEntry(new SymbolTableEntry
+                    {
+                        Name = LeftMostChild!.Token!.Lexeme,
+                        Kind = SymbolEntryKind.Data,
+                        Type = varType,
+                        Line = LeftMostChild!.Token!.Location,
+                        Visibility = Parent!.LeftMostChild!.Token!.Lexeme == "public" ? VisibilityType.Public : VisibilityType.Private,
+                    });
                 }
 
 
                 break;
-            case StructMember:
-                WriteLine("Struct Member");
 
-                // The leftmost child of the current node is the visibility of the member
-                string visibility = LeftMostChild!.Token!.Lexeme;
-
-                IASTNode member = LeftMostChild!.RightSibling!;
-
-                // The member is either a variable declaration or a function definition
-                if (member.Operation == VarDecl)
-                {
-                    // The leftmost child of the member is the identifier of the member
-                    string memberName = member.LeftMostChild!.Token!.Lexeme;
-                    string memberType = member.LeftMostChild!.RightSibling!.Token!.Lexeme;
-
-                    // Check if the member is an array
-                    IASTNode memberArraySize = member.LeftMostChild!.RightSibling!.RightSibling!;
-                    if (memberArraySize.LeftMostChild != null)
-                        if (memberArraySize.LeftMostChild!.Token != null)
-                            memberType += "[" + memberArraySize.LeftMostChild!.Token!.Lexeme + "]";
-                        else
-                            memberType += "[]";
-
-                    // Create a new symbol table entry for the member
-                    ISymbolTableEntry memberEntry = new SymbolTableEntry(memberName, SymbolEntryKind.Data, memberType, null,member.LeftMostChild!.Token!.Location);
-
-                    // Add the member entry to the current table
-                    currentTable.AddEntry(memberEntry);
-                }
-                else
-                {
-                    // The leftmost child of the member is the function head
-                    IASTNode methodHead = member;
-
-                    // The first child of the function head is the identifier of the function
-                    string methodName = methodHead.LeftMostChild!.Token!.Lexeme;
-
-                    // The third child of the function head is the return type of the function
-                    string methodReturnType = methodHead.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme;
-
-                    // Create a new symbol table for the function
-                    ISymbolTable methodTable = new SymbolTable(methodName, currentTable);
-
-                    // Create a new symbol table entry for the function
-                    ISymbolTableEntry methodEntry = new SymbolTableEntry(methodName, SymbolEntryKind.Method, methodReturnType, methodTable,methodHead.LeftMostChild!.Token!.Location);
-
-                    // Add the function entry to the current table
-                    currentTable.AddEntry(methodEntry);
-
-                    // Update the current table to the function table
-                    currentTable = methodTable;
-                }
-
-                break;
             default:
                 break;
         }
@@ -547,6 +606,41 @@ public class ASTNode : IASTNode
         {
             child.Visit(currentTable, warnings, errors);
             child = child.RightSibling;
+        }
+
+        // Perform the following actions when exiting a node based on its operation
+        switch (Operation)
+        {
+            case ImplDef:
+                /*
+                    The following steps are performed for a class implementation:
+                    - Check if all the methods in the class have been implemented
+                    - Set the kind from ClassDeclaration to a Class.
+                */
+
+                currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!.Entries.ToList().ForEach(e =>
+                {
+                    if (e.Kind == SymbolEntryKind.MethodDeclaration)
+                        errors.Add(new SemanticError(SemanticErrorType.MethodNotImplemented, e.Line, "Method not implemented."));
+                });
+
+                currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Kind = SymbolEntryKind.Class;
+
+                break;
+
+            case Program:
+                /*
+
+                    The following steps are performed for the program:
+                    - Make sure the program has a main function
+                    - The main function should be a free function with the name "main" and return type "void"
+                    - Make sure the main function has no paramaters
+
+                */
+
+
+            default:
+                break;
         }
     }
 
@@ -561,19 +655,19 @@ public class ASTNode : IASTNode
                 ISymbolTableEntry? mainEntry = currentTable.Lookup("main");
 
                 if (mainEntry == null)
-                    errors.Add(new SemanticError(SemanticErrorType.MainNotFound, 0,"Main function not found."));
+                    errors.Add(new SemanticError(SemanticErrorType.MainNotFound, 0, "Main function not found."));
 
-                if(mainEntry!=null)
+                if (mainEntry != null)
                 {
                     // Make sure the main function returns void
                     if (mainEntry.Type != "void")
-                        errors.Add(new SemanticError(SemanticErrorType.MainReturnType, mainEntry.Line,"Main function must return void."));
-                
+                        errors.Add(new SemanticError(SemanticErrorType.MainReturnType, mainEntry.Line, "Main function must return void."));
+
                     ISymbolTable mainTable = mainEntry.Link!;
 
                     // Make sure the main function has no paramaters
                     if (mainTable.Entries.Count > 0 && mainTable.Entries.Any(e => e.Kind == SymbolEntryKind.Parameter))
-                        errors.Add(new SemanticError(SemanticErrorType.MainParameter, mainEntry.Line,"Main function must have no parameters."));
+                        errors.Add(new SemanticError(SemanticErrorType.MainParameter, mainEntry.Line, "Main function must have no parameters."));
                 }
 
                 break;
@@ -599,7 +693,7 @@ public class ASTNode : IASTNode
 
                 // Set the current table to the function table
                 currentTable = functionTable;
-                
+
 
 
                 break;
@@ -609,7 +703,7 @@ public class ASTNode : IASTNode
 
                 IASTNode variable = LeftMostChild!;
                 IASTNode expression = variable.RightSibling!;
-                
+
                 string variableType = currentTable.Lookup(variable.LeftMostChild!.Token!.Lexeme)!.Type;
 
 
@@ -618,7 +712,7 @@ public class ASTNode : IASTNode
                 WriteLine("Variable Type: " + variableType);
                 WriteLine("Expression Type: " + expressionType);
 
-                
+
 
                 break;
             default:
