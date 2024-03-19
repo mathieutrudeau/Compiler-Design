@@ -1780,6 +1780,7 @@ public class Parser : IParser
             
             SemStack.PushUntilEmptyNode(SemanticOperation.IndexList);
             SemStack.PushNextX(SemanticOperation.DataMember, 2);
+            SemStack.PushIfXPlaceholder(DotChain, 2);
 
             bool res = Match(Dot);
             

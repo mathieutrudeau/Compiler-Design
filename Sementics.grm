@@ -54,7 +54,7 @@
 <statement> ::= 'return' '(' <expr> ')' ';' B4   
 
 
-<statement-Id-nest> ::= V1 V2 '.' T10 'id' T1 T0 <statement-Id-nest>   
+<statement-Id-nest> ::= V1 V2 V6 '.' T10 'id' T1 T0 <statement-Id-nest>   
 <statement-Id-nest> ::= '(' <aParams> ')' F7 V3 V6 <statement-Id-nest2>  
 <statement-Id-nest> ::= <indice> <rept-idnest1> V1 V2 V6 <statement-Id-nest3>  
 <statement-Id-nest> ::= V1 V2 V6 <assignOp> <expr> F6  

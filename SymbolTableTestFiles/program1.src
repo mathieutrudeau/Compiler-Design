@@ -4,21 +4,21 @@ struct Class1
 
     public let B: integer;
 
-    private let BB: float;
+    public let BB: float;
 
-    public func A(a:integer,b:integer) -> void;
+    public func A(a:integer,b:integer) -> integer;
 
 };
 
 
 struct Class2 inherits Class1
 {
-    
+    public let CC: Class1;
 };
 
 impl Class1
 {
-    func A(a:integer, b:integer) ->void
+    func A(a:integer, b:integer) ->integer
     {
         let theOldVar: integer;
     }
@@ -27,7 +27,7 @@ impl Class1
 }
 
 impl Class2{
-func A(a:integer, b:integer) ->void
+func A(a:integer, b:integer) ->integer
     {
         let myNewVar: float;
 
@@ -39,8 +39,12 @@ func A(a:integer, b:integer) ->void
 
 func test1() -> void
 {
-    let a: b;
-    
+    let a: Class1;
+    let d: Class2;
+
+    d.CC.B = 4;
+
+    //d= 4;
 }
 
 
@@ -48,6 +52,9 @@ func test1() -> void
 
 func main() -> void
 {
-    
+    let a: integer;
+
+    //a = 3;
+
 }
 
