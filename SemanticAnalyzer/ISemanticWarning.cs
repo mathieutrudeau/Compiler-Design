@@ -16,5 +16,5 @@ public enum SemanticWarningType
     ShadowedInheritedMember,
     OverloadedMethod,
     OverloadedFunction,
-    ArraySizeNotSpecified,
+    UndeclaredArraySize,
 }

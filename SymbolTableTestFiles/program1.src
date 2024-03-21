@@ -6,6 +6,10 @@ struct Class1
 
     public let BB: float;
 
+    public let NewVar: float[6];
+
+    public let NVar: float[4][5];
+
     public func A(a:integer,b:integer) -> integer;
 
 };
@@ -21,6 +25,8 @@ impl Class1
     func A(a:integer, b:integer) ->integer
     {
         let theOldVar: integer;
+
+        return (-6);
     }
 
     
@@ -30,6 +36,11 @@ impl Class2{
 func A(a:integer, b:integer) ->integer
     {
         let myNewVar: float;
+
+        let bbb: integer;
+        bbb=4;
+
+        return (bbb);
 
     }
 }
@@ -44,14 +55,46 @@ func test1() -> void
 
     d.CC.B = 4;
 
-    let f: integer[];
-    let c: integer[][][][];
+    let f: integer;
+    let c: integer[3][3][3][3];
 
+    f=0;
 
-
-    c[3][d.CC.B] = f;
+    c[3][d.CC.B][2][2] = f;
 
     //d= 4;
+    
+    if(4<2) then {
+        
+    }
+    else{
+
+    };
+
+    
+}
+
+
+func NewFunc(arr: integer[][], b:float[1], sv:integer[9], c: integer ) -> void
+{
+    //let a:integer[3][3];
+    
+}
+
+
+func ffas() -> float
+{
+
+    let b:integer;
+
+    if(2<4) then {
+        return (0.0);
+    }
+    else{
+        
+    };
+
+    return (3.0);
 }
 
 

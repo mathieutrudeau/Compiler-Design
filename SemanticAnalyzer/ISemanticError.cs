@@ -20,7 +20,8 @@ public enum SemanticErrorType
     MainNotFound,
     MainReturnType,
     MainParameter,
-    ArraySizeZero,
+    ArraySizeOutOfRange,
+    UndeclaredArraySize,
     ClassAlreadyDeclared,
     ClassNotFound,
     ClassNotImplemented,
@@ -29,4 +30,6 @@ public enum SemanticErrorType
     InvalidType,
     UndeclaredType,
     InvalidIndex,
+    ReturnOnVoid,
+    NotAllPathsReturn,
 }
