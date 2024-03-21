@@ -44,6 +44,13 @@ func test1() -> void
 
     d.CC.B = 4;
 
+    let f: integer[];
+    let c: integer[][][][];
+
+
+
+    c[3][d.CC.B] = f;
+
     //d= 4;
 }
 

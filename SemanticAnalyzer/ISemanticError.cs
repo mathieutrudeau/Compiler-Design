@@ -28,4 +28,5 @@ public enum SemanticErrorType
     MultipleDefinition,
     InvalidType,
     UndeclaredType,
+    InvalidIndex,
 }

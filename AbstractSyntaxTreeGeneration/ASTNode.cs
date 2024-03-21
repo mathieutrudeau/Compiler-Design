@@ -4,6 +4,7 @@ using SemanticAnalyzer;
 using static AbstractSyntaxTreeGeneration.SemanticOperation;
 using static System.Console;
 using System.Data;
+using System;
 
 namespace AbstractSyntaxTreeGeneration;
 
@@ -279,18 +280,51 @@ public class ASTNode : IASTNode
             case FloatLit:
                 return "float";
             case SignFactor:
-                return GetType(LeftMostChild!.RightSibling!, currentTable, warnings, errors);
+                return GetType(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors);
             case AddExpr:
             case MultExpr:
-                return GetType(LeftMostChild!, currentTable,warnings,errors) == "float" || GetType(LeftMostChild!.RightSibling!.RightSibling!,currentTable,warnings,errors) == "float" ?
+                return GetType(node.LeftMostChild!, currentTable,warnings,errors) == "float" || GetType(node.LeftMostChild!.RightSibling!.RightSibling!,currentTable,warnings,errors) == "float" ?
                     "float" : "integer";
             case DataMember:
                 WriteLine("DataMember");
                 // Check if the data member is already declared in the current scope
                 if (!currentTable.IsAlreadyDeclared(node.LeftMostChild!.Token!.Lexeme))
                     errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, node.LeftMostChild!.Token!.Location, $"No declaration found for data member '{node.LeftMostChild!.Token!.Lexeme}'."));
-                else
+                else if (node.LeftMostChild!.RightSibling!.IsLeaf())
                     return currentTable.Lookup(node.LeftMostChild!.Token!.Lexeme)!.Type;
+                else
+                {
+                    // Get the type of the data member
+                    string type = currentTable.Lookup(node.LeftMostChild!.Token!.Lexeme)!.Type;
+
+                    // Get the dimensions of the array
+                    int dimensions = type.Count(c => c == '[');
+
+                    // Loop through the array indices
+                    IASTNode? index = node.LeftMostChild!.RightSibling!.LeftMostChild!;
+
+                    // Check if the array index is of type integer and if the number of indices matches the number of dimensions
+                    while (index != null)
+                    {
+                        string type1 = GetType(index, currentTable, warnings, errors);
+                        
+                        if (GetType(index, currentTable, warnings, errors) != "integer")
+                            errors.Add(new SemanticError(SemanticErrorType.InvalidIndex, node.LeftMostChild!.Token!.Location, "Array index must be of type integer."));
+                        else if (dimensions == 0)
+                            errors.Add(new SemanticError(SemanticErrorType.InvalidIndex, node.LeftMostChild!.Token!.Location, "Invalid index for non-array type."));
+                        else
+                            dimensions--;
+
+                        index = index.RightSibling;
+                    }
+
+                    // Return the type of the array
+                    string dims = "";
+                    for (int i = 0; i < dimensions; i++)
+                        dims += "[]";
+
+                    return string.Concat(type.AsSpan(0, type.IndexOf('[')), dims); ;
+                }
 
                 return "";
 
@@ -317,7 +351,7 @@ public class ASTNode : IASTNode
                 // Set the current table to the class table
                 currentTable = currentTable.Lookup(lhs)!.Link!;
                 return GetType(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors);
-                
+
             default:
                 return "";
         }
