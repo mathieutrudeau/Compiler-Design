@@ -1,0 +1,35 @@
+Warning: ShadowedInheritedMember at line 84: Method 'build2' shadows the inherited method from a parent class.
+Warning: OverloadedFunction at line 96: Function 'f' overloads another function.
+Error: MethodNotImplemented at line 4: Method 'evaluate2' not implemented.
+Error: MultipleDeclaration at line 6: Class 'POLYNOMIAL' already declared.
+Error: ClassNotImplemented at line 6: Class 'POLYNOMIAL' not implemented.
+Error: MultipleDeclaration at line 13: Data member 'b' already declared.
+Error: InheritedClassNotFound at line 28: Inherited class 'E' not found.
+Error: ClassNotImplemented at line 28: Class 'C' not implemented.
+Error: ClassNotImplemented at line 32: Class 'D' not implemented.
+Error: ClassNotImplemented at line 36: Class 'E' not implemented.
+Error: InvalidType at line 45: Return type 'integer' does not match the expected return type 'float'.
+Error: InvalidType at line 79: Type mismatch in expression. Expected float but got integer.
+Error: InvalidType at line 81: Type mismatch in assignment statement. Expected float but got integer.
+Error: InvalidType at line 82: Return type 'integer' does not match the expected return type 'QUADRATIC'.
+Error: MultipleDeclaration at line 95: Function 'f' already declared.
+Error: NotAllPathsReturn at line 98: All paths must return a value.
+Error: UndeclaredType at line 104: No declaration found for type 'a'.
+Error: UndeclaredType at line 105: No declaration found for type 'C'.
+Error: MultipleDeclaration at line 109: Variable 'counter' already declared.
+Error: UndeclaredMethod at line 112: No declaration found for function/method 'build(integer, float)'.
+Error: UndeclaredMember at line 114: No declaration found for data member 'b'.
+Error: UndeclaredMethod at line 115: No declaration found for function/method 'f()'.
+Error: UndeclaredMethod at line 116: No declaration found for function/method 'undefined()'.
+Error: InvalidType at line 117: Type mismatch in assignment statement. Expected integer but got a.
+Error: UndeclaredMethod at line 118: No declaration found for function/method 'f(integer, integer, integer)'.
+Error: UndeclaredMethod at line 119: No declaration found for function/method 'f(float, integer)'.
+Error: InvalidType at line 120: Type mismatch in assignment statement. Expected integer[] but got integer.
+Error: InvalidIndex at line 121: Array index must be of type integer.
+Error: InvalidType at line 121: Type mismatch in assignment statement. Expected integer[] but got integer.
+Error: UndeclaredMethod at line 122: No declaration found for function/method 'f3(integer[1][2][3])'.
+Error: IllegalChaining at line 123: 'integer' cannot be chained. Only class types can be chained using the dot operator.
+Error: UndeclaredMember at line 127: No declaration found for data member 'counter'.
+Error: UndeclaredMethod at line 127: No declaration found for function/method 'evaluate()'.
+Error: UndeclaredMember at line 128: No declaration found for data member 'counter'.
+Error: UndeclaredMethod at line 128: No declaration found for function/method 'evaluate()'.

@@ -1,29 +1,40 @@
-
 using AbstractSyntaxTreeGeneration;
 using static System.Console;
 
 namespace SemanticAnalyzer;
 
+/// <summary>
+/// Represents a Symbol Table.
+/// </summary>
 public class SymbolTable : ISymbolTable
 {
+    /// <summary>
+    /// The name of the symbol table.
+    /// </summary>
     public string Name { get; set; } = "";
+
+    /// <summary>
+    /// The list of entries in the symbol table.
+    /// </summary>
     public LinkedList<ISymbolTableEntry> Entries { get; set; } = new LinkedList<ISymbolTableEntry>();
+
+    /// <summary>
+    /// The parent symbol table. This will be null for the global symbol table.
+    /// </summary>
     public ISymbolTable? Parent { get; set; } = null;
 
-    public bool GenerateSymbolTable(IASTNode root)
-    {
-        throw new NotImplementedException();
-    }
+    #region Public Methods
+
 
     public ISymbolTableEntry? Lookup(string name)
     {
         // Look for the entry in the current symbol table
         ISymbolTableEntry? entry = Entries.FirstOrDefault(e => e.Name == name);
-        
+
         // If the entry is found, return it
         if (entry != null)
             return entry;
-        
+
         // If the entry is not found, look for it in the parent symbol table
         if (Parent != null)
             return Parent.Lookup(name);
@@ -32,96 +43,10 @@ public class SymbolTable : ISymbolTable
         return null;
     }
 
-    public override string ToString()
-    {
-        return PrintSymbolTable(this, 0);
-    }
-
-    private string AlignString(string str)
-    {
-        int maxLineLength = 0;
-
-        foreach (var line in str.Split("\n"))
-        {
-            if (line.Length > maxLineLength)
-                maxLineLength = line.Length;
-        }
-
-        return str.PadRight(maxLineLength);
-    }
-
-    private string PrintSymbolTable(ISymbolTable table, int depth)
-    {
-        
-        int depth_magnitude = 4;
-        int indent = depth_magnitude * depth;
-
-        string start_str = "";
-        for (int i = 0; i < depth; i++)
-            start_str += "|" + new string(' ', depth_magnitude);
-        
-
-        if (indent == 0)
-            indent = -1;
-
-        string tableName = start_str
-        + "| Symbol Table: " + table.Name + "    | Parent: " + (table.Parent == null ? "None" : table.Parent.Name);
-        
-        string tableContents = "";
-
-        if (table.Entries.Count != 0)
-        {
-            int maxNameLength = table.Entries.Max(e => e.Name.Length) + 8;
-            int maxKindLength = table.Entries.Max(e => e.Kind.ToString().Length) + 9;
-            int maxTypeLength = table.Entries.Max(e => e.Type.Length) + 9;
-            int maxLinkLength = table.Entries.Max(e => e.Link == null ? 4 : e.Link.Name.Length) + 9;
-            if (maxLinkLength < 13)
-                maxLinkLength = 13;
-
-            foreach (var entry in table.Entries)
-            {
-                tableContents += start_str + string.Format("| Name: {0}", entry.Name).PadRight(maxNameLength);
-                tableContents += string.Format(" | Kind: {0}", entry.Kind).PadRight(maxKindLength);
-                tableContents += string.Format(" | Type: {0}", entry.Type).PadRight(maxTypeLength);
-                tableContents += string.Format(" | Link: {0}", entry.Link == null ? "None" : entry.Link.Name).PadRight(maxLinkLength);
-                tableContents += "\n";
-
-
-                if (entry.Link != null)
-                    tableContents += PrintSymbolTable(entry.Link, depth + 1);
-            }
-
-            tableContents = tableContents.TrimEnd('\n');
-        }
-        
-        // Find the line with the most characters
-        int maxLineLength = tableName.Length;
-
-        foreach (var line in tableContents.Split("\n"))
-        {
-            if (line.Length > maxLineLength)
-                maxLineLength = line.Length;
-        }
-
-        
-        tableName = tableName.PadRight(maxLineLength+1) + "|" + "\n";
-        //tableName =
-        tableName = start_str + new string('=', maxLineLength+1-indent) + "\n" + tableName + start_str + new string('=', maxLineLength+1-indent) + "\n";
-
-        // Append spaces to each line to make them the same length and add the | at the end
-        tableContents = string.Join("\n", tableContents.Split("\n").Select(s=>s.PadRight(maxLineLength+1) + "|").Where(s=>s.Length > 1))+ "\n";
-
-        tableContents += start_str + new string('=', maxLineLength-indent) + "|\n";
-
-        string str = tableName + tableContents;
-
-        return str;
-    }
-
     public bool IsInheritedMethod(string name, string[] parameters, string type)
     {
         // Check if the name is already declared in the current symbol table
-        if (Entries.Any(e => e.Name == name && e.Parameters.SequenceEqual(parameters) && e.Visibility==VisibilityType.Public && e.Type==type && e.Kind == SymbolEntryKind.Method || e.Kind == SymbolEntryKind.MethodDeclaration))
+        if (Entries.Any(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters) && e.Visibility == VisibilityType.Public && e.Type == type && e.Kind == SymbolEntryKind.Method || e.Kind == SymbolEntryKind.MethodDeclaration))
             return true;
 
         // If the name is not declared in the current symbol table, check if it is declared in one of the inherited symbol tables
@@ -133,7 +58,6 @@ public class SymbolTable : ISymbolTable
         return false;
     }
 
-
     public IASTNode? IsValidReference(string name)
     {
         // Copy the reference to the current symbol table
@@ -142,18 +66,18 @@ public class SymbolTable : ISymbolTable
         // Look for the entry in the current symbol table
         ISymbolTableEntry? entry = null;
 
-        while(entry == null && currentTable != null)
+        while (entry == null && currentTable != null)
         {
             // Check whether the current symbol table is for a class or for a function
-            if(currentTable.Parent!.Entries.First(e=>e.Name==currentTable.Name).Kind == SymbolEntryKind.Class)
-                {
-                    // Class
-                }
-                else
-                {
-                    // Function or method
-                }
-            
+            if (currentTable.Parent!.Entries.First(e => e.Name == currentTable.Name).Kind == SymbolEntryKind.Class)
+            {
+                // Class
+            }
+            else
+            {
+                // Function or method
+            }
+
             entry = currentTable.Entries.FirstOrDefault(e => e.Name == name);
 
             currentTable = currentTable.Parent!;
@@ -181,8 +105,8 @@ public class SymbolTable : ISymbolTable
     public bool IsAlreadyDeclared(string name, string[] parameters, SymbolEntryKind? kind = null)
     {
         // Check if the name is already declared in the current symbol table
-        if ((kind ==null && Entries.Any(e => e.Name == name && e.Parameters.SequenceEqual(parameters)))
-        || (kind != null && Entries.Any(e => e.Name == name && e.Parameters.SequenceEqual(parameters) && e.Kind == kind)))
+        if ((kind == null && Entries.Any(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters)))
+        || (kind != null && Entries.Any(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters) && e.Kind == kind)))
             return true;
 
         // If the name is not declared in the current symbol table, check if it is declared in the parent symbol table
@@ -197,6 +121,134 @@ public class SymbolTable : ISymbolTable
     {
         Entries.AddLast(entry);
     }
+
+    #endregion Public Methods
+
+    #region Private Methods
+
+    private string PrintSymbolTable(ISymbolTable table, int depth)
+    {
+
+        int depth_magnitude = 4;
+        int indent = depth_magnitude * depth;
+
+        string start_str = "";
+        for (int i = 0; i < depth; i++)
+            start_str += "|" + new string(' ', depth_magnitude);
+
+
+        if (indent == 0)
+            indent = -1;
+
+        string tableName = start_str
+        + "| Symbol Table: " + table.Name + "    | Parent: " + (table.Parent == null ? "None" : table.Parent.Name);
+
+        string tableContents = "";
+
+        if (table.Entries.Count != 0)
+        {
+            int maxNameLength = table.Entries.Max(e => e.Name.Length) + 8;
+            int maxKindLength = table.Entries.Max(e => e.Kind.ToString().Length) + 9;
+            int maxTypeLength = table.Entries.Max(e => e.Type.Length) + 9;
+            int maxLinkLength = table.Entries.Max(e => e.Link == null ? 4 : e.Link.Name.Length) + 9;
+            if (maxLinkLength < 13)
+                maxLinkLength = 13;
+
+            foreach (var entry in table.Entries)
+            {
+                tableContents += start_str + string.Format("| Name: {0}", entry.Name).PadRight(maxNameLength);
+                tableContents += string.Format(" | Kind: {0}", entry.Kind).PadRight(maxKindLength);
+                tableContents += string.Format(" | Type: {0}", entry.Type).PadRight(maxTypeLength);
+                tableContents += string.Format(" | Link: {0}", entry.Link == null ? "None" : entry.Link.Name).PadRight(maxLinkLength);
+                tableContents += "\n";
+
+
+                if (entry.Link != null)
+                    tableContents += PrintSymbolTable(entry.Link, depth + 1);
+            }
+
+            tableContents = tableContents.TrimEnd('\n');
+        }
+
+        // Find the line with the most characters
+        int maxLineLength = tableName.Length;
+
+        foreach (var line in tableContents.Split("\n"))
+        {
+            if (line.Length > maxLineLength)
+                maxLineLength = line.Length;
+        }
+
+
+        tableName = tableName.PadRight(maxLineLength + 1) + "|" + "\n";
+        //tableName =
+        tableName = start_str + new string('=', maxLineLength + 1 - indent) + "\n" + tableName + start_str + new string('=', maxLineLength + 1 - indent) + "\n";
+
+        // Append spaces to each line to make them the same length and add the | at the end
+        tableContents = string.Join("\n", tableContents.Split("\n").Select(s => s.PadRight(maxLineLength + 1) + "|").Where(s => s.Length > 1)) + "\n";
+
+        tableContents += start_str + new string('=', maxLineLength - indent) + "|\n";
+
+        string str = tableName + tableContents;
+
+        return str;
+    }
+
+    #endregion Private Methods
+
+    #region Static Methods
+
+    /// <summary>
+    /// Checks if the parameters of a function match the arguments.
+    /// </summary>
+    /// <param name="parameters">The parameters of the function.</param>
+    /// <param name="arguments">The arguments to check.</param>
+    /// <returns>True if the parameters match the arguments, false otherwise.</returns>
+    private static bool MatchFunctionParameters(string[] parameters, string[] arguments)
+    {
+        // Check if the number of arguments and parameters match
+        if (arguments.Length != parameters.Length)
+            return false;
+
+        // Check if the arguments match the parameters
+        for (int i = 0; i < arguments.Length; i++)
+        {
+            // If the argument is the same as the parameter, continue
+            if (arguments[i] == parameters[i])
+                continue;
+
+            // In case of arrays, check if the dimensions match
+            string[] argDims = arguments[i].Split('[');
+            string[] paramDims = parameters[i].Split('[');
+
+            if (argDims.Length != paramDims.Length)
+                return false;
+
+            // If the dimensions match, make sure the sizes match
+            for (int j = 0; j < argDims.Length; j++)
+            {
+                // If the parameter size is empty, then it will match any size
+                if (paramDims[j].Split(']')[0] == "")
+                    continue;
+                // If the parameter size is not empty, then the sizes must match
+                else if (argDims[j].Split(']')[0] != paramDims[j].Split(']')[0])
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    #endregion Static Methods
+
+    #region Overridden Methods
+
+    public override string ToString()
+    {
+        return PrintSymbolTable(this, 0);
+    }
+
+    #endregion Overridden Methods
 
 }
 

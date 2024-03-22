@@ -11,7 +11,7 @@ public static class SymbolTableDriver
     public static void GenerateSymbolTable(string sourceFolder)
     {
         // Get all the test files
-        string[] testFiles = Directory.GetFiles(sourceFolder, "program1.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "polynomialsemanticerrors.src");
 
         // Run the semantic analyzer on each file
         foreach (string testFile in testFiles)
@@ -28,7 +28,7 @@ public static class SymbolTableDriver
             if (parseSuccess)
             {
                 IASTNode root = parser.GetAST_Root();
-                ISemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(root);
+                ISemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(root, testFile);
                 bool analyzeSuccess = semanticAnalyzer.Analyze();
 
 

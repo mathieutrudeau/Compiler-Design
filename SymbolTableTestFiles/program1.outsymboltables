@@ -1,0 +1,90 @@
+==========================================================================================
+| Symbol Table: Global    | Parent: None                                                 |
+==========================================================================================
+| Name: Class1  | Kind: Class    | Type:       | Link: Class1                            |
+|    ==========================================================================          |
+|    | Symbol Table: Class1    | Parent: Global                               |          |
+|    ==========================================================================          |
+|    | Name: b      | Kind: Data   | Type: integer     | Link: None           |          |
+|    | Name: B      | Kind: Data   | Type: integer     | Link: None           |          |
+|    | Name: BB     | Kind: Data   | Type: float       | Link: None           |          |
+|    | Name: NewVar | Kind: Data   | Type: float[6]    | Link: None           |          |
+|    | Name: NVar   | Kind: Data   | Type: float[4][5] | Link: None           |          |
+|    | Name: A      | Kind: Method | Type: integer     | Link: A              |          |
+|    |    =================================================================== |          |
+|    |    | Symbol Table: A    | Parent: Class1                            |  |          |
+|    |    =================================================================== |          |
+|    |    | Name: a         | Kind: Parameter | Type: integer | Link: None |  |          |
+|    |    | Name: b         | Kind: Parameter | Type: integer | Link: None |  |          |
+|    |    | Name: theOldVar | Kind: Variable  | Type: integer | Link: None |  |          |
+|    |    ==================================================================| |          |
+|    =========================================================================|          |
+| Name: Class2  | Kind: Class    | Type:       | Link: Class2                            |
+|    =================================================================================== |
+|    | Symbol Table: Class2    | Parent: Global                                        | |
+|    =================================================================================== |
+|    | Name: Class1 | Kind: Inherit | Type:         | Link: Class1                     | |
+|    |    ============================================================================ | |
+|    |    | Symbol Table: Class1    | Parent: Global                                |  | |
+|    |    ============================================================================ | |
+|    |    | Name: b      | Kind: Data   | Type: integer     | Link: None            |  | |
+|    |    | Name: B      | Kind: Data   | Type: integer     | Link: None            |  | |
+|    |    | Name: BB     | Kind: Data   | Type: float       | Link: None            |  | |
+|    |    | Name: NewVar | Kind: Data   | Type: float[6]    | Link: None            |  | |
+|    |    | Name: NVar   | Kind: Data   | Type: float[4][5] | Link: None            |  | |
+|    |    | Name: A      | Kind: Method | Type: integer     | Link: A               |  | |
+|    |    |    ==================================================================== |  | |
+|    |    |    | Symbol Table: A    | Parent: Class1                            |   |  | |
+|    |    |    ==================================================================== |  | |
+|    |    |    | Name: a         | Kind: Parameter | Type: integer | Link: None |   |  | |
+|    |    |    | Name: b         | Kind: Parameter | Type: integer | Link: None |   |  | |
+|    |    |    | Name: theOldVar | Kind: Variable  | Type: integer | Link: None |   |  | |
+|    |    |    ===================================================================| |  | |
+|    |    ===========================================================================| | |
+|    | Name: CC     | Kind: Data    | Type: Class1  | Link: None                       | |
+|    | Name: A      | Kind: Method  | Type: integer | Link: A                          | |
+|    |    ==================================================================           | |
+|    |    | Symbol Table: A    | Parent: Class2                           |            | |
+|    |    ==================================================================           | |
+|    |    | Name: a        | Kind: Parameter | Type: integer | Link: None |            | |
+|    |    | Name: b        | Kind: Parameter | Type: integer | Link: None |            | |
+|    |    | Name: myNewVar | Kind: Variable  | Type: float   | Link: None |            | |
+|    |    | Name: bbb      | Kind: Variable  | Type: integer | Link: None |            | |
+|    |    =================================================================|           | |
+|    ==================================================================================| |
+| Name: test1   | Kind: Function | Type: void  | Link: test1                             |
+|    =====================================================================               |
+|    | Symbol Table: test1    | Parent: Global                           |               |
+|    =====================================================================               |
+|    | Name: a | Kind: Variable | Type: Class1              | Link: None |               |
+|    | Name: d | Kind: Variable | Type: Class2              | Link: None |               |
+|    | Name: f | Kind: Variable | Type: integer             | Link: None |               |
+|    | Name: c | Kind: Variable | Type: integer[3][3][3][3] | Link: None |               |
+|    ====================================================================|               |
+| Name: NewFunc | Kind: Function | Type: void  | Link: NewFunc                           |
+|    ================================================================                    |
+|    | Symbol Table: NewFunc    | Parent: Global                    |                    |
+|    ================================================================                    |
+|    | Name: arr | Kind: Parameter | Type: integer[][] | Link: None |                    |
+|    | Name: b   | Kind: Parameter | Type: float[1]    | Link: None |                    |
+|    | Name: sv  | Kind: Parameter | Type: integer[9]  | Link: None |                    |
+|    | Name: c   | Kind: Parameter | Type: integer     | Link: None |                    |
+|    ===============================================================|                    |
+| Name: ffas    | Kind: Function | Type: float | Link: ffas                              |
+|    ===============================================================                     |
+|    | Symbol Table: ffas    | Parent: Global                      |                     |
+|    ===============================================================                     |
+|    | Name: arr | Kind: Parameter | Type: Class1[][] | Link: None |                     |
+|    | Name: a   | Kind: Parameter | Type: integer    | Link: None |                     |
+|    | Name: b   | Kind: Variable  | Type: integer    | Link: None |                     |
+|    ==============================================================|                     |
+| Name: main    | Kind: Function | Type: void  | Link: main                              |
+|    ================================================================                    |
+|    | Symbol Table: main    | Parent: Global                       |                    |
+|    ================================================================                    |
+|    | Name: a | Kind: Variable | Type: Class1[10][11] | Link: None |                    |
+|    | Name: f | Kind: Variable | Type: integer        | Link: None |                    |
+|    | Name: b | Kind: Variable | Type: integer        | Link: None |                    |
+|    ===============================================================|                    |
+=========================================================================================|
+

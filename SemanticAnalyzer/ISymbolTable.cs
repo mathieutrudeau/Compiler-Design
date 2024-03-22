@@ -22,7 +22,6 @@ public interface ISymbolTable
     /// </summary>
     public ISymbolTable? Parent { get; set; }
 
-    public bool GenerateSymbolTable(IASTNode root);
 
     public void AddEntry(ISymbolTableEntry entry);
 
@@ -51,6 +50,7 @@ public interface ISymbolTable
 
     public bool IsInheritedMethod(string name, string[] parameters, string type);
 
+    
     public IASTNode? IsValidReference(string name);
 
 }
@@ -95,9 +95,16 @@ public interface ISymbolTableEntry
     /// </summary>
     public int ReferencesCount { get; set; }
 
+    /// <summary>
+    /// The visibility of the entry.
+    /// </summary>
     public VisibilityType Visibility { get; set; }
 }
 
+
+/// <summary>
+///  Interface that allows a node to be visited.
+/// </summary>
 public interface IVisitor
 {
 

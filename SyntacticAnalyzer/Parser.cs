@@ -135,7 +135,9 @@ public class Parser : IParser
         sw2.WriteLine(root.DotASTString());
         sw2.Close();
 
-        // Return the result
+        // Check if errors occurred during the parsing by checking the syntax errors file
+        res = res && !File.Exists(SourceName + OUT_SYNTAX_ERRORS_EXTENSION);
+
         return res;
     }
 
@@ -164,7 +166,9 @@ public class Parser : IParser
         if (!isMatch)
         {
             string errorMsg = $"Syntax error: Unexpected '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected {Token.TokenTypeToString(tokenType)}.";
+            ForegroundColor = ConsoleColor.Red;
             WriteLine(errorMsg);
+            ResetColor();
             using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
             sw.WriteLine(errorMsg);
         }
@@ -200,7 +204,9 @@ public class Parser : IParser
             string errorMsg = $"Syntax error: Unexpected token '{LookAhead.Lexeme}' at line {LookAhead.Location}. Expected any of the following: {string.Join(", ", expectedTokens)}.";
 
             // Write the error message to the console and to the output file
+            ForegroundColor = ConsoleColor.Red;
             WriteLine(errorMsg);
+            ResetColor();
         
             using StreamWriter sw = new(SourceName + OUT_SYNTAX_ERRORS_EXTENSION, true);
             sw.WriteLine(errorMsg);
