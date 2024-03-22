@@ -36,6 +36,34 @@ public class SemanticAnalyzer : ISemanticAnalyzer
 
     }
 
+    private void ShowErrors()
+    {
+        if (_errors.Count > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            // If there are any errors, print them and return false
+            foreach (var error in _errors.OrderBy(e => e.Line))
+            {
+                Console.WriteLine(error);
+            }
+            Console.ResetColor();
+        }
+    }
+
+    private void ShowWarnings()
+    {
+        if (_warnings.Count > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            // If there are any warnings, print them
+            foreach (var warning in _warnings.OrderBy(w => w.Line))
+            {
+                Console.WriteLine(warning);
+            }
+            Console.ResetColor();
+        }
+    }
+
     /// <summary>
     /// Analyzes the AST and builds the symbol table.
     /// </summary>
@@ -53,22 +81,11 @@ public class SemanticAnalyzer : ISemanticAnalyzer
             _astRoot.SemanticCheck(_globalSymbolTable, _warnings, _errors);
 
 
-        if (_warnings.Count > 0)
-        {
-            // If there are any warnings, print them
-            foreach (var warning in _warnings)
-            {
-                Console.WriteLine(warning);
-            }
-        }        
+        ShowWarnings();
 
         if (_errors.Count > 0)
         {
-            // If there are any errors, print them and return false
-            foreach (var error in _errors)
-            {
-                Console.WriteLine(error);
-            }
+            ShowErrors();
             return false;   
         }
 

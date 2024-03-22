@@ -133,6 +133,37 @@ public class SymbolTable : ISymbolTable
         return false;
     }
 
+
+    public IASTNode? IsValidReference(string name)
+    {
+        // Copy the reference to the current symbol table
+        ISymbolTable? currentTable = this;
+
+        // Look for the entry in the current symbol table
+        ISymbolTableEntry? entry = null;
+
+        while(entry == null && currentTable != null)
+        {
+            // Check whether the current symbol table is for a class or for a function
+            if(currentTable.Parent!.Entries.First(e=>e.Name==currentTable.Name).Kind == SymbolEntryKind.Class)
+                {
+                    // Class
+                }
+                else
+                {
+                    // Function or method
+                }
+            
+            entry = currentTable.Entries.FirstOrDefault(e => e.Name == name);
+
+            currentTable = currentTable.Parent!;
+        }
+
+
+
+        return null;
+    }
+
     public bool IsAlreadyDeclared(string name)
     {
         // Check if the name is already declared in the current symbol table

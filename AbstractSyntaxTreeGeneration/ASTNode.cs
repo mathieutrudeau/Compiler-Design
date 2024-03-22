@@ -283,7 +283,7 @@ public class ASTNode : IASTNode
                 return GetType(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors);
             case AddExpr:
             case MultExpr:
-                return GetType(node.LeftMostChild!, currentTable,warnings,errors) == "float" || GetType(node.LeftMostChild!.RightSibling!.RightSibling!,currentTable,warnings,errors) == "float" ?
+                return GetType(node.LeftMostChild!, currentTable, warnings, errors) == "float" || GetType(node.LeftMostChild!.RightSibling!.RightSibling!, currentTable, warnings, errors) == "float" ?
                     "float" : "integer";
             case DataMember:
                 // Check if the data member is already declared in the current scope
@@ -306,7 +306,7 @@ public class ASTNode : IASTNode
                     while (index != null)
                     {
                         string type1 = GetType(index, currentTable, warnings, errors);
-                        
+
                         if (GetType(index, currentTable, warnings, errors) != "integer")
                             errors.Add(new SemanticError(SemanticErrorType.InvalidIndex, node.LeftMostChild!.Token!.Location, "Array index must be of type integer."));
                         else if (dimensions == 0)
@@ -329,8 +329,12 @@ public class ASTNode : IASTNode
 
             case FuncCall:
                 // Check if the function is already declared in the current scope
-                if (!currentTable.IsAlreadyDeclared(node.LeftMostChild!.Token!.Lexeme))
-                    errors.Add(new SemanticError(SemanticErrorType.UndefinedMethod, node.LeftMostChild!.Token!.Location, $"No declaration found for method '{node.LeftMostChild!.Token!.Lexeme}'."));
+                if (!currentTable.IsAlreadyDeclared(node.LeftMostChild!.Token!.Lexeme, GetFunctionParams(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Function)
+                && !currentTable.IsAlreadyDeclared(node.LeftMostChild!.Token!.Lexeme, GetFunctionParams(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Method))
+                {
+                    string parameters = string.Join(", ", GetFunctionParams(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors));
+                    errors.Add(new SemanticError(SemanticErrorType.UndeclaredMethod, node.LeftMostChild!.Token!.Location, $"No declaration found for function/method '{node.LeftMostChild!.Token!.Lexeme}({parameters})'."));
+                }
                 else
                     return currentTable.Lookup(node.LeftMostChild!.Token!.Lexeme)!.Type;
 
@@ -340,9 +344,20 @@ public class ASTNode : IASTNode
 
                 // Check if the data member is already declared in the current scope
                 string lhs = GetType(node.LeftMostChild!, currentTable, warnings, errors);
-                
+
                 if (lhs == "")
                     return "";
+
+                if (lhs == "integer" || lhs == "float")
+                {
+                    // Find the location of the dot operator
+                    IASTNode? locationNode = node.LeftMostChild;
+                    while (!locationNode!.IsLeaf())
+                        locationNode = locationNode.LeftMostChild;
+
+                    errors.Add(new SemanticError(SemanticErrorType.IllegalChaining, locationNode.Token!.Location, $"'{lhs}' cannot be chained. Only class types can be chained using the dot operator."));
+                    return "";
+                }
 
                 // Set the current table to the class table
                 currentTable = currentTable.Lookup(lhs)!.Link!;
@@ -354,7 +369,6 @@ public class ASTNode : IASTNode
 
 
     }
-
 
     private static string GetVarType(IASTNode node, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
@@ -381,8 +395,7 @@ public class ASTNode : IASTNode
         return varType;
     }
 
-
-    private static string[] GetFunctionParams(IASTNode node, List<ISemanticWarning> warnings, List<ISemanticError> errors)
+    private string[] GetFunctionParams(IASTNode node, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
 
         string[] parameters = Array.Empty<string>();
@@ -407,7 +420,7 @@ public class ASTNode : IASTNode
                         if (arraySize.Operation == ArrayIndex)
                         {
                             paramType += "[]";
-                            if (!warnings.Any(w => w.Line ==  arraySize.Parent!.Parent!.LeftMostChild!.Token!.Location && w.Type == SemanticWarningType.UndeclaredArraySize))
+                            if (!warnings.Any(w => w.Line == arraySize.Parent!.Parent!.LeftMostChild!.Token!.Location && w.Type == SemanticWarningType.UndeclaredArraySize))
                                 warnings.Add(new SemanticWarning(SemanticWarningType.UndeclaredArraySize, arraySize.Parent!.Parent!.LeftMostChild!.Token!.Location, "Array size not declared. This may lead to unexpected behavior."));
                         }
                         else
@@ -427,23 +440,40 @@ public class ASTNode : IASTNode
 
                 break;
 
+            case AParamList:
+                
+                    IASTNode? arg = node.LeftMostChild;
+    
+                    while (arg != null)
+                    {
+                        if(arg.Operation == FuncCall)
+                            parameters = parameters.Append(GetType(arg.LeftMostChild!, currentTable, warnings, errors)).ToArray();
+                        else
+                            parameters = parameters.Append(GetType(arg, currentTable, warnings, errors)).ToArray();
+                        arg = arg.RightSibling;
+                    }
+    
+                    break;
+
             default:
+
+
                 break;
         }
 
         return parameters;
     }
 
-    private bool CheckReturn(IASTNode? node, string expectedReturnType, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors, bool isReturnAllowed=true)
+    private bool CheckReturn(IASTNode? node, string expectedReturnType, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors, bool isReturnAllowed = true)
     {
         if (node == null)
             return false;
 
         bool containsReturn = false;
 
-        while(node != null)
+        while (node != null)
         {
-            switch(node.Operation)
+            switch (node.Operation)
             {
                 case IfStat:
                     bool firstPath = CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors, isReturnAllowed);
@@ -454,7 +484,7 @@ public class ASTNode : IASTNode
 
                     containsReturn = firstPath && secondPath;
 
-                    if(containsReturn)
+                    if (containsReturn)
                         return true;
 
                     break;
@@ -462,11 +492,11 @@ public class ASTNode : IASTNode
 
                     IASTNode? locationNode = node.LeftMostChild;
 
-                    while(!locationNode!.IsLeaf())
+                    while (!locationNode!.IsLeaf())
                         locationNode = locationNode.LeftMostChild;
 
-                    string returnType = GetType(node.LeftMostChild!,currentTable,warnings,errors);
-                    if(returnType!=expectedReturnType)
+                    string returnType = GetType(node.LeftMostChild!, currentTable, warnings, errors);
+                    if (returnType != expectedReturnType)
                         errors.Add(new SemanticError(SemanticErrorType.InvalidType, locationNode!.Token!.Location, $"Return type '{returnType}' does not match the expected return type '{expectedReturnType}'."));
 
                     return true;
@@ -479,19 +509,69 @@ public class ASTNode : IASTNode
     }
 
     private void ValidateFuncReturnType(IASTNode node, string expectedReturnType, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
-    {   
-        switch(expectedReturnType)
+    {
+        switch (expectedReturnType)
         {
             case "void":
-                if(CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors,false))
+                if (CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors, false))
                     errors.Add(new SemanticError(SemanticErrorType.ReturnOnVoid, node.LeftMostChild!.LeftMostChild!.Token!.Location, "Function with return type 'void' must not contain a return statement."));
                 break;
             default:
-                if(!CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors))
+                if (!CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors))
                     errors.Add(new SemanticError(SemanticErrorType.NotAllPathsReturn, node.LeftMostChild!.LeftMostChild!.Token!.Location, "All paths must return a value."));
                 return;
         }
-    } 
+    }
+
+
+    private void ValidateReference(IASTNode node, ref ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
+    {
+        switch (node.Operation)
+        {
+            case DotChain:
+                WriteLine("DotChain");
+
+
+                ValidateReference(node.LeftMostChild!, ref currentTable, warnings, errors);
+
+                ValidateReference(node.LeftMostChild!.RightSibling!, ref currentTable, warnings, errors);
+
+
+                break;
+
+            case DataMember:
+
+                // Make sure that the data member is declared in the current scope
+
+                WriteLine("DataMember - " + node.LeftMostChild!.Token!.Lexeme + " - Current Table: " + currentTable.Name);
+
+                if (currentTable.Lookup(node.LeftMostChild!.Token!.Lexeme) == null)
+                {
+                    errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, node.LeftMostChild!.Token!.Location, $"No declaration found for data member '{node.LeftMostChild!.Token!.Lexeme}'."));
+                }
+                else
+                {
+                    WriteLine("Data Type: " + currentTable.Lookup(node.LeftMostChild!.Token!.Lexeme)!.Type);
+
+                }
+
+                // Check if the data member is chained, if so, its type must be a class
+                if (node.Parent!.Operation == DotChain)
+                {
+
+                }
+
+
+                break;
+            case FuncCall:
+                WriteLine("FuncCall");
+                break;
+            default:
+                break;
+        }
+    }
+
+
 
     public void Visit(ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
@@ -574,7 +654,7 @@ public class ASTNode : IASTNode
                 if (Parent!.Operation == Program)
                 {
                     // Check if the function is already declared in the current scope
-                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,warnings,errors), SymbolEntryKind.Function))
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,currentTable, warnings, errors), SymbolEntryKind.Function))
                         errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.LeftMostChild!.Token!.Location, $"Function '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' already declared."));
                     // Check if the function is overloading another function
                     else if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme))
@@ -587,7 +667,7 @@ public class ASTNode : IASTNode
                         Kind = SymbolEntryKind.Function,
                         Type = LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme,
                         Line = LeftMostChild!.LeftMostChild!.Token!.Location,
-                        Parameters = GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,warnings,errors),
+                        Parameters = GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors),
 
                         // Create a new symbol table for the function
                         Link = new SymbolTable
@@ -607,16 +687,16 @@ public class ASTNode : IASTNode
                 {
 
                     // Check if the method is not declared in the class table
-                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,warnings,errors), SymbolEntryKind.MethodDeclaration))
+                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,currentTable, warnings, errors), SymbolEntryKind.MethodDeclaration))
                     {
                         // Check if the method is a duplicate definition
-                        if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,warnings,errors), SymbolEntryKind.Method))
+                        if (currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Method))
                         {
                             errors.Add(new SemanticError(SemanticErrorType.MultipleDefinition, LeftMostChild!.LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' already defined."));
                             return;
                         }
                         // Check if the method is a inherited member
-                        else if (currentTable.IsInheritedMethod(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, warnings,errors), LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme))
+                        else if (currentTable.IsInheritedMethod(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors), LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme))
                         {
                             warnings.Add(new SemanticWarning(SemanticWarningType.ShadowedInheritedMember, LeftMostChild!.LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}' shadows the inherited method from a parent class."));
 
@@ -627,7 +707,7 @@ public class ASTNode : IASTNode
                                 Kind = SymbolEntryKind.MethodDeclaration,
                                 Type = LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme,
                                 Line = LeftMostChild!.LeftMostChild!.Token!.Location,
-                                Parameters = GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, warnings, errors),
+                                Parameters = GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors),
                                 Visibility = VisibilityType.Public,
                             });
                         }
@@ -639,7 +719,7 @@ public class ASTNode : IASTNode
                     }
 
                     // Check if the method is already declared in the current scope with the same parameters
-                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!,warnings,errors), SymbolEntryKind.MethodDeclaration))
+                    if (!currentTable.IsAlreadyDeclared(LeftMostChild!.LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.MethodDeclaration))
                         errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, LeftMostChild!.LeftMostChild!.Token!.Location, $"No declaration found for method '{LeftMostChild!.LeftMostChild!.Token!.Lexeme}'."));
 
                     // Create a new symbol table for the method
@@ -682,7 +762,7 @@ public class ASTNode : IASTNode
                 if (Parent!.Operation == StructMember)
                 {
                     // Check if the method is already declared in the current scope with the same parameters
-                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!,warnings,errors), null))
+                    if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme, GetFunctionParams(LeftMostChild!.RightSibling!, currentTable, warnings, errors), null))
                         errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.Token!.Lexeme}' already declared."));
 
                     // Add the method to the class table
@@ -692,7 +772,7 @@ public class ASTNode : IASTNode
                         Kind = SymbolEntryKind.MethodDeclaration,
                         Type = LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme,
                         Line = LeftMostChild!.Token!.Location,
-                        Parameters = GetFunctionParams(LeftMostChild!.RightSibling!,warnings,errors),
+                        Parameters = GetFunctionParams(LeftMostChild!.RightSibling!, currentTable, warnings, errors),
                         Visibility = Parent!.LeftMostChild!.Token!.Lexeme == "public" ? VisibilityType.Public : VisibilityType.Private,
                     });
 
@@ -755,14 +835,12 @@ public class ASTNode : IASTNode
                     if (currentTable.IsAlreadyDeclared(LeftMostChild!.Token!.Lexeme))
                         errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Variable '{LeftMostChild!.Token!.Lexeme}' already declared."));
 
-                    //WriteLine(currentTable.Name);
-
                     // Add the variable to the function table
                     currentTable.AddEntry(new SymbolTableEntry
                     {
                         Name = LeftMostChild!.Token!.Lexeme,
                         Kind = SymbolEntryKind.Variable,
-                        Type = GetVarType(this, warnings, errors),    
+                        Type = GetVarType(this, warnings, errors),
                         Line = LeftMostChild!.Token!.Location
                     });
                 }
@@ -925,7 +1003,7 @@ public class ASTNode : IASTNode
                 // Set the current table to the function table
                 currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
 
-                WriteLine(currentTable.Name + " " + funcReturnType);
+                //WriteLine(currentTable.Name + " " + funcReturnType);
                 ValidateFuncReturnType(this, funcReturnType, currentTable, warnings, errors);
 
 
@@ -970,6 +1048,41 @@ public class ASTNode : IASTNode
 
                 break;
 
+            case RelExpr:
+            case AddExpr:
+            case MultExpr:
+                /*
+                    The following steps are performed for a relational, addition or multiplication expression:
+                    - Make sure that the types of the operands are valid
+                */
+
+                // Get the left and right hand side types
+                string leftType = GetType(LeftMostChild!, currentTable, warnings, errors);
+                string rightType = GetType(LeftMostChild!.RightSibling!.RightSibling!, currentTable, warnings, errors);
+
+                // Get the location of the expression
+                int loc = LeftMostChild!.RightSibling!.Token!.Location;
+
+                // Check if the types are valid
+                if (leftType != rightType && leftType != "" && rightType != "")
+                    errors.Add(new SemanticError(SemanticErrorType.InvalidType, loc, "Type mismatch in expression. Expected " + leftType + " but got " + rightType + "."));
+
+                break;
+
+            case FuncCall:
+            case DotChain:
+            case DataMember:
+
+                // Make sure that the reference is not part of a chain
+                if (Parent!.Operation != DotChain && Parent!.Operation != FuncCall)
+                {
+                    if (Operation == FuncCall)
+                        GetType(LeftMostChild!, currentTable, warnings, errors);
+                    else
+                        GetType(this, currentTable, warnings, errors);
+                }
+
+                break;
 
 
             default:

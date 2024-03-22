@@ -103,8 +103,22 @@ func ffas() -> float
 func main() -> void
 {
     let a: integer;
+    let f: integer;
 
     //a = 3;
+
+    let b: integer;
+
+    //b = ffas();
+
+    ffas(b);
+
+    while(a()>f) 
+    {
+
+    };
+
+    a();
 
 }
 

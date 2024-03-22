@@ -51,6 +51,8 @@ public interface ISymbolTable
 
     public bool IsInheritedMethod(string name, string[] parameters, string type);
 
+    public IASTNode? IsValidReference(string name);
+
 }
 
 /// <summary>

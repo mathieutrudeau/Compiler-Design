@@ -22,6 +22,7 @@ public enum SemanticErrorType
     MainParameter,
     ArraySizeOutOfRange,
     UndeclaredArraySize,
+    IllegalChaining,
     ClassAlreadyDeclared,
     ClassNotFound,
     ClassNotImplemented,
