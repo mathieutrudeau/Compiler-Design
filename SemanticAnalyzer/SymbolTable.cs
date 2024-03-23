@@ -228,7 +228,6 @@ public class SymbolTable : ISymbolTable
         return false;
     }
 
-
     private string PrintSymbolTable(ISymbolTable table, int depth)
     {
 

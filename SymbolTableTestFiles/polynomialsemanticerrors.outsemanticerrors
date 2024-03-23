@@ -1,4 +1,3 @@
-Warning: OverloadedMethod at line 11: Method 'evaluate(integer)' overloads another method.
 Warning: ShadowedInheritedMember at line 14: Data member 'a' shadows an inherited member.
 Warning: ShadowedInheritedMember at line 15: Data member 'b' shadows an inherited member.
 Warning: ShadowedInheritedMember at line 19: Member method 'evaluate(float)' is inherited from class 'POLYNOMIAL'.
@@ -9,13 +8,13 @@ Error: MethodNotImplemented at line 7: Method 'evaluate2(float)' not implemented
 Error: MultipleDeclaration at line 9: Class 'POLYNOMIAL' already declared.
 Error: MultipleDeclaration at line 10: Method 'evaluate(float)' already declared.
 Error: MethodNotImplemented at line 10: Method 'evaluate(float)' not implemented.
+Error: MultipleDeclaration at line 11: Method 'evaluate(integer)' already declared.
 Error: MethodNotImplemented at line 11: Method 'evaluate(integer)' not implemented.
 Error: MultipleDeclaration at line 16: Cannot declare data member 'b'. The identifier is already in use.
 Error: InheritedClassNotFound at line 31: No declaration found for inherited class 'E'.
 Error: ClassNotImplemented at line 31: Class 'C' not implemented.
 Error: ClassNotImplemented at line 35: Class 'D' not implemented.
 Error: ClassNotImplemented at line 39: Class 'E' not implemented.
-Error: InvalidType at line 48: Return type 'integer' does not match the expected return type 'float'.
 Error: InvalidType at line 82: Type mismatch in expression. Expected float but got integer.
 Error: InvalidType at line 84: Type mismatch in assignment statement. Expected float but got integer.
 Error: InvalidType at line 85: Return type 'integer' does not match the expected return type 'QUADRATIC'.
@@ -26,7 +25,6 @@ Error: NotAllPathsReturn at line 101: All paths must return a value.
 Error: UndeclaredType at line 107: No declaration found for type 'a'.
 Error: UndeclaredType at line 108: No declaration found for type 'C'.
 Error: MultipleDeclaration at line 112: Cannot declare variable 'counter'. The identifier is already in use.
-Error: UndeclaredFunction at line 115: No declaration found for function/method 'build(integer, float)'.
 Error: UndeclaredMember at line 117: No declaration found for data member 'b'.
 Error: UndeclaredFunction at line 118: No declaration found for function/method 'f()'.
 Error: UndeclaredFunction at line 119: No declaration found for function/method 'undefined()'.
@@ -38,5 +36,3 @@ Error: InvalidIndex at line 124: Array index must be of type integer.
 Error: InvalidType at line 124: Type mismatch in assignment statement. Expected integer[] but got integer.
 Error: UndeclaredFunction at line 125: No declaration found for function/method 'f3(integer[1][2][3])'.
 Error: IllegalChaining at line 126: 'integer' cannot be chained. Only class types can be chained using the dot operator.
-Error: UndeclaredFunction at line 130: No declaration found for function/method 'evaluate(integer)'.
-Error: UndeclaredFunction at line 131: No declaration found for function/method 'evaluate(integer)'.

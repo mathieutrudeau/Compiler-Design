@@ -1,4 +1,4 @@
-Warning: ShadowedInheritedMember at line 19: Member 'H' is inherited from class 'D'.
-Warning: OverloadedMethod at line 19: Method 'H' overloads another method.
-Warning: ShadowedInheritedMember at line 35: Member 'H' is inherited from class 'D'.
+Warning: ShadowedInheritedMember at line 19: Member method 'H()' is inherited from class 'D'.
+Warning: OverloadedMethod at line 19: Method 'H(integer)' overloads another method.
+Warning: ShadowedInheritedMember at line 35: Member method 'H()' is inherited from class 'D'.
 Warning: OverloadedFunction at line 71: Function 'f1' overloads another function.

@@ -29,7 +29,7 @@
 |    =================================================================================== |
 |    | Symbol Table: Class2    | Parent: Global                                        | |
 |    =================================================================================== |
-|    | Name: Class1 | Kind: Inherit | Type:         | Link: Class1                     | |
+|    | Name: Class1   | Kind: Inherit   | Type:         | Link: Class1                 | |
 |    |    ============================================================================ | |
 |    |    | Symbol Table: Class1    | Parent: Global                                |  | |
 |    |    ============================================================================ | |
@@ -53,16 +53,11 @@
                                                       |                             |  | |
 |    |    |    =========================================|                           |  | |
 |    |    ===========================================================================| | |
-|    | Name: CC     | Kind: Data    | Type: Class1  | Link: None                       | |
-|    | Name: A      | Kind: Method  | Type: integer | Link: A                          | |
-|    |    ==================================================================           | |
-|    |    | Symbol Table: A    | Parent: Class2                           |            | |
-|    |    ==================================================================           | |
-|    |    | Name: a        | Kind: Parameter | Type: integer | Link: None |            | |
-|    |    | Name: b        | Kind: Parameter | Type: integer | Link: None |            | |
-|    |    | Name: myNewVar | Kind: Variable  | Type: float   | Link: None |            | |
-|    |    | Name: bbb      | Kind: Variable  | Type: integer | Link: None |            | |
-|    |    =================================================================|           | |
+|    | Name: CC       | Kind: Data      | Type: Class1  | Link: None                   | |
+|    | Name: a        | Kind: Parameter | Type: integer | Link: None                   | |
+|    | Name: b        | Kind: Parameter | Type: integer | Link: None                   | |
+|    | Name: myNewVar | Kind: Variable  | Type: float   | Link: None                   | |
+|    | Name: bbb      | Kind: Variable  | Type: integer | Link: None                   | |
 |    ==================================================================================| |
 | Name: test1   | Kind: Function | Type: void  | Link: test1                             |
 |    =====================================================================               |

@@ -11,7 +11,7 @@ public static class SymbolTableDriver
     public static void GenerateSymbolTable(string sourceFolder)
     {
         // Get all the test files
-        string[] testFiles = Directory.GetFiles(sourceFolder, "bubblesort.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "*.src");
 
         // Run the semantic analyzer on each file
         foreach (string testFile in testFiles)
@@ -35,7 +35,6 @@ public static class SymbolTableDriver
                 if (analyzeSuccess)
                 {
                     WriteLine("Symbol Table built successfully.");
-                    WriteLine(semanticAnalyzer.GetGlobalSymbolTable().ToString());
                 }
                 else
                     WriteLine("Failed to build Symbol Table for file: " + testFile);

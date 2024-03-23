@@ -1,4 +1,8 @@
-Warning: ShadowedInheritedMember at line 43: Method 'A' shadows the inherited method from a parent class.
+Warning: ShadowedInheritedMember at line 43: Member method 'A(integer, integer)' is inherited from class 'Class1'.
 Warning: UndeclaredArraySize at line 86: Array size not declared. This may lead to unexpected behavior.
 Warning: UndeclaredArraySize at line 93: Array size not declared. This may lead to unexpected behavior.
+Error: UndeclaredMember at line 48: No declaration found for data member 'bbb'.
+Error: UndeclaredMember at line 50: No declaration found for data member 'bbb'.
+Error: InvalidType at line 50: Return type '' does not match the expected return type 'integer'.
 Error: UndeclaredMember at line 64: Member 'b' is visible only within the class it is declared in.
+Error: UndeclaredMember at line 64: No declaration found for data member 'b'.
