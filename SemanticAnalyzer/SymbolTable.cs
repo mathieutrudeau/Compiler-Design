@@ -25,6 +25,80 @@ public class SymbolTable : ISymbolTable
 
     #region Public Methods
 
+    public bool IsAccessibleWithinScope(string identifier, int identifierLocation, ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors , string[] arguments, SymbolEntryKind? kind = null, string? type = null)
+    {
+        // Copy the reference to the current symbol table
+        ISymbolTable? currentTable = this;
+
+        // Recursively check if the identifier is accessible within the current scope
+        return IsAccessibleWithinScope(identifier, identifierLocation, currentTable, callScope, warnings, errors, arguments, kind,type);
+    }
+
+    private bool IsAccessibleWithinScope(string identifier, int identifierLocation,  ISymbolTable currentTable ,ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, SymbolEntryKind? kind = null, string? type = null)
+    {
+        // Look for the entry in the current symbol table
+        ISymbolTableEntry? entry = currentTable.Entries.FirstOrDefault(e => e.Name == identifier && (kind == null || e.Kind == kind) && MatchFunctionParameters(e.Parameters, arguments) && (type == null || e.Type == type));
+
+        // If the entry is found, check if it is accessible from the call scope
+        if (entry != null)
+        {
+            switch (entry.Kind)
+            {
+                case SymbolEntryKind.Variable:
+                    // Variables have no restrictions on their visibility
+                    return true;
+                case SymbolEntryKind.Function:
+                    // Free Functions can be accessed from any scope
+                    return true;
+                case SymbolEntryKind.Parameter:
+                    // Parameters can be accessed from the function they are declared in
+                    return currentTable == callScope;
+                case SymbolEntryKind.Data:
+                case SymbolEntryKind.Method:
+                    // Data and Methods can be accessed from the class they are declared in
+                    if (entry.Visibility == VisibilityType.Public)
+                        return true;
+                    // If the data/method is private, check if it is being accessed from the class it is declared in
+                    else if (currentTable != callScope)
+                    {
+                        errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, identifierLocation, $"Member '{identifier}' is visible only within the class it is declared in."));
+                        return false;
+                    }
+                    else
+                        return currentTable == callScope;
+                default:
+                    if(entry.Visibility == VisibilityType.Public)
+                        return true;
+                    else if (currentTable != callScope)
+                    {
+                        errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, identifierLocation, $"Member '{identifier}' is visible only within the class it is declared in."));
+                        return false;
+                    }
+                    else
+                        return currentTable == callScope;
+            }
+        }
+
+        // If the entry is not found in the current symbol table, check if its declared in any inherited symbol tables
+        foreach (var inheritEntry in currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.Inherit))
+        {
+            if (inheritEntry.Link != null)
+            {
+                // Check if the entry is accessible from the inherited symbol table
+                if (IsAccessibleWithinScope(identifier, identifierLocation, inheritEntry.Link, callScope, warnings, errors, arguments, kind,type))
+                    return true;
+            }
+        }
+
+        // If the entry as yet not been found, check if it is declared in the parent symbol table
+        if (currentTable.Parent != null)
+            return IsAccessibleWithinScope(identifier, identifierLocation, currentTable.Parent, callScope, warnings, errors, arguments, kind, type);
+
+        
+        // If the entry is not found in the current symbol table or any of its ancestors, return false
+        return false;
+    }
+
 
     public ISymbolTableEntry? Lookup(string name)
     {

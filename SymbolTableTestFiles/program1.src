@@ -12,6 +12,8 @@ struct Class1
 
     public func A(a:integer,b:integer) -> integer;
 
+    private func AA() -> integer;
+
 };
 
 
@@ -27,6 +29,11 @@ impl Class1
         let theOldVar: integer;
 
         return (-6);
+    }
+
+    func AA() -> float
+    {
+        return (4);
     }
 
     
@@ -54,6 +61,7 @@ func test1() -> void
     let d: Class2;
 
     d.CC.B = 4;
+    a.b = 6;
 
     let f: integer;
     let c: integer[3][3][3][3];
@@ -82,10 +90,10 @@ func NewFunc(arr: integer[][], b:float[1], sv:integer[9], c: integer ) -> void
 }
 
 
-func ffas(arr: Class1[][3ds],a:integer) -> float
+func ffas(arr: Class1[][],a:integer) -> float
 {
 
-    arr[3][5].b = 4;
+    arr[3][5].B = 4;
 
     let b:integer;
 

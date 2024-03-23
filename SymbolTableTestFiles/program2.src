@@ -1,0 +1,64 @@
+
+struct D
+{
+    public func H()->float;
+    private func h() ->float;
+};
+
+
+
+struct C inherits D
+{
+    public let B: integer;
+    private let b: integer;
+    
+
+    public func A(b:integer) -> integer;
+};  
+
+impl D {
+    
+    func H() -> float
+    {
+        return (2.0);
+    }
+
+    func h() -> float
+    {
+        return (3.0);
+    }
+}
+
+impl C 
+{
+    func A(b:integer) -> integer
+    {
+        return (3);
+    }
+
+    func h() -> float
+    {
+        return (3.0);
+    }
+
+}
+
+
+
+func f1()->void
+{
+
+}
+
+
+
+func f1(a:integer)->float
+{
+    return (3.0);
+}
+
+
+func main() -> void
+{
+
+}

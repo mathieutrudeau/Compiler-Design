@@ -1,0 +1,3 @@
+Warning: OverloadedFunction at line 55: Function 'f1' overloads another function.
+Error: UndeclaredMember at line 39: Member 'h' is visible only within the class it is declared in.
+Error: UndeclaredMethod at line 39: No declaration found for method 'h'.

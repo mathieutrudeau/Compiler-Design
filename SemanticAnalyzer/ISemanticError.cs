@@ -30,7 +30,17 @@ public enum SemanticErrorType
     /// The Identifier is declared multiple times.
     /// </summary>
     MultipleDeclaration,
-        
+
+    /// <summary>
+    /// The Identifier is not declared.
+    /// </summary>
+    UndeclaredVariable,
+
+    /// <summary>
+    /// The Identifier is not declared.
+    /// </summary>
+    UndeclaredFunction,
+
     UndefinedMethod,
     MethodNotImplemented,
     UndeclaredMember,

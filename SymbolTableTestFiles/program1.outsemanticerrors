@@ -1,3 +1,4 @@
-Warning: ShadowedInheritedMember at line 36: Method 'A' shadows the inherited method from a parent class.
-Warning: UndeclaredArraySize at line 78: Array size not declared. This may lead to unexpected behavior.
-Warning: UndeclaredArraySize at line 85: Array size not declared. This may lead to unexpected behavior.
+Warning: ShadowedInheritedMember at line 43: Method 'A' shadows the inherited method from a parent class.
+Warning: UndeclaredArraySize at line 86: Array size not declared. This may lead to unexpected behavior.
+Warning: UndeclaredArraySize at line 93: Array size not declared. This may lead to unexpected behavior.
+Error: UndeclaredMember at line 64: Member 'b' is visible only within the class it is declared in.

@@ -22,8 +22,14 @@ public interface ISymbolTable
     /// </summary>
     public ISymbolTable? Parent { get; set; }
 
-
+    /// <summary>
+    /// Adds an entry to the symbol table.
+    /// </summary>
     public void AddEntry(ISymbolTableEntry entry);
+
+
+    public bool IsAccessibleWithinScope(string identifier, int identifierLocation, ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, SymbolEntryKind? kind = null, string? type = null);
+
 
     /// <summary>
     /// Looks up the symbol table entry with the given name. This method will search the current symbol table and all of its ancestors.
