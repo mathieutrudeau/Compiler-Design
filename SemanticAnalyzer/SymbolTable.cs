@@ -37,7 +37,7 @@ public class SymbolTable : ISymbolTable
     private bool IsAccessibleWithinScope(string identifier, int identifierLocation,  ISymbolTable currentTable ,ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, SymbolEntryKind? kind = null, string? type = null)
     {
         // Look for the entry in the current symbol table
-        ISymbolTableEntry? entry = currentTable.Entries.FirstOrDefault(e => e.Name == identifier && (kind == null || e.Kind == kind) && MatchFunctionParameters(e.Parameters, arguments) && (type == null || e.Type == type));
+        ISymbolTableEntry? entry = currentTable.Entries.FirstOrDefault(e => e.Name == identifier && (kind == null || e.Kind == kind) && (arguments.Length==0 || MatchFunctionParameters(e.Parameters, arguments)) && (type == null || e.Type == type));
 
         // If the entry is found, check if it is accessible from the call scope
         if (entry != null)
@@ -59,23 +59,25 @@ public class SymbolTable : ISymbolTable
                     if (entry.Visibility == VisibilityType.Public)
                         return true;
                     // If the data/method is private, check if it is being accessed from the class it is declared in
-                    else if (currentTable != callScope)
+                    else if (currentTable != callScope && currentTable != callScope.Parent)
                     {
                         errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, identifierLocation, $"Member '{identifier}' is visible only within the class it is declared in."));
                         return false;
                     }
+                    // If the data/method is private and being accessed from the class it is declared in, return true
                     else
-                        return currentTable == callScope;
+                        return currentTable == callScope || currentTable == callScope.Parent;
                 default:
                     if(entry.Visibility == VisibilityType.Public)
                         return true;
-                    else if (currentTable != callScope)
+                    else if (currentTable != callScope && currentTable != callScope.Parent)
                     {
                         errors.Add(new SemanticError(SemanticErrorType.UndeclaredMember, identifierLocation, $"Member '{identifier}' is visible only within the class it is declared in."));
                         return false;
                     }
+                    // If the data/method is private and being accessed from the class it is declared in, return true
                     else
-                        return currentTable == callScope;
+                        return currentTable == callScope || currentTable == callScope.Parent;
             }
         }
 
@@ -85,8 +87,13 @@ public class SymbolTable : ISymbolTable
             if (inheritEntry.Link != null)
             {
                 // Check if the entry is accessible from the inherited symbol table
-                if (IsAccessibleWithinScope(identifier, identifierLocation, inheritEntry.Link, callScope, warnings, errors, arguments, kind,type))
+                if (IsAccessibleWithinScope(identifier, identifierLocation, inheritEntry.Link, callScope, warnings, errors, arguments, kind, type))
+                {
+                    // If the entry is accessible from the inherited symbol table, return true and add a warning
+                    if(kind == SymbolEntryKind.Method || kind == SymbolEntryKind.MethodDeclaration)
+                        warnings.Add(new SemanticWarning(SemanticWarningType.ShadowedInheritedMember, identifierLocation, $"Member '{identifier}' is inherited from class '{inheritEntry.Link.Name}'."));
                     return true;
+                }
             }
         }
 

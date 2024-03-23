@@ -5,3 +5,5 @@ obj/**
 **.outproductions
 **.outsyntaxerrors
 **.outast
+**.outsemanticerrors
+**.outsymboltables

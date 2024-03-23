@@ -349,10 +349,10 @@ public class ASTNode : IASTNode
 
             case FuncCall:
                 // Check if the function is already declared in the current scope
-                if (!currentTable.IsAccessibleWithinScope(node.LeftMostChild!.Token!.Lexeme, node.LeftMostChild!.Token!.Location, callScope, warnings, errors, GetFunctionParams(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Function)
-                && !currentTable.IsAccessibleWithinScope(node.LeftMostChild!.Token!.Lexeme, node.LeftMostChild!.Token!.Location, callScope, warnings, errors, GetFunctionParams(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Method))
+                if (!currentTable.IsAccessibleWithinScope(node.LeftMostChild!.Token!.Lexeme, node.LeftMostChild!.Token!.Location, callScope, warnings, errors, GetFunctionParams(node.LeftMostChild!.RightSibling!, callScope, warnings, errors), SymbolEntryKind.Function)
+                && !currentTable.IsAccessibleWithinScope(node.LeftMostChild!.Token!.Lexeme, node.LeftMostChild!.Token!.Location, callScope, warnings, errors, GetFunctionParams(node.LeftMostChild!.RightSibling!, callScope, warnings, errors), SymbolEntryKind.Method))
                 {
-                    string parameters = string.Join(", ", GetFunctionParams(node.LeftMostChild!.RightSibling!, currentTable, warnings, errors));
+                    string parameters = string.Join(", ", GetFunctionParams(node.LeftMostChild!.RightSibling!, callScope, warnings, errors));
                     errors.Add(new SemanticError(SemanticErrorType.UndeclaredFunction, node.LeftMostChild!.Token!.Location, $"No declaration found for function/method '{node.LeftMostChild!.Token!.Lexeme}({parameters})'."));
                 }
                 else
@@ -388,17 +388,31 @@ public class ASTNode : IASTNode
         }
     }
 
+    /// <summary>
+    /// Get the type of the variable declaration. 
+    /// </summary>
+    /// <param name="node"> The node to get the type of. </param>
+    /// <param name="warnings"> The list of semantic warnings. </param>
+    /// <param name="errors"> The list of semantic errors. </param>
+    /// <returns> The type of the variable declaration. </returns>
+    /// <remarks>
+    /// The type of the variable declaration is determined by the type of the variable and any array dimensions.
+    /// </remarks>
     private static string GetVarType(IASTNode node, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
+        // Get the type of the variable
         string varType = node.LeftMostChild!.RightSibling!.Token!.Lexeme;
 
         // Add any array dimensions to the variable type
         IASTNode? arraySizes = node.LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
 
+        // Loop through the array dimensions
         while (arraySizes != null)
-        {
+        {   
+            // Check if the array size is declared or not
             if (arraySizes.Operation == ArrayIndex)
                 errors.Add(new SemanticError(SemanticErrorType.UndeclaredArraySize, node.LeftMostChild!.Token!.Location, "Array size must be declared."));
+            // Add any array dimensions to the variable type
             else
             {
                 if (int.Parse(arraySizes.Token!.Lexeme) <= 0)
@@ -407,145 +421,235 @@ public class ASTNode : IASTNode
                     varType += "[" + arraySizes.Token!.Lexeme + "]";
             }
 
+            // Move to the next array dimension
             arraySizes = arraySizes.RightSibling;
         }
 
         return varType;
     }
 
-
-
+    /// <summary>
+    /// Gets the parameters/arguments of the given function call or function definition.
+    /// </summary>
+    /// <param name="node"> The node to get the parameters/arguments of. </param>
+    /// <param name="currentTable"> The current symbol table. </param>
+    /// <param name="warnings"> The list of semantic warnings. </param>
+    /// <param name="errors"> The list of semantic errors. </param>
+    /// <returns> The parameters/arguments of the function call or function definition. </returns>
+    /// <remarks>
+    /// The parameters/arguments are returned as an array of strings, where each string represents the type of a parameter/argument.
+    /// </remarks>
     private string[] GetFunctionParams(IASTNode node, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
-
+        // Initialize the parameters
         string[] parameters = Array.Empty<string>();
 
         // Perform the appropriate action based on the operation of the current node
         switch (node.Operation)
         {
-
             case FParamList:
+                /*
+                    Handle function parameters.
+
+                    The following steps are performed:
+                    - Get the type of each parameter
+                    - Add any array dimensions to the parameter type
+                */
 
                 IASTNode? param = node.LeftMostChild;
 
+                // Loop through the parameters
                 while (param != null)
                 {
+                    // Get the type of the parameter
                     string paramType = param.LeftMostChild!.RightSibling!.Token!.Lexeme;
 
                     // Add any array dimensions to the parameter type
                     IASTNode? arraySize = param.LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
 
+                    // Loop through the array dimensions
                     while (arraySize != null)
                     {
+                        // Check if the array size is declared or not
                         if (arraySize.Operation == ArrayIndex)
-                        {
+                        {   
+                            // Add a warning if the array size is not declared
                             paramType += "[]";
                             if (!warnings.Any(w => w.Line == arraySize.Parent!.Parent!.LeftMostChild!.Token!.Location && w.Type == SemanticWarningType.UndeclaredArraySize))
                                 warnings.Add(new SemanticWarning(SemanticWarningType.UndeclaredArraySize, arraySize.Parent!.Parent!.LeftMostChild!.Token!.Location, "Array size not declared. This may lead to unexpected behavior."));
                         }
                         else
                         {
+                            // Add any array dimensions to the parameter type
+                            // Add an error if the array size is less than or equal to 0
                             if (int.Parse(arraySize.Token!.Lexeme) <= 0 && !errors.Any(e => e.Line == arraySize.Token!.Location && e.Type == SemanticErrorType.ArraySizeOutOfRange))
                                 errors.Add(new SemanticError(SemanticErrorType.ArraySizeOutOfRange, arraySize.Token!.Location, "Array size must be greater than 0."));
                             else
                                 paramType += "[" + arraySize.Token!.Lexeme + "]";
                         }
 
+                        // Move to the next array dimension
                         arraySize = arraySize.RightSibling;
                     }
 
+                    // Add the parameter type to the parameters array
                     parameters = parameters.Append(paramType).ToArray();
+                    
+                    // Move to the next parameter
                     param = param.RightSibling;
                 }
 
                 break;
 
             case AParamList:
-                
+                /*
+                    Handle function arguments.
+
+                    The following steps are performed:
+                    - Get the type of each argument
+                    - Add any array dimensions to the argument type
+                */
+
                     IASTNode? arg = node.LeftMostChild;
-    
+                    
+                    // Loop through the arguments
                     while (arg != null)
                     {
+                        // Check if the argument is a function call, or any other type of argument
                         if(arg.Operation == FuncCall)
                             parameters = parameters.Append(GetType(arg.LeftMostChild!, currentTable, currentTable, warnings, errors)).ToArray();
                         else
                             parameters = parameters.Append(GetType(arg, currentTable,currentTable, warnings, errors)).ToArray();
+                        
+                        // Move to the next argument
                         arg = arg.RightSibling;
                     }
     
                     break;
 
             default:
-
-
                 break;
         }
 
         return parameters;
     }
 
+    /// <summary>
+    /// Checks if a return statement is present in the function.
+    /// </summary>
+    /// <param name="node"> The node to check for a return statement. </param>
+    /// <param name="expectedReturnType"> The expected return type of the function. </param>
+    /// <param name="currentTable"> The current symbol table. </param>
+    /// <param name="warnings"> The list of semantic warnings. </param>
+    /// <param name="errors"> The list of semantic errors. </param>
+    /// <param name="isReturnAllowed"> A flag indicating if a return statement is allowed. </param>
+    /// <returns> A flag indicating if a return statement is present in the function. </returns>
+    /// <remarks>
+    /// The function checks if a return statement is present in the function. If a return statement is present, the function checks if the return type matches the expected return type.
+    /// </remarks>
     private bool CheckReturn(IASTNode? node, string expectedReturnType, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors, bool isReturnAllowed = true)
     {
+        // If the node is null, return false
         if (node == null)
             return false;
 
+        // Initialize a flag indicating if a return statement is present in the function
         bool containsReturn = false;
 
+        // Loop through the nodes
         while (node != null)
         {
+            // Perform the appropriate action based on the operation of the current node
             switch (node.Operation)
             {
                 case IfStat:
+                    /*
+                        Handle if statement.
+
+                        The following steps are performed:
+                        - Check if the if statement contains a return statement in both paths
+                        - Check if the return type of the if statement matches the expected return type
+                    */
+
+                    // Check if the if statement contains a return statement in both paths
                     bool firstPath = CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors, isReturnAllowed);
                     bool secondPath = CheckReturn(node.LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors, isReturnAllowed);
 
+                    // Check if any path contains a return statement when a return statement is not allowed
                     if ((firstPath || secondPath) && !isReturnAllowed)
                         return true;
 
+                    // Check if the if statement contains a return statement in both paths
                     containsReturn = firstPath && secondPath;
 
+                    // Return true if the if statement contains a return statement in both paths
                     if (containsReturn)
                         return true;
 
                     break;
-                case ReturnStat:
 
+                case ReturnStat:
+                    /*
+                        Handle return statement.
+
+                        The following steps are performed:
+                        - Check if the return type matches the expected return type
+                    */
+                
+                    // Get the location of the return statement
                     IASTNode? locationNode = node.LeftMostChild;
 
                     while (!locationNode!.IsLeaf())
                         locationNode = locationNode.LeftMostChild;
 
+                    // Get the return type of the return statement
                     string returnType = GetType(node.LeftMostChild!, currentTable,currentTable, warnings, errors);
+                    
+                    // Check if the return type matches the expected return type
                     if (returnType != expectedReturnType)
                         errors.Add(new SemanticError(SemanticErrorType.InvalidType, locationNode!.Token!.Location, $"Return type '{returnType}' does not match the expected return type '{expectedReturnType}'."));
 
-                    return true;
+                    // Return true, indicating that a return statement is present in this path
+                    return true;    
                 default:
                     break;
             }
+
+            // Move to the next node
             node = node.RightSibling;
         }
         return containsReturn;
     }
 
+    /// <summary>
+    /// Validates the return type of a function.
+    /// </summary>
+    /// <param name="node"> The node to validate. </param>
+    /// <param name="expectedReturnType"> The expected return type of the function. </param>
+    /// <param name="currentTable"> The current symbol table. </param>
+    /// <param name="warnings"> The list of semantic warnings. </param>
+    /// <param name="errors"> The list of semantic errors. </param>
     private void ValidateFuncReturnType(IASTNode node, string expectedReturnType, ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors)
     {
+        // Perform the appropriate action based on the operation of the current node
         switch (expectedReturnType)
         {
+            // Check if the return type is void
             case "void":
+
+                // Check if the function contains a return statement, which is not allowed for functions with return type void
                 if (CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors, false))
                     errors.Add(new SemanticError(SemanticErrorType.ReturnOnVoid, node.LeftMostChild!.LeftMostChild!.Token!.Location, "Function with return type 'void' must not contain a return statement."));
                 break;
+
+            // Check if the return type is not void
             default:
+                // Check if the function contains a return statement, which is required for functions with a return type other than void
                 if (!CheckReturn(node.LeftMostChild!.RightSibling!.LeftMostChild, expectedReturnType, currentTable, warnings, errors))
                     errors.Add(new SemanticError(SemanticErrorType.NotAllPathsReturn, node.LeftMostChild!.LeftMostChild!.Token!.Location, "All paths must return a value."));
                 return;
         }
     }
-
-
-
-
 
     /// <summary>
     /// Visits the abstract syntax tree node.
@@ -588,10 +692,15 @@ public class ASTNode : IASTNode
 
                 // Check if the class is already declared in the current scope
                 if (currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>(), SymbolEntryKind.ClassDeclaration))
+                {
                     errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Class '{LeftMostChild!.Token!.Lexeme}' already declared."));
-                else if(currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>(), SymbolEntryKind.Class))
+
+                    // Set the current table to the class table
+                    currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
+                }
+                else if (currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>(), SymbolEntryKind.Class))
                     errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Class '{LeftMostChild!.Token!.Lexeme}' already declared."));
-                else if(currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>()))
+                else if (currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>()))
                     errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Identifier '{LeftMostChild!.Token!.Lexeme}' already used by a free function."));
                 // If the class is not declared, add the class to the global symbol table
                 else
@@ -746,8 +855,12 @@ public class ASTNode : IASTNode
                 if (Parent!.Operation == StructMember)
                 {
                     // Check if the method is already declared in the current scope with the same parameters
-                    if(currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, GetFunctionParams(LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.MethodDeclaration))
+                    if (currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, GetFunctionParams(LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.MethodDeclaration))
                         errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.Token!.Lexeme}' already declared."));
+                    else if (currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>(), SymbolEntryKind.MethodDeclaration))
+                        warnings.Add(new SemanticWarning(SemanticWarningType.OverloadedMethod, LeftMostChild!.Token!.Location, $"Method '{LeftMostChild!.Token!.Lexeme}' overloads another method."));
+                    else if (currentTable.IsAccessibleWithinScope(LeftMostChild!.Token!.Lexeme, LeftMostChild!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>()))
+                        errors.Add(new SemanticError(SemanticErrorType.MultipleDeclaration, LeftMostChild!.Token!.Location, $"Identifier '{LeftMostChild!.Token!.Lexeme}' already used within the scope."));
 
                     // Add the method to the class table
                     currentTable.AddEntry(new SymbolTableEntry
@@ -997,7 +1110,7 @@ public class ASTNode : IASTNode
                 // Check if the function or method is already declared in the current scope
                 if (!currentTable.IsAccessibleWithinScope(LeftMostChild!.LeftMostChild!.Token!.Lexeme, LeftMostChild!.LeftMostChild!.Token!.Location, currentTable, warnings, errors, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Function)
                 && !currentTable.IsAccessibleWithinScope(LeftMostChild!.LeftMostChild!.Token!.Lexeme, LeftMostChild!.LeftMostChild!.Token!.Location, currentTable, warnings, errors, GetFunctionParams(LeftMostChild!.LeftMostChild!.RightSibling!, currentTable, warnings, errors), SymbolEntryKind.Method))
-                    break;
+                    return;
 
                 // Get the return type of the function
                 string funcReturnType = LeftMostChild!.LeftMostChild!.RightSibling!.RightSibling!.Token!.Lexeme;
