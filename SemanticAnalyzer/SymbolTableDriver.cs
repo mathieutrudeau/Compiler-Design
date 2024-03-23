@@ -11,7 +11,7 @@ public static class SymbolTableDriver
     public static void GenerateSymbolTable(string sourceFolder)
     {
         // Get all the test files
-        string[] testFiles = Directory.GetFiles(sourceFolder, "polynomialsemanticerrors.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "bubblesort.src");
 
         // Run the semantic analyzer on each file
         foreach (string testFile in testFiles)

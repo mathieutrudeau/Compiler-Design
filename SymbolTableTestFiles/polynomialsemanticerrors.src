@@ -1,5 +1,8 @@
 // ====== Class declarations ====== //
 struct POLYNOMIAL {
+  private let a: float;                                         // 8.5
+	private let b: float;                                         // 8.5
+
 	public func evaluate(x: float) -> float;
 	public func evaluate2(x: float) -> float;                     // 6.2
 };

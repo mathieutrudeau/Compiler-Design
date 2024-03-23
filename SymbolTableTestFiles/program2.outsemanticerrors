@@ -1,3 +1,4 @@
-Warning: OverloadedFunction at line 55: Function 'f1' overloads another function.
-Error: UndeclaredMember at line 39: Member 'h' is visible only within the class it is declared in.
-Error: UndeclaredMethod at line 39: No declaration found for method 'h'.
+Warning: ShadowedInheritedMember at line 19: Member 'H' is inherited from class 'D'.
+Warning: OverloadedMethod at line 19: Method 'H' overloads another method.
+Warning: ShadowedInheritedMember at line 35: Member 'H' is inherited from class 'D'.
+Warning: OverloadedFunction at line 71: Function 'f1' overloads another function.

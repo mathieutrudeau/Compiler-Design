@@ -31,8 +31,14 @@ public enum SemanticWarningType
     /// </summary>
     ShadowedInheritedMember,
 
-
+    /// <summary>
+    /// The Identifier overloads a method in the same scope.
+    /// </summary>
     OverloadedMethod,
+
+    /// <summary>
+    /// The Identifier overloads a function in the same scope.
+    /// </summary>
     OverloadedFunction,
     
     /// <summary>

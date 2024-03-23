@@ -1,6 +1,10 @@
 
 struct D
 {
+
+    public let G:integer;
+    private let g: C;
+
     public func H()->float;
     private func h() ->float;
 };
@@ -12,9 +16,34 @@ struct C inherits D
     public let B: integer;
     private let b: integer;
     
-
+    public func H(b:integer)->integer;
     public func A(b:integer) -> integer;
 };  
+
+
+impl C 
+{
+    func A(b:integer) -> integer
+    {
+        b = G;
+        return (3);
+    }
+
+    //func BBBB()->void
+    
+
+    func H() -> float
+    {
+        return (3.0);
+    }
+
+    func H(b:integer)->integer
+    {
+        return(0);
+    }
+
+}
+
 
 impl D {
     
@@ -23,24 +52,11 @@ impl D {
         return (2.0);
     }
 
-    func h() -> float
+    func h()->float
     {
-        return (3.0);
+        return (0.0);
     }
-}
-
-impl C 
-{
-    func A(b:integer) -> integer
-    {
-        return (3);
-    }
-
-    func h() -> float
-    {
-        return (3.0);
-    }
-
+    
 }
 
 

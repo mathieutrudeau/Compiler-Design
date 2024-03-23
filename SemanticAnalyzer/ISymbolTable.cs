@@ -27,37 +27,42 @@ public interface ISymbolTable
     /// </summary>
     public void AddEntry(ISymbolTableEntry entry);
 
-
-    public bool IsAccessibleWithinScope(string identifier, int identifierLocation, ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, SymbolEntryKind? kind = null, string? type = null);
-
+    /// <summary>
+    /// Checks if the given identifier is accessible within the current scope.
+    /// </summary>
+    /// <param name="identifier">The identifier to check.</param>
+    /// <param name="identifierLocation">The line number where the identifier is located.</param>
+    /// <param name="callScope">The symbol table for the current scope.</param>
+    /// <param name="warnings">The list of warnings to add to.</param>
+    /// <param name="errors">The list of errors to add to.</param>
+    /// <param name="arguments">The arguments to the function or method.</param>
+    /// <param name="asArguments">Whether to check if the arguments match the parameters.</param>
+    /// <param name="kind">The kind of the entry to check.</param>
+    /// <param name="type">The type of the entry to check.</param>
+    /// <returns>True if the identifier is accessible within the current scope, false otherwise.</returns>
+    /// <remarks>
+    /// This method will check if the identifier is accessible within the current scope. If the identifier is not found in the current scope, it will check the parent scope and any inherited tables. If the identifier is found, it will check if the identifier is accessible based on the visibility of the identifier and the visibility of the current scope. If the identifier is a function or method, it will also check if the arguments match the parameters.
+    /// </remarks>
+    public bool IsAccessibleWithinScope(string identifier, int identifierLocation, ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, bool asArguments = true, SymbolEntryKind? kind = null, string? type = null);
+ 
+    /// <summary>
+    /// Looks up the symbol table entry with the given name, parameters, and kind. This method will search the current symbol table and all of its ancestors and inherited tables.
+    /// </summary>
+    /// <param name="name">The name of the entry to look up.</param>
+    /// <param name="parameters">The parameters of the entry to look up. Only applicable to functions.</param>
+    /// <param name="kind">The kind of the entry to look up.</param>
+    /// <returns> The symbol table entry with the given name, parameters, and kind, or null if no such entry exists.</returns>
+    /// <remarks>
+    /// This method will search the current symbol table and all of its ancestors and inherited tables for the entry with the given name, parameters, and kind. If the entry is found, it will return the entry. If the entry is not found, it will return null.
+    /// </remarks>
+    public ISymbolTableEntry? Lookup(string name, string[] parameters, SymbolEntryKind? kind);
 
     /// <summary>
-    /// Looks up the symbol table entry with the given name. This method will search the current symbol table and all of its ancestors.
+    /// Looks up the symbol table entry with the given name. This method will search the current symbol table and all of its ancestors and inherited tables.
     /// </summary>
     /// <param name="name">The name of the entry to look up.</param>
     /// <returns> The symbol table entry with the given name, or null if no such entry exists.</returns>
     public ISymbolTableEntry? Lookup(string name);
-
-    /// <summary>
-    /// Checks if the given name is already declared in the symbol table for the current scope or any of its ancestors.
-    /// </summary>
-    /// <param name="name">The name to check.</param>
-    /// <returns>True if the name is already declared, false otherwise.</returns>
-    public bool IsAlreadyDeclared(string name);
-
-    /// <summary>
-    /// Checks if the given name is already declared in the symbol table for the current scope or any of its ancestors.
-    /// Entries with the same name but different parameters are considered different entries.
-    /// </summary>
-    /// <param name="name">The name to check.</param>
-    /// <param name="parameters">The parameters of the function to check.</param>
-    /// <returns>True if the name is already declared, false otherwise.</returns>
-    public bool IsAlreadyDeclared(string name, string[] parameters, SymbolEntryKind? kind);
-
-    public bool IsInheritedMethod(string name, string[] parameters, string type);
-
-    
-    public IASTNode? IsValidReference(string name);
 
 }
 

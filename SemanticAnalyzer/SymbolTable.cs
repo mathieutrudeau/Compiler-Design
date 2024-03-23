@@ -25,19 +25,136 @@ public class SymbolTable : ISymbolTable
 
     #region Public Methods
 
-    public bool IsAccessibleWithinScope(string identifier, int identifierLocation, ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors , string[] arguments, SymbolEntryKind? kind = null, string? type = null)
+    /// <summary>
+    /// Checks if the given identifier is accessible within the current scope.
+    /// </summary>
+    /// <param name="identifier">The identifier to check.</param>
+    /// <param name="identifierLocation">The line number where the identifier is located.</param>
+    /// <param name="callScope">The symbol table for the current scope.</param>
+    /// <param name="warnings">The list of warnings to add to.</param>
+    /// <param name="errors">The list of errors to add to.</param>
+    /// <param name="arguments">The arguments to the function or method.</param>
+    /// <param name="asArguments">Whether to check if the arguments match the parameters.</param>
+    /// <param name="kind">The kind of the entry to check.</param>
+    /// <param name="type">The type of the entry to check.</param>
+    /// <returns>True if the identifier is accessible within the current scope, false otherwise.</returns>
+    /// <remarks>
+    /// This method will check if the identifier is accessible within the current scope. If the identifier is not found in the current scope, it will check the parent scope and any inherited tables. If the identifier is found, it will check if the identifier is accessible based on the visibility of the identifier and the visibility of the current scope. If the identifier is a function or method, it will also check if the arguments match the parameters.    
+    /// </remarks>
+    public bool IsAccessibleWithinScope(string identifier, int identifierLocation, ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors , string[] arguments, bool asArguments = true, SymbolEntryKind? kind = null, string? type = null)
     {
         // Copy the reference to the current symbol table
         ISymbolTable? currentTable = this;
 
         // Recursively check if the identifier is accessible within the current scope
-        return IsAccessibleWithinScope(identifier, identifierLocation, currentTable, callScope, warnings, errors, arguments, kind,type);
+        return IsAccessibleWithinScope(identifier, identifierLocation, currentTable, callScope, warnings, errors, arguments,asArguments, kind,type);
     }
 
-    private bool IsAccessibleWithinScope(string identifier, int identifierLocation,  ISymbolTable currentTable ,ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, SymbolEntryKind? kind = null, string? type = null)
+    /// <summary>
+    /// Looks up the symbol table entry with the given name, parameters, and kind. This method will search the current symbol table and all of its ancestors and inherited tables.
+    /// </summary>
+    /// <param name="name">The name of the entry to look up.</param>
+    /// <param name="parameters">The parameters of the entry to look up. Only applicable to functions.</param>
+    /// <param name="kind">The kind of the entry to look up.</param>
+    /// <returns> The symbol table entry with the given name, parameters, and kind, or null if no such entry exists.</returns>
+    /// <remarks>
+    /// This method will search the current symbol table and all of its ancestors and inherited tables for the entry with the given name, parameters, and kind. If the entry is found, it will return the entry. If the entry is not found, it will return null.
+    /// </remarks>
+    public ISymbolTableEntry? Lookup(string name, string[] parameters, SymbolEntryKind? kind)
     {
         // Look for the entry in the current symbol table
-        ISymbolTableEntry? entry = currentTable.Entries.FirstOrDefault(e => e.Name == identifier && (kind == null || e.Kind == kind) && (arguments.Length==0 || MatchFunctionParameters(e.Parameters, arguments)) && (type == null || e.Type == type));
+        ISymbolTableEntry? entry = Entries.FirstOrDefault(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters) && (kind == null || e.Kind == kind));
+
+        // If the entry is found, return it
+        if (entry != null)
+            return entry;
+
+        // If the entry is not found, look for it in any inherited symbol tables
+        foreach (var inheritEntry in Entries.Where(e => e.Kind == SymbolEntryKind.Inherit))
+        {
+            if (inheritEntry.Link != null)
+            {
+                ISymbolTableEntry? inheritedEntry = inheritEntry.Link.Lookup(name, parameters, kind);
+                if (inheritedEntry != null)
+                    return inheritedEntry;
+            }
+        }
+
+        // If the entry is not found in the inherited symbol tables, look for it in the parent symbol table
+        if (Parent != null)
+            return Parent.Lookup(name, parameters, kind);
+
+        // If the entry is not found in the current symbol table or any of its ancestors, return null
+        return null;
+    }
+
+    /// <summary>
+    /// Looks up the symbol table entry with the given name. This method will search the current symbol table and all of its ancestors and inherited tables.
+    /// </summary>
+    /// <param name="name">The name of the entry to look up.</param>
+    /// <returns> The symbol table entry with the given name, or null if no such entry exists.</returns>
+    public ISymbolTableEntry? Lookup(string name)
+    {
+        // Look for the entry in the current symbol table
+        ISymbolTableEntry? entry = Entries.FirstOrDefault(e => e.Name == name);
+
+        // If the entry is found, return it
+        if (entry != null)
+            return entry;
+
+        // If the entry is not found, look for it in any inherited symbol tables
+        foreach (var inheritEntry in Entries.Where(e => e.Kind == SymbolEntryKind.Inherit))
+        {
+            if (inheritEntry.Link != null)
+            {
+                ISymbolTableEntry? inheritedEntry = inheritEntry.Link.Lookup(name);
+                if (inheritedEntry != null)
+                    return inheritedEntry;
+            }
+        }
+
+        // If the entry is not found in the inherited symbol tables, look for it in the parent symbol table
+        if (Parent != null)
+            return Parent.Lookup(name);
+
+        // If the entry is not found in the current symbol table or any of its ancestors, return null
+        return null;
+    }
+
+    /// <summary>
+    /// Adds an entry to the symbol table.
+    /// </summary>
+    /// <param name="entry">The entry to add.</param>
+    public void AddEntry(ISymbolTableEntry entry)
+    {
+        Entries.AddLast(entry);
+    }
+
+    #endregion Public Methods
+
+    #region Private Methods
+
+    /// <summary>
+    /// Checks if the given identifier is accessible within the current scope.
+    /// </summary>
+    /// <param name="identifier">The identifier to check.</param>
+    /// <param name="identifierLocation">The line number where the identifier is located.</param>
+    /// <param name="currentTable">The current symbol table.</param>
+    /// <param name="callScope">The symbol table for the current scope.</param>
+    /// <param name="warnings">The list of warnings to add to.</param>
+    /// <param name="errors">The list of errors to add to.</param>
+    /// <param name="arguments">The arguments to the function or method.</param>
+    /// <param name="asArguments">Whether to check if the arguments match the parameters.</param>
+    /// <param name="kind">The kind of the entry to check.</param>
+    /// <param name="type">The type of the entry to check.</param>
+    /// <returns>True if the identifier is accessible within the current scope, false otherwise.</returns>
+    /// <remarks>
+    /// This method will check if the identifier is accessible within the current scope. If the identifier is not found in the current scope, it will check the parent scope and any inherited tables. If the identifier is found, it will check if the identifier is accessible based on the visibility of the identifier and the visibility of the current scope. If the identifier is a function or method, it will also check if the arguments match the parameters.
+    /// </remarks>
+    private bool IsAccessibleWithinScope(string identifier, int identifierLocation,  ISymbolTable currentTable ,ISymbolTable callScope, List<ISemanticWarning> warnings, List<ISemanticError> errors, string[] arguments, bool asArguments, SymbolEntryKind? kind = null, string? type = null)
+    {
+        // Look for the entry in the current symbol table
+        ISymbolTableEntry? entry = currentTable.Entries.FirstOrDefault(e => e.Name == identifier && (kind == null || e.Kind == kind) && (asArguments==false || MatchFunctionParameters(e.Parameters, arguments)) && (type == null || e.Type == type));
 
         // If the entry is found, check if it is accessible from the call scope
         if (entry != null)
@@ -87,11 +204,16 @@ public class SymbolTable : ISymbolTable
             if (inheritEntry.Link != null)
             {
                 // Check if the entry is accessible from the inherited symbol table
-                if (IsAccessibleWithinScope(identifier, identifierLocation, inheritEntry.Link, callScope, warnings, errors, arguments, kind, type))
+                if (IsAccessibleWithinScope(identifier, identifierLocation, inheritEntry.Link, callScope, warnings, errors, arguments, asArguments, kind, type))
                 {
                     // If the entry is accessible from the inherited symbol table, return true and add a warning
-                    if(kind == SymbolEntryKind.Method || kind == SymbolEntryKind.MethodDeclaration)
-                        warnings.Add(new SemanticWarning(SemanticWarningType.ShadowedInheritedMember, identifierLocation, $"Member '{identifier}' is inherited from class '{inheritEntry.Link.Name}'."));
+                    if (kind == SymbolEntryKind.Method || kind == SymbolEntryKind.MethodDeclaration)
+                    {
+                        string parameterString = string.Join(", ", arguments);
+                        warnings.Add(new SemanticWarning(SemanticWarningType.ShadowedInheritedMember, identifierLocation, $"Member method '{identifier}({parameterString})' is inherited from class '{inheritEntry.Link.Name}'."));
+                    }
+                    else if(kind == SymbolEntryKind.Data)
+                        warnings.Add(new SemanticWarning(SemanticWarningType.ShadowedInheritedMember, identifierLocation, $"Member data '{identifier}' is inherited from class '{inheritEntry.Link.Name}'."));
                     return true;
                 }
             }
@@ -99,113 +221,13 @@ public class SymbolTable : ISymbolTable
 
         // If the entry as yet not been found, check if it is declared in the parent symbol table
         if (currentTable.Parent != null)
-            return IsAccessibleWithinScope(identifier, identifierLocation, currentTable.Parent, callScope, warnings, errors, arguments, kind, type);
+            return IsAccessibleWithinScope(identifier, identifierLocation, currentTable.Parent, callScope, warnings, errors, arguments, asArguments, kind, type);
 
         
         // If the entry is not found in the current symbol table or any of its ancestors, return false
         return false;
     }
 
-
-    public ISymbolTableEntry? Lookup(string name)
-    {
-        // Look for the entry in the current symbol table
-        ISymbolTableEntry? entry = Entries.FirstOrDefault(e => e.Name == name);
-
-        // If the entry is found, return it
-        if (entry != null)
-            return entry;
-
-        // If the entry is not found, look for it in the parent symbol table
-        if (Parent != null)
-            return Parent.Lookup(name);
-
-        // If the entry is not found in the current symbol table or any of its ancestors, return null
-        return null;
-    }
-
-    public bool IsInheritedMethod(string name, string[] parameters, string type)
-    {
-        // Check if the name is already declared in the current symbol table
-        if (Entries.Any(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters) && e.Visibility == VisibilityType.Public && e.Type == type && e.Kind == SymbolEntryKind.Method || e.Kind == SymbolEntryKind.MethodDeclaration))
-            return true;
-
-        // If the name is not declared in the current symbol table, check if it is declared in one of the inherited symbol tables
-        foreach (var entry in Entries.Where(e => e.Kind == SymbolEntryKind.Inherit))
-            if (entry.Link != null)
-                if (entry.Link.IsInheritedMethod(name, parameters, type))
-                    return true;
-
-        return false;
-    }
-
-    public IASTNode? IsValidReference(string name)
-    {
-        // Copy the reference to the current symbol table
-        ISymbolTable? currentTable = this;
-
-        // Look for the entry in the current symbol table
-        ISymbolTableEntry? entry = null;
-
-        while (entry == null && currentTable != null)
-        {
-            // Check whether the current symbol table is for a class or for a function
-            if (currentTable.Parent!.Entries.First(e => e.Name == currentTable.Name).Kind == SymbolEntryKind.Class)
-            {
-                // Class
-            }
-            else
-            {
-                // Function or method
-            }
-
-            entry = currentTable.Entries.FirstOrDefault(e => e.Name == name);
-
-            currentTable = currentTable.Parent!;
-        }
-
-
-
-        return null;
-    }
-
-    public bool IsAlreadyDeclared(string name)
-    {
-        // Check if the name is already declared in the current symbol table
-        if (Entries.Any(e => e.Name == name))
-            return true;
-
-        // If the name is not declared in the current symbol table, check if it is declared in the parent symbol table
-        if (Parent != null)
-            return Parent.IsAlreadyDeclared(name);
-
-        // If the name is not declared in the current symbol table or any of its ancestors, return false
-        return false;
-    }
-
-    public bool IsAlreadyDeclared(string name, string[] parameters, SymbolEntryKind? kind = null)
-    {
-        // Check if the name is already declared in the current symbol table
-        if ((kind == null && Entries.Any(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters)))
-        || (kind != null && Entries.Any(e => e.Name == name && MatchFunctionParameters(e.Parameters, parameters) && e.Kind == kind)))
-            return true;
-
-        // If the name is not declared in the current symbol table, check if it is declared in the parent symbol table
-        if (Parent != null)
-            return Parent.IsAlreadyDeclared(name, parameters, kind);
-
-        // If the name is not declared in the current symbol table or any of its ancestors, return false
-        return false;
-    }
-
-    public void AddEntry(ISymbolTableEntry entry)
-    {
-        Entries.AddLast(entry);
-    }
-
-    #endregion Public Methods
-
-    #region Private Methods
 
     private string PrintSymbolTable(ISymbolTable table, int depth)
     {
@@ -295,7 +317,7 @@ public class SymbolTable : ISymbolTable
         for (int i = 0; i < arguments.Length; i++)
         {
             // If the argument is the same as the parameter, continue
-            if (arguments[i] == parameters[i])
+            if (arguments[i] == parameters[i] || arguments[i].Replace("integer","float") == parameters[i])
                 continue;
 
             // In case of arrays, check if the dimensions match

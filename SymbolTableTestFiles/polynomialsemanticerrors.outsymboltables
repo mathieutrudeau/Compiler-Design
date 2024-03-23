@@ -1,164 +1,174 @@
-===========================================================================================
-| Symbol Table: Global    | Parent: None                                                  |
-===========================================================================================
-| Name: POLYNOMIAL | Kind: Class             | Type:         | Link: POLYNOMIAL           |
-|    ============================================================================         |
-|    | Symbol Table: POLYNOMIAL    | Parent: Global                             |         |
-|    ============================================================================         |
-|    | Name: evaluate  | Kind: Method            | Type: float | Link: evaluate |         |
-|    |    =========================================================             |         |
-|    |    | Symbol Table: evaluate    | Parent: POLYNOMIAL       |              |         |
-|    |    =========================================================             |         |
-|    |    | Name: x | Kind: Parameter | Type: float | Link: None |              |         |
-|    |    ========================================================|             |         |
-|    | Name: evaluate2 | Kind: MethodDeclaration | Type: float | Link: None     |         |
-|    ===========================================================================|         |
-| Name: evaluate   | Kind: MethodDeclaration | Type: float   | Link: None                 |
-| Name: evaluate   | Kind: MethodDeclaration | Type: integer | Link: None                 |
-| Name: LINEAR     | Kind: Class             | Type:         | Link: LINEAR               |
-|    ==================================================================================== |
-|    | Symbol Table: LINEAR    | Parent: Global                                         | |
-|    ==================================================================================== |
-|    | Name: POLYNOMIAL | Kind: Inherit | Type:         | Link: POLYNOMIAL              | |
-|    |    ============================================================================= | |
-|    |    | Symbol Table: POLYNOMIAL    | Parent: Global                             |  | |
-|    |    ============================================================================= | |
-|    |    | Name: evaluate  | Kind: Method            | Type: float | Link: evaluate |  | |
-|    |    |    ==========================================================            |  | |
-|    |    |    | Symbol Table: evaluate    | Parent: POLYNOMIAL       |              |  | |
-|    |    |    ==========================================================            |  | |
-|    |    |    | Name: x | Kind: Parameter | Type: float | Link: None |              |  | |
-|    |    |    =========================================================|            |  | |
-|    |    | Name: evaluate2 | Kind: MethodDeclaration | Type: float | Link: None     |  | |
-|    |    ============================================================================| | |
-|    | Name: a          | Kind: Data    | Type: float   | Link: None                    | |
-|    | Name: b          | Kind: Data    | Type: float   | Link: None                    | |
-|    | Name: b          | Kind: Data    | Type: integer | Link: None                    | |
-|    | Name: build      | Kind: Method  | Type: LINEAR  | Link: build                   | |
-|    |    =====================================================================         | |
-|    |    | Symbol Table: build    | Parent: LINEAR                          |          | |
-|    |    =====================================================================         | |
-|    |    | Name: A            | Kind: Parameter | Type: float  | Link: None |          | |
-|    |    | Name: B            | Kind: Parameter | Type: float  | Link: None |          | |
-|    |    | Name: new_function | Kind: Variable  | Type: LINEAR | Link: None |          | |
-|    |    ====================================================================|         | |
-|    | Name: evaluate   | Kind: Method  | Type: float   | Link: evaluate                | |
-|    |    ==============================================================                | |
-|    |    | Symbol Table: evaluate    | Parent: LINEAR                |                 | |
-|    |    ==============================================================                | |
-|    |    | Name: x      | Kind: Parameter | Type: float | Link: None |                 | |
-|    |    | Name: result | Kind: Variable  | Type: float | Link: None |                 | |
-|    |    =============================================================|                | |
-|    ===================================================================================| |
-| Name: QUADRATIC  | Kind: Class             | Type:         | Link: QUADRATIC            |
-|    ==================================================================================== |
-|    | Symbol Table: QUADRATIC    | Parent: Global                                      | |
-|    ==================================================================================== |
-|    | Name: POLYNOMIAL | Kind: Inherit | Type:           | Link: POLYNOMIAL            | |
-|    |    ============================================================================= | |
-|    |    | Symbol Table: POLYNOMIAL    | Parent: Global                             |  | |
-|    |    ============================================================================= | |
-|    |    | Name: evaluate  | Kind: Method            | Type: float | Link: evaluate |  | |
-|    |    |    ==========================================================            |  | |
-|    |    |    | Symbol Table: evaluate    | Parent: POLYNOMIAL       |              |  | |
-|    |    |    ==========================================================            |  | |
-|    |    |    | Name: x | Kind: Parameter | Type: float | Link: None |              |  | |
-|    |    |    =========================================================|            |  | |
-|    |    | Name: evaluate2 | Kind: MethodDeclaration | Type: float | Link: None     |  | |
-|    |    ============================================================================| | |
-|    | Name: a          | Kind: Data    | Type: float     | Link: None                  | |
-|    | Name: b          | Kind: Data    | Type: float     | Link: None                  | |
-|    | Name: c          | Kind: Data    | Type: float     | Link: None                  | |
-|    | Name: build      | Kind: Method  | Type: QUADRATIC | Link: build                 | |
-|    |    ========================================================================      | |
-|    |    | Symbol Table: build    | Parent: QUADRATIC                          |       | |
-|    |    ========================================================================      | |
-|    |    | Name: A            | Kind: Parameter | Type: float     | Link: None |       | |
-|    |    | Name: B            | Kind: Parameter | Type: float     | Link: None |       | |
-|    |    | Name: C            | Kind: Parameter | Type: float     | Link: None |       | |
-|    |    | Name: new_function | Kind: Variable  | Type: QUADRATIC | Link: None |       | |
-|    |    =======================================================================|      | |
-|    | Name: evaluate   | Kind: Method  | Type: float     | Link: evaluate              | |
-|    |    ==============================================================                | |
-|    |    | Symbol Table: evaluate    | Parent: QUADRATIC             |                 | |
-|    |    ==============================================================                | |
-|    |    | Name: x      | Kind: Parameter | Type: float | Link: None |                 | |
-|    |    | Name: result | Kind: Variable  | Type: float | Link: None |                 | |
-|    |    =============================================================|                | |
-|    ===================================================================================| |
-| Name: C          | Kind: ClassDeclaration  | Type:         | Link: C                    |
-|    =====================================================                                |
-|    | Symbol Table: C    | Parent: Global               |                                |
-|    =====================================================                                |
-|    | Name: a | Kind: Data | Type: integer | Link: None |                                |
-|    ====================================================|                                |
-| Name: D          | Kind: ClassDeclaration  | Type:         | Link: D                    |
-|    =============================================================                        |
-|    | Symbol Table: D    | Parent: Global                       |                        |
-|    =============================================================                        |
-|    | Name: C | Kind: Inherit | Type:         | Link: C         |                        |
-|    |    ====================================================== |                        |
-|    |    | Symbol Table: C    | Parent: Global               |  |                        |
-|    |    ====================================================== |                        |
-|    |    | Name: a | Kind: Data | Type: integer | Link: None |  |                        |
-|    |    =====================================================| |                        |
-|    | Name: b | Kind: Data    | Type: integer | Link: None      |                        |
-|    ============================================================|                        |
-| Name: E          | Kind: ClassDeclaration  | Type:         | Link: E                    |
-|    ======================================================================               |
-|    | Symbol Table: E    | Parent: Global                                |               |
-|    ======================================================================               |
-|    | Name: D | Kind: Inherit | Type:         | Link: D                  |               |
-|    |    =============================================================== |               |
-|    |    | Symbol Table: D    | Parent: Global                        |  |               |
-|    |    =============================================================== |               |
-|    |    | Name: C | Kind: Inherit | Type:         | Link: C          |  |               |
-|    |    |    ======================================================= |  |               |
-|    |    |    | Symbol Table: C    | Parent: Global               |   |  |               |
-|    |    |    ======================================================= |  |               |
-|    |    |    | Name: a | Kind: Data | Type: integer | Link: None |   |  |               |
-|    |    |    ======================================================| |  |               |
-|    |    | Name: b | Kind: Data    | Type: integer | Link: None       |  |               |
-|    |    ==============================================================| |               |
-|    | Name: c | Kind: Data    | Type: integer | Link: None               |               |
-|    =====================================================================|               |
-| Name: f          | Kind: Function          | Type: void    | Link: f                    |
-|    ==========================================================                           |
-|    | Symbol Table: f    | Parent: Global                    |                           |
-|    ==========================================================                           |
-|    | Name: i | Kind: Parameter | Type: integer | Link: None |                           |
-|    =========================================================|                           |
-| Name: f          | Kind: Function          | Type: void    | Link: f                    |
-|    ==========================================================                           |
-|    | Symbol Table: f    | Parent: Global                    |                           |
-|    ==========================================================                           |
-|    | Name: i | Kind: Parameter | Type: integer | Link: None |                           |
-|    =========================================================|                           |
-| Name: f          | Kind: Function          | Type: integer | Link: f                    |
-|    ==========================================================                           |
-|    | Symbol Table: f    | Parent: Global                    |                           |
-|    ==========================================================                           |
-|    | Name: i | Kind: Parameter | Type: integer | Link: None |                           |
-|    | Name: j | Kind: Parameter | Type: integer | Link: None |                           |
-|    =========================================================|                           |
-| Name: f3         | Kind: Function          | Type: integer | Link: f3                   |
-|    =================================================================                    |
-|    | Symbol Table: f3    | Parent: Global                          |                    |
-|    =================================================================                    |
-|    | Name: p1 | Kind: Parameter | Type: integer[2][3] | Link: None |                    |
-|    ================================================================|                    |
-| Name: main       | Kind: Function          | Type: void    | Link: main                 |
-|    ========================================================================             |
-|    | Symbol Table: main    | Parent: Global                               |             |
-|    ========================================================================             |
-|    | Name: a       | Kind: Variable | Type: a                | Link: None |             |
-|    | Name: c       | Kind: Variable | Type: C                | Link: None |             |
-|    | Name: f1      | Kind: Variable | Type: LINEAR           | Link: None |             |
-|    | Name: f2      | Kind: Variable | Type: QUADRATIC        | Link: None |             |
-|    | Name: counter | Kind: Variable | Type: integer          | Link: None |             |
-|    | Name: counter | Kind: Variable | Type: float            | Link: None |             |
-|    | Name: i       | Kind: Variable | Type: integer[2][3]    | Link: None |             |
-|    | Name: j       | Kind: Variable | Type: integer[1][2][3] | Link: None |             |
-|    =======================================================================|             |
-==========================================================================================|
+=============================================================================================
+| Symbol Table: Global    | Parent: None                                                    |
+=============================================================================================
+| Name: POLYNOMIAL | Kind: Class            | Type:         | Link: POLYNOMIAL              |
+|    ==============================================================================         |
+|    | Symbol Table: POLYNOMIAL    | Parent: Global                               |         |
+|    ==============================================================================         |
+|    | Name: a         | Kind: Data              | Type: float   | Link: None     |         |
+|    | Name: b         | Kind: Data              | Type: float   | Link: None     |         |
+|    | Name: evaluate  | Kind: Method            | Type: float   | Link: evaluate |         |
+|    |    =========================================================               |         |
+|    |    | Symbol Table: evaluate    | Parent: POLYNOMIAL       |                |         |
+|    |    =========================================================               |         |
+|    |    | Name: x | Kind: Parameter | Type: float | Link: None |                |         |
+|    |    ========================================================|               |         |
+|    | Name: evaluate2 | Kind: MethodDeclaration | Type: float   | Link: None     |         |
+|    | Name: evaluate  | Kind: MethodDeclaration | Type: float   | Link: None     |         |
+|    | Name: evaluate  | Kind: MethodDeclaration | Type: integer | Link: None     |         |
+|    =============================================================================|         |
+| Name: LINEAR     | Kind: Class            | Type:         | Link: LINEAR                  |
+|    ====================================================================================== |
+|    | Symbol Table: LINEAR    | Parent: Global                                           | |
+|    ====================================================================================== |
+|    | Name: POLYNOMIAL | Kind: Inherit | Type:         | Link: POLYNOMIAL                | |
+|    |    =============================================================================== | |
+|    |    | Symbol Table: POLYNOMIAL    | Parent: Global                               |  | |
+|    |    =============================================================================== | |
+|    |    | Name: a         | Kind: Data              | Type: float   | Link: None     |  | |
+|    |    | Name: b         | Kind: Data              | Type: float   | Link: None     |  | |
+|    |    | Name: evaluate  | Kind: Method            | Type: float   | Link: evaluate |  | |
+|    |    |    ==========================================================              |  | |
+|    |    |    | Symbol Table: evaluate    | Parent: POLYNOMIAL       |                |  | |
+|    |    |    ==========================================================              |  | |
+|    |    |    | Name: x | Kind: Parameter | Type: float | Link: None |                |  | |
+|    |    |    =========================================================|              |  | |
+|    |    | Name: evaluate2 | Kind: MethodDeclaration | Type: float   | Link: None     |  | |
+|    |    | Name: evaluate  | Kind: MethodDeclaration | Type: float   | Link: None     |  | |
+|    |    | Name: evaluate  | Kind: MethodDeclaration | Type: integer | Link: None     |  | |
+|    |    ==============================================================================| | |
+|    | Name: a          | Kind: Data    | Type: float   | Link: None                      | |
+|    | Name: b          | Kind: Data    | Type: float   | Link: None                      | |
+|    | Name: b          | Kind: Data    | Type: integer | Link: None                      | |
+|    | Name: build      | Kind: Method  | Type: LINEAR  | Link: build                     | |
+|    |    =====================================================================           | |
+|    |    | Symbol Table: build    | Parent: LINEAR                          |            | |
+|    |    =====================================================================           | |
+|    |    | Name: A            | Kind: Parameter | Type: float  | Link: None |            | |
+|    |    | Name: B            | Kind: Parameter | Type: float  | Link: None |            | |
+|    |    | Name: new_function | Kind: Variable  | Type: LINEAR | Link: None |            | |
+|    |    ====================================================================|           | |
+|    | Name: evaluate   | Kind: Method  | Type: float   | Link: evaluate                  | |
+|    |    ==============================================================                  | |
+|    |    | Symbol Table: evaluate    | Parent: LINEAR                |                   | |
+|    |    ==============================================================                  | |
+|    |    | Name: x      | Kind: Parameter | Type: float | Link: None |                   | |
+|    |    | Name: result | Kind: Variable  | Type: float | Link: None |                   | |
+|    |    =============================================================|                  | |
+|    =====================================================================================| |
+| Name: QUADRATIC  | Kind: Class            | Type:         | Link: QUADRATIC               |
+|    ====================================================================================== |
+|    | Symbol Table: QUADRATIC    | Parent: Global                                        | |
+|    ====================================================================================== |
+|    | Name: POLYNOMIAL | Kind: Inherit | Type:           | Link: POLYNOMIAL              | |
+|    |    =============================================================================== | |
+|    |    | Symbol Table: POLYNOMIAL    | Parent: Global                               |  | |
+|    |    =============================================================================== | |
+|    |    | Name: a         | Kind: Data              | Type: float   | Link: None     |  | |
+|    |    | Name: b         | Kind: Data              | Type: float   | Link: None     |  | |
+|    |    | Name: evaluate  | Kind: Method            | Type: float   | Link: evaluate |  | |
+|    |    |    ==========================================================              |  | |
+|    |    |    | Symbol Table: evaluate    | Parent: POLYNOMIAL       |                |  | |
+|    |    |    ==========================================================              |  | |
+|    |    |    | Name: x | Kind: Parameter | Type: float | Link: None |                |  | |
+|    |    |    =========================================================|              |  | |
+|    |    | Name: evaluate2 | Kind: MethodDeclaration | Type: float   | Link: None     |  | |
+|    |    | Name: evaluate  | Kind: MethodDeclaration | Type: float   | Link: None     |  | |
+|    |    | Name: evaluate  | Kind: MethodDeclaration | Type: integer | Link: None     |  | |
+|    |    ==============================================================================| | |
+|    | Name: a          | Kind: Data    | Type: float     | Link: None                    | |
+|    | Name: b          | Kind: Data    | Type: float     | Link: None                    | |
+|    | Name: c          | Kind: Data    | Type: float     | Link: None                    | |
+|    | Name: build      | Kind: Method  | Type: QUADRATIC | Link: build                   | |
+|    |    ========================================================================        | |
+|    |    | Symbol Table: build    | Parent: QUADRATIC                          |         | |
+|    |    ========================================================================        | |
+|    |    | Name: A            | Kind: Parameter | Type: float     | Link: None |         | |
+|    |    | Name: B            | Kind: Parameter | Type: float     | Link: None |         | |
+|    |    | Name: C            | Kind: Parameter | Type: float     | Link: None |         | |
+|    |    | Name: new_function | Kind: Variable  | Type: QUADRATIC | Link: None |         | |
+|    |    =======================================================================|        | |
+|    | Name: evaluate   | Kind: Method  | Type: float     | Link: evaluate                | |
+|    |    ==============================================================                  | |
+|    |    | Symbol Table: evaluate    | Parent: QUADRATIC             |                   | |
+|    |    ==============================================================                  | |
+|    |    | Name: x      | Kind: Parameter | Type: float | Link: None |                   | |
+|    |    | Name: result | Kind: Variable  | Type: float | Link: None |                   | |
+|    |    =============================================================|                  | |
+|    =====================================================================================| |
+| Name: C          | Kind: ClassDeclaration | Type:         | Link: C                       |
+|    =====================================================                                  |
+|    | Symbol Table: C    | Parent: Global               |                                  |
+|    =====================================================                                  |
+|    | Name: a | Kind: Data | Type: integer | Link: None |                                  |
+|    ====================================================|                                  |
+| Name: D          | Kind: ClassDeclaration | Type:         | Link: D                       |
+|    =============================================================                          |
+|    | Symbol Table: D    | Parent: Global                       |                          |
+|    =============================================================                          |
+|    | Name: C | Kind: Inherit | Type:         | Link: C         |                          |
+|    |    ====================================================== |                          |
+|    |    | Symbol Table: C    | Parent: Global               |  |                          |
+|    |    ====================================================== |                          |
+|    |    | Name: a | Kind: Data | Type: integer | Link: None |  |                          |
+|    |    =====================================================| |                          |
+|    | Name: b | Kind: Data    | Type: integer | Link: None      |                          |
+|    ============================================================|                          |
+| Name: E          | Kind: ClassDeclaration | Type:         | Link: E                       |
+|    ======================================================================                 |
+|    | Symbol Table: E    | Parent: Global                                |                 |
+|    ======================================================================                 |
+|    | Name: D | Kind: Inherit | Type:         | Link: D                  |                 |
+|    |    =============================================================== |                 |
+|    |    | Symbol Table: D    | Parent: Global                        |  |                 |
+|    |    =============================================================== |                 |
+|    |    | Name: C | Kind: Inherit | Type:         | Link: C          |  |                 |
+|    |    |    ======================================================= |  |                 |
+|    |    |    | Symbol Table: C    | Parent: Global               |   |  |                 |
+|    |    |    ======================================================= |  |                 |
+|    |    |    | Name: a | Kind: Data | Type: integer | Link: None |   |  |                 |
+|    |    |    ======================================================| |  |                 |
+|    |    | Name: b | Kind: Data    | Type: integer | Link: None       |  |                 |
+|    |    ==============================================================| |                 |
+|    | Name: c | Kind: Data    | Type: integer | Link: None               |                 |
+|    =====================================================================|                 |
+| Name: f          | Kind: Function         | Type: void    | Link: f                       |
+|    ==========================================================                             |
+|    | Symbol Table: f    | Parent: Global                    |                             |
+|    ==========================================================                             |
+|    | Name: i | Kind: Parameter | Type: integer | Link: None |                             |
+|    =========================================================|                             |
+| Name: f          | Kind: Function         | Type: void    | Link: f                       |
+|    ==========================================================                             |
+|    | Symbol Table: f    | Parent: Global                    |                             |
+|    ==========================================================                             |
+|    | Name: i | Kind: Parameter | Type: integer | Link: None |                             |
+|    =========================================================|                             |
+| Name: f          | Kind: Function         | Type: integer | Link: f                       |
+|    ==========================================================                             |
+|    | Symbol Table: f    | Parent: Global                    |                             |
+|    ==========================================================                             |
+|    | Name: i | Kind: Parameter | Type: integer | Link: None |                             |
+|    | Name: j | Kind: Parameter | Type: integer | Link: None |                             |
+|    =========================================================|                             |
+| Name: f3         | Kind: Function         | Type: integer | Link: f3                      |
+|    =================================================================                      |
+|    | Symbol Table: f3    | Parent: Global                          |                      |
+|    =================================================================                      |
+|    | Name: p1 | Kind: Parameter | Type: integer[2][3] | Link: None |                      |
+|    ================================================================|                      |
+| Name: main       | Kind: Function         | Type: void    | Link: main                    |
+|    ========================================================================               |
+|    | Symbol Table: main    | Parent: Global                               |               |
+|    ========================================================================               |
+|    | Name: a       | Kind: Variable | Type: a                | Link: None |               |
+|    | Name: c       | Kind: Variable | Type: C                | Link: None |               |
+|    | Name: f1      | Kind: Variable | Type: LINEAR           | Link: None |               |
+|    | Name: f2      | Kind: Variable | Type: QUADRATIC        | Link: None |               |
+|    | Name: counter | Kind: Variable | Type: integer          | Link: None |               |
+|    | Name: counter | Kind: Variable | Type: float            | Link: None |               |
+|    | Name: i       | Kind: Variable | Type: integer[2][3]    | Link: None |               |
+|    | Name: j       | Kind: Variable | Type: integer[1][2][3] | Link: None |               |
+|    =======================================================================|               |
+============================================================================================|
 
