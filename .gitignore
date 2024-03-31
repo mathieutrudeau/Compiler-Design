@@ -7,3 +7,6 @@ obj/**
 **.outast
 **.outsemanticerrors
 **.outsymboltables
+.vs/**
+.vs
+Properties/**

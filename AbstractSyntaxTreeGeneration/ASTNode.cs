@@ -1408,6 +1408,11 @@ public class SemanticStack : ISemanticStack
     {
         return _stack.Pop();
     }
+
+    public bool IsEmpty()
+    {
+        return _stack.Count == 0;
+    }
 }
 
 /// <summary>

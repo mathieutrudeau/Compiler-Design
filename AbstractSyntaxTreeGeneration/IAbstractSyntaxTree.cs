@@ -12,6 +12,12 @@ public interface ISemanticStack
     public IASTNode Peek();
 
     /// <summary>
+    /// Checks if the stack is empty.
+    /// </summary>
+    /// <returns> True if the stack is empty, otherwise false. </returns>
+    public bool IsEmpty();
+
+    /// <summary>
     /// Pushes a node onto the stack.
     /// </summary>
     /// <param name="node"> The node to push onto the stack. </param>
