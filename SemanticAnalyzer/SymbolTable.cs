@@ -252,7 +252,10 @@ public class SymbolTable : ISymbolTable
             int maxNameLength = table.Entries.Max(e => e.Name.Length) + 8;
             int maxKindLength = table.Entries.Max(e => e.Kind.ToString().Length) + 9;
             int maxTypeLength = table.Entries.Max(e => e.Type.Length) + 9;
+            int maxVisibilityLength = table.Entries.Max(e => e.Visibility.ToString().Length) + 9;
             int maxLinkLength = table.Entries.Max(e => e.Link == null ? 4 : e.Link.Name.Length) + 9;
+            int maxReferencesCount = table.Entries.Max(e => e.ReferencesCount.ToString().Length) + 9;
+            int maxOffsetLength = table.Entries.Max(e => e.Offset.ToString().Length) + 9;
             if (maxLinkLength < 13)
                 maxLinkLength = 13;
 
@@ -261,7 +264,10 @@ public class SymbolTable : ISymbolTable
                 tableContents += start_str + string.Format("| Name: {0}", entry.Name).PadRight(maxNameLength);
                 tableContents += string.Format(" | Kind: {0}", entry.Kind).PadRight(maxKindLength);
                 tableContents += string.Format(" | Type: {0}", entry.Type).PadRight(maxTypeLength);
+                tableContents += string.Format(" | Visibility: {0}", entry.Visibility).PadRight(maxVisibilityLength);
                 tableContents += string.Format(" | Link: {0}", entry.Link == null ? "None" : entry.Link.Name).PadRight(maxLinkLength);
+                tableContents += string.Format(" | References: {0}", entry.ReferencesCount).PadRight(maxReferencesCount);
+                tableContents += string.Format(" | Offset: {0}", entry.Offset).PadRight(maxOffsetLength);
                 tableContents += "\n";
 
 
@@ -366,7 +372,8 @@ public class SymbolTableEntry : ISymbolTableEntry
     public int Line { get; set; }
     public VisibilityType Visibility { get; set; }
     public string[] Parameters { get; set; } = Array.Empty<string>();
-    public int ReferencesCount { get; set; }
+    public int ReferencesCount { get; set; } = 0;
+    public int Offset { get; set; } = 0;
 }
 
 

@@ -7,6 +7,8 @@ using System.Data;
 using System;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Collections;
 
 namespace AbstractSyntaxTreeGeneration;
 
@@ -1215,7 +1217,6 @@ public class ASTNode : IASTNode
                     && !currentTable.IsAccessibleWithinScope(LeftMostChild!.RightSibling!.Token!.Lexeme, LeftMostChild!.RightSibling!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>(),false, SymbolEntryKind.Class))
                     errors.Add(new SemanticError(SemanticErrorType.UndeclaredType, LeftMostChild!.RightSibling!.Token!.Location, $"No declaration found for type '{LeftMostChild!.RightSibling!.Token!.Lexeme}'."));
 
-
                 break;
 
             case RelExpr:
@@ -1259,6 +1260,31 @@ public class ASTNode : IASTNode
 
                 break;
 
+            case Identifier:
+                /*
+                    The following steps are performed for an identifier:
+                    - Check if the identifier is declared
+                    - Add a reference count to the identifier
+                */
+
+                // Get the Operation of the parent node
+                SemanticOperation parentOp = Parent!.Operation;
+
+                switch(parentOp)
+                {
+                    case FuncHead:
+                    case VarDecl:
+                    case FParam:
+                        return;
+                }
+
+                // Look up the identifier in the symbol table
+                if(currentTable.Lookup(Token!.Lexeme) != null)
+                    // Add a reference count to the identifier
+                    currentTable.Lookup(Token!.Lexeme)!.ReferencesCount++;
+
+                break;
+                
 
             default:
                 break;
@@ -1277,6 +1303,28 @@ public class ASTNode : IASTNode
     }
 
     #endregion Methods for Semantic Analysis
+
+    #region Methods for Code Generation
+
+    public void GenerateCode(ISymbolTable currentTable, StringBuilder code)
+    {
+
+        switch(Operation)
+        {
+            default:
+                break;
+        }
+
+        // Loop through the children of the current node in depth-first order
+        IASTNode? child = LeftMostChild;
+        while (child != null)
+        {
+            child.GenerateCode(currentTable, code);
+            child = child.RightSibling;
+        }
+    }
+
+    #endregion Methods for Code Generation
 
 }
 

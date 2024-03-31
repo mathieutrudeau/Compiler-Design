@@ -1,4 +1,6 @@
+using System.Text;
 using AbstractSyntaxTreeGeneration;
+using SemanticAnalyzer;
 
 namespace CodeGenerator;
 
@@ -9,9 +11,12 @@ public class CodeGenerator : ICodeGenerator
 
     private IASTNode Root{ get; set;}
 
-    public CodeGenerator(IASTNode root , string sourceFileName)
+    private ISymbolTable SymbolTable{ get; set;}
+
+    public CodeGenerator(IASTNode root, ISymbolTable symbolTable, string sourceFileName)
     {
         this.Root = root;
+        this.SymbolTable = symbolTable;
         SourceFileName = sourceFileName;
     }
 
@@ -19,6 +24,10 @@ public class CodeGenerator : ICodeGenerator
 
     public void GenerateCode()
     {
-        throw new System.NotImplementedException();
+        StringBuilder code = new ();
+        Root.GenerateCode(SymbolTable, code);
+
+        string outputFileName = SourceFileName.Replace(".src", ".moon");
+        File.WriteAllText(outputFileName, code.ToString());
     }
 }

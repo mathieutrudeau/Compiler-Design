@@ -46,7 +46,7 @@ public static class CompilerDriver
             }
 
             // Run the Code Generator
-            ICodeGenerator codeGenerator = new CodeGenerator(root, testFile);
+            ICodeGenerator codeGenerator = new CodeGenerator(root, semanticAnalyzer.GetGlobalSymbolTable(), testFile);
 
             // Generate the code
             codeGenerator.GenerateCode();

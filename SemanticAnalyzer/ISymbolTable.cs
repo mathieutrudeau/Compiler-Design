@@ -1,3 +1,4 @@
+using System.Text;
 using AbstractSyntaxTreeGeneration;
 
 namespace SemanticAnalyzer;
@@ -107,6 +108,11 @@ public interface ISymbolTableEntry
     public int ReferencesCount { get; set; }
 
     /// <summary>
+    /// The offset of the entry.
+    /// </summary>
+    public int Offset { get; set; }
+
+    /// <summary>
     /// The visibility of the entry.
     /// </summary>
     public VisibilityType Visibility { get; set; }
@@ -135,5 +141,13 @@ public interface IVisitor
     /// <param name="errors">The list of errors to add to.</param>
     public void SemanticCheck(ISymbolTable currentTable, List<ISemanticWarning> warnings, List<ISemanticError> errors);
 
+    /// <summary>
+    /// Generates the code for the node.
+    /// </summary>
+    /// <param name="currentTable">The symbol table for the current scope.</param>
+    /// <remarks>
+    /// This method will generate the code for the node. The code will be added to the code generator.
+    /// </remarks>
+    public void GenerateCode(ISymbolTable currentTable, StringBuilder code);
 }
 
