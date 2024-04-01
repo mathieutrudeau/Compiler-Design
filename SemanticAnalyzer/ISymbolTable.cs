@@ -1,5 +1,6 @@
 using System.Text;
 using AbstractSyntaxTreeGeneration;
+using CodeGenerator;
 
 namespace SemanticAnalyzer;
 
@@ -65,6 +66,16 @@ public interface ISymbolTable
     /// <returns> The symbol table entry with the given name, or null if no such entry exists.</returns>
     public ISymbolTableEntry? Lookup(string name);
 
+
+    /// <summary>
+    /// Sets the offset for the symbol table entries.
+    /// </summary>
+    /// <param name="currentOffset">The current offset to set.</param>
+    /// <remarks>
+    /// This method will set the offset for all the symbol table entries in the symbol table. The offset will be used to calculate the memory location of the entry.
+    /// </remarks>
+    public void SetOffset(int currentOffset);
+
 }
 
 /// <summary>
@@ -113,6 +124,11 @@ public interface ISymbolTableEntry
     public int Offset { get; set; }
 
     /// <summary>
+    /// The size of the entry.
+    /// </summary>
+    public int Size { get; set; }
+
+    /// <summary>
     /// The visibility of the entry.
     /// </summary>
     public VisibilityType Visibility { get; set; }
@@ -148,6 +164,7 @@ public interface IVisitor
     /// <remarks>
     /// This method will generate the code for the node. The code will be added to the code generator.
     /// </remarks>
-    public void GenerateCode(ISymbolTable currentTable, StringBuilder code);
+    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator);
+
 }
 

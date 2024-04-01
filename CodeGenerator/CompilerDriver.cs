@@ -5,14 +5,13 @@ using static System.Console;
 
 namespace CodeGenerator;
 
-
 public static class CompilerDriver
 {
     
     public static void GenerateCode(string sourceFolder)
     {
         // Get all the test files
-        string[] testFiles = Directory.GetFiles(sourceFolder, "example-bubblesort.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "program1.src");
 
         // Run the Code Generator on each file
         foreach (string testFile in testFiles)

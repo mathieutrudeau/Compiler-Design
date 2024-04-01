@@ -46,68 +46,93 @@
 //      -------------
 
 // ====== struct declarations ====== //
-class POLYNOMIAL {
-  public function evaluate: (x: float) => float;                    
+struct POLYNOMIAL {
+
+  public func evaluate (x: float) -> float;                    
 };
 
-class LINEAR isa POLYNOMIAL {
-  private attribute a: float;
-  private attribute b: float;
-  public  constructor: (A: float, B: float);
-  public  function evaluate: (x: float) => float;
+struct LINEAR inherits POLYNOMIAL {
+  private let a: float;
+  private let b: float;
+  public  func build(A: float, B: float) -> LINEAR;
+  public  func evaluate(x: float) -> float;
 };
 
-class QUADRATIC isa POLYNOMIAL {
-  private attribute a: float;
-  private attribute b: float;
-  private attribute c: float;
-  public  constructor: (A: float, B: float, C: float);
-  public  function evaluate: (x: float) => float;
+struct QUADRATIC inherits POLYNOMIAL {
+  private let a: float;
+  private let b: float;
+  private let c: float;
+  public  func build(A: float, B: float, C: float) -> QUADRATIC;
+  public  func evaluate(x: float) -> float;
 };
 
 // ====== member function implementations ====== //  
-function POLYNOMIAL::evaluate(x: float) => float                  // 2.1, 2.2
+impl POLYNOMIAL
 {
-  return (0.0);                                                   // 2.3
-}
-
-function QUADRATIC::evaluate(x: float) => float
-{
-  localvar result: float;                                         // 1.1
-    //Using Horner's method
-    result = a;                                                   // 3.1       
-    result = result * x + b;                                      // 3.1, 5.1
-    result = result * x + c;                                      // 3.1, 5.1
-    return (result);                                              // 2.3
-}
-
-function QUADRATIC::constructor(A: float, B: float, C: float)     // 2.1, 2.2
-{
-  self.a = A;                                                     // 3.1, 5.3
-  self.b = B;                                                     // 3.1, 5.3
-  self.c = C;                                                     // 3.1, 5.3
-}
-
-function LINEAR::constructor(A: float, B: float)                  // 2.1, 2.2
-{
-  self.a = A;                                                     // 3.1, 5.3
-  self.b = B;                                                     // 3.1, 5.3
-}
-
-function LINEAR::evaluate(x: float) => float                      // 2.1, 2.2
-{
-  localvar result: float;                                         // 1.1
-    result = 0.0;                                                 // 3.1
-    result = a * x + b;                                           // 3.1, 5.1
-    return (result);                                              // 2.3
+  func evaluate(x: float) -> float                  // 2.1, 2.2
+  {
+    return (0.0);                                                   // 2.3
   }
+}
+
+impl QUADRATIC
+{
+  func evaluate(x: float) -> float
+  {
+    let result: float;                                         // 1.1
+      //Using Horner's method
+      result = a;                                                   // 3.1       
+      result = result * x + b;                                      // 3.1, 5.1
+      result = result * x + c;                                      // 3.1, 5.1
+      return (result);                                              // 2.3
+  }
+
+  func build(A: float, B: float, C: float) -> QUADRATIC     // 2.1, 2.2
+  {
+    let new_function: QUADRATIC;
+
+    new_function.a = A;                                                     // 3.1, 5.3
+    new_function.b = B;                                                     // 3.1, 5.3
+    new_function.c = C;
+
+    return (new_function);                                           
+    
+              // 3.1, 5.3
+  }
+}
+
+
+impl LINEAR
+{
+  func build(A: float, B: float) -> LINEAR                  // 2.1, 2.2
+  {
+    let new_function: LINEAR;
+
+    new_function.a = A;                                                     // 3.1, 5.3
+    new_function.b = B;  
+    
+    return  (new_function);                                                   // 3.1, 5.3
+  }
+
+  func evaluate(x: float) -> float                      // 2.1, 2.2
+  {
+    let result: float;                                         // 1.1
+      result = 0.0;                                                 // 3.1
+      result = a * x + b;                                           // 3.1, 5.1
+      return (result);                                              // 2.3
+    }
+}
  
 // ====== main ====== //
-function main() => void                                           // 2.1, 2.2
+func main() -> void                                           // 2.1, 2.2
 {
-  localvar f1: LINEAR(2, 3.5);                                    // 1.3, 2.1, 2.2, 2.4
-  localvar f2: QUADRATIC(-2.0, 1.0, 0.0);                         // 1.3, 2.1, 2.2, 2.4
-  localvar counter: float;                                        // 1.1
+  let f1: LINEAR;                                    // 1.3, 2.1, 2.2, 2.4
+  let f2: QUADRATIC;                         // 1.3, 2.1, 2.2, 2.4
+  let counter: integer;   
+  
+  f1 = f1.build(2,3.5);
+  f2 = f2.build(-2.0,1.0,0.0);
+                                       // 1.1
 
   counter = 1;                                                    // 3.1
 	

@@ -9,6 +9,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Collections;
+using CodeGenerator;
 
 namespace AbstractSyntaxTreeGeneration;
 
@@ -1090,6 +1091,10 @@ public class ASTNode : IASTNode
                 // Set the kind from ClassDeclaration to a Class
                 currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Kind = SymbolEntryKind.Class;
 
+                // Set the size of the class in the symbol table.
+                // The size of the class is the sum of the sizes of its data members.
+                //currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Size = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!.Entries.Where(e => e.Kind == SymbolEntryKind.Data).Sum(e => e.Size);
+
                 break;
 
             case Program:
@@ -1300,17 +1305,88 @@ public class ASTNode : IASTNode
             child = child.RightSibling;
         }
 
+        switch(Operation)
+        {
+            case Program:
+                currentTable.SetOffset(0);
+                break;
+        }
+
     }
 
     #endregion Methods for Semantic Analysis
 
     #region Methods for Code Generation
 
-    public void GenerateCode(ISymbolTable currentTable, StringBuilder code)
+    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator)
     {
 
         switch(Operation)
         {
+            case IfStat:
+
+                WriteLine("IfStat");
+
+                // Run the code generation for the if statement expression
+                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator);
+
+                int labelCount=0;
+
+                // Run the code generation for the if statement block
+                moonCodeGenerator.If(ref labelCount);
+                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
+                moonCodeGenerator.Else(ref labelCount);
+                // Run the code generation for the else statement block
+                LeftMostChild!.RightSibling!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
+                moonCodeGenerator.EndIf(ref labelCount);
+
+
+                return;
+                
+
+            case StatBlock:
+
+                WriteLine("StatBlock");
+
+                break;
+
+            case VarDecl:
+                /*
+                    The following steps are performed for a variable declaration:
+                    - Add the variable to the symbol table
+                    - Allocate memory for the variable
+                */
+
+                moonCodeGenerator.DeclareVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
+
+                break;
+
+            case FuncDef:
+                /*
+                    The following steps are performed for a function definition:
+                    - Set the current function tables
+                */
+
+                currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
+
+
+
+
+                break;
+
+            case IntLit:
+                /*
+                    The following steps are performed for an integer literal:
+                    - Load the the integer into a register
+                */
+
+                if (Parent!.Operation == ArraySize)
+                    return;
+
+                moonCodeGenerator.LoadInteger(Token!.Lexeme);
+
+                break;
+
             default:
                 break;
         }
@@ -1319,8 +1395,52 @@ public class ASTNode : IASTNode
         IASTNode? child = LeftMostChild;
         while (child != null)
         {
-            child.GenerateCode(currentTable, code);
+            child.GenerateCode(currentTable, moonCodeGenerator);
             child = child.RightSibling;
+        }
+
+        // Perform the following actions when exiting a node based on its operation
+        switch (Operation)
+        {
+            case NotFactor:
+                    
+                    moonCodeGenerator.NotExpr();
+    
+                    break;
+
+            case AddExpr:
+
+                moonCodeGenerator.AddExpr(LeftMostChild!.RightSibling!.Token!.Lexeme); 
+
+                break;
+            
+            case MultExpr:
+
+                moonCodeGenerator.MultExpr(LeftMostChild!.RightSibling!.Token!.Lexeme);
+
+                break;
+
+            case RelExpr:
+
+                moonCodeGenerator.RelExpr(LeftMostChild!.RightSibling!.Token!.Lexeme);
+
+                break;
+
+            case AssignStat:
+
+                moonCodeGenerator.Assign();
+
+                break;
+
+
+            case DataMember:
+
+                moonCodeGenerator.LoadVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
+
+                break;
+
+            default:
+                break;
         }
     }
 

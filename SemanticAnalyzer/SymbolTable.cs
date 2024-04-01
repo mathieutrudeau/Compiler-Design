@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using AbstractSyntaxTreeGeneration;
 using static System.Console;
 
@@ -24,6 +25,24 @@ public class SymbolTable : ISymbolTable
     public ISymbolTable? Parent { get; set; } = null;
 
     #region Public Methods
+
+
+    public void SetOffset(int offset)
+    {
+        foreach (var entry in Entries)
+        {
+            WriteLine($"Setting offset for {entry.Kind} {entry.Name} to {offset}");
+
+            offset -= entry.Size;
+
+            if (entry.Kind != SymbolEntryKind.Inherit)
+                entry.Link?.SetOffset(offset);
+
+            offset = entry.Link?.Entries.Last?.Value.Offset ?? offset;
+
+            entry.Offset = offset;
+        }
+    }
 
     /// <summary>
     /// Checks if the given identifier is accessible within the current scope.
@@ -127,6 +146,34 @@ public class SymbolTable : ISymbolTable
     /// <param name="entry">The entry to add.</param>
     public void AddEntry(ISymbolTableEntry entry)
     {
+        // Set the size of the entry based on its kind
+        switch(entry.Kind)
+        {
+            case SymbolEntryKind.Data:
+            case SymbolEntryKind.Variable:
+                var dims = entry.Type.Split('[');   
+                if(dims[0]=="float")
+                    entry.Size = 8;
+                else
+                    entry.Size = 4;
+            
+                if(dims.Length > 1)
+                    for(int i = 1; i < dims.Length; i++)
+                        entry.Size *= int.Parse(dims[i].Split(']')[0]);
+
+                if(entry.Kind == SymbolEntryKind.Data)
+                    Parent!.Entries.Where(e => e.Name == Name).First().Size += entry.Size;
+            
+                break;
+
+            case SymbolEntryKind.Parameter:
+                entry.Size = 4;
+            
+                if(entry.Type.Contains("float"))
+                    entry.Size = 8;
+                break;
+        }
+
         Entries.AddLast(entry);
     }
 
@@ -255,6 +302,7 @@ public class SymbolTable : ISymbolTable
             int maxVisibilityLength = table.Entries.Max(e => e.Visibility.ToString().Length) + 9;
             int maxLinkLength = table.Entries.Max(e => e.Link == null ? 4 : e.Link.Name.Length) + 9;
             int maxReferencesCount = table.Entries.Max(e => e.ReferencesCount.ToString().Length) + 9;
+            int maxSizeLength = table.Entries.Max(e => e.Size.ToString().Length) + 9;
             int maxOffsetLength = table.Entries.Max(e => e.Offset.ToString().Length) + 9;
             if (maxLinkLength < 13)
                 maxLinkLength = 13;
@@ -267,6 +315,7 @@ public class SymbolTable : ISymbolTable
                 tableContents += string.Format(" | Visibility: {0}", entry.Visibility).PadRight(maxVisibilityLength);
                 tableContents += string.Format(" | Link: {0}", entry.Link == null ? "None" : entry.Link.Name).PadRight(maxLinkLength);
                 tableContents += string.Format(" | References: {0}", entry.ReferencesCount).PadRight(maxReferencesCount);
+                tableContents += string.Format(" | Size: {0}", entry.Size).PadRight(maxSizeLength);
                 tableContents += string.Format(" | Offset: {0}", entry.Offset).PadRight(maxOffsetLength);
                 tableContents += "\n";
 
@@ -374,6 +423,7 @@ public class SymbolTableEntry : ISymbolTableEntry
     public string[] Parameters { get; set; } = Array.Empty<string>();
     public int ReferencesCount { get; set; } = 0;
     public int Offset { get; set; } = 0;
+    public int Size { get; set; } = 0;
 }
 
 

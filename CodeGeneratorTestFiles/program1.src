@@ -1,0 +1,18 @@
+func main() -> void
+{
+    let a: integer;
+    let b: integer;
+    
+    if(2>1) then
+    {   
+        if(3>2)then
+        {
+            b = 4;
+        }
+        else;
+    }
+    else
+    {
+        b = 10;
+    };
+}
