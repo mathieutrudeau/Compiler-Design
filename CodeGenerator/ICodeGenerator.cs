@@ -95,4 +95,9 @@ public interface IMoonCodeGenerator
     public void Else(ref int ifCount);
     public void EndIf(ref int ifCount);
 
+    public void While(ref int whileCount);
+
+    public void WhileCond(ref int whileCount);
+    public void EndWhile(ref int whileCount);
+
 }

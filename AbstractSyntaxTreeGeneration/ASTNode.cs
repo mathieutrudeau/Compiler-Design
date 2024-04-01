@@ -1323,9 +1323,24 @@ public class ASTNode : IASTNode
 
         switch(Operation)
         {
-            case IfStat:
 
-                WriteLine("IfStat");
+            case WhileStat:
+
+                // Run the code generation for the while statement expression
+                int whileCount = 0;
+                moonCodeGenerator.WhileCond(ref whileCount);
+                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator);
+
+                // Run the code generation for the while statement block
+                moonCodeGenerator.While(ref whileCount);
+                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
+
+                moonCodeGenerator.EndWhile(ref whileCount);
+        
+
+                return;
+
+            case IfStat:
 
                 // Run the code generation for the if statement expression
                 LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator);
@@ -1345,8 +1360,6 @@ public class ASTNode : IASTNode
                 
 
             case StatBlock:
-
-                WriteLine("StatBlock");
 
                 break;
 

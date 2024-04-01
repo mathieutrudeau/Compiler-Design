@@ -276,7 +276,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         string resultRegister = GetRegister();
 
         // Compare the two operands
-        Code.AppendLine($"\t\t{op} {operand1}, {operand2}, {resultRegister}\t\t% {operand1} {operation} {operand2} = {resultRegister}");
+        Code.AppendLine($"\t\t{op} {resultRegister}, {operand1}, {operand2}\t\t% {operand1} {operation} {operand2} = {resultRegister}");
 
         // Free the operands
         FreeRegister(operand1);
@@ -331,6 +331,37 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         string endIfLabel = $"endif{ifCount}";
 
         Code.AppendLine($"{endIfLabel}\t\t nop\t\t% End of the if block");
+    }
+
+
+    public void WhileCond(ref int whileCount)
+    {
+        whileCount = Code.ToString().Split("gowhile").Length;
+        string goWhileLabel = $"gowhile{whileCount}";
+
+        Code.AppendLine($"{goWhileLabel}\t\t nop\t\t% Start of the while condition block");
+    }
+    
+    public void While(ref int whileCount)
+    {
+        string endWhileLabel = $"endwhile{whileCount}";
+
+        // Get the condition
+        string condition = RegistersInUse.Pop();
+
+        Code.AppendLine($"\t\tbz {condition},{endWhileLabel}\t\t% If {condition} is false, jump to {endWhileLabel}");
+
+        // Free the condition
+        FreeRegister(condition);
+    }
+
+    public void EndWhile(ref int whileCount)
+    {
+        string goWhileLabel = $"gowhile{whileCount}";
+        string endWhileLabel = $"endwhile{whileCount}";
+
+        Code.AppendLine($"\t\tj {goWhileLabel}\t\t% Jump to {goWhileLabel}");
+        Code.AppendLine($"{endWhileLabel}\t\t nop\t\t% End of the while block");
     }
 
 }

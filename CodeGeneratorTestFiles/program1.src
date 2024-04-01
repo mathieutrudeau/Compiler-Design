@@ -3,7 +3,7 @@ func main() -> void
     let a: integer;
     let b: integer;
     
-    if(2>1) then
+    if(2<1) then
     {   
         if(3>2)then
         {
@@ -13,6 +13,9 @@ func main() -> void
     }
     else
     {
-        b = 10;
+        while(1<2)
+        {
+            b=b+2;
+        };
     };
 }
