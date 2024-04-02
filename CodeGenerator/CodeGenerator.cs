@@ -364,4 +364,43 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"{endWhileLabel}\t\t nop\t\t% End of the while block");
     }
 
+
+
+    public void Write()
+    {
+        // Get the value to write
+        string value = RegistersInUse.Pop();
+
+        // Write the value
+        
+        // Load the top address of the stack
+        Code.AppendLine($"\t\taddi r14,r0, topaddr\t\t% Load the top address of the stack");
+
+        // Write the value to the stack
+        Code.AppendLine($"\t\tsw -8(r14),{value}");
+        
+        // Put the address on the buffer stack
+        Code.AppendLine($"\t\taddi {value},r0,buf\t\t% Put the address on the buffer stack");
+
+        // Write the value to the stack
+        Code.AppendLine($"\t\tsw -12(r14),{value}");
+
+        // Call the int to string subroutine
+        Code.AppendLine($"\t\tjl r15, intstr\t\t% Call the int to string subroutine");
+
+        // Copy the result to the stack
+        Code.AppendLine($"\t\tsw -8(r14),r13\t\t% Copy the result to the stack");
+
+        // Call the print string subroutine
+        Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
+
+
+
+        // Add a buffer of 20 bytes
+        Data.AppendLine("buf\t\tres 20");
+
+        // Free the value
+        FreeRegister(value);
+    }
+
 }

@@ -27,6 +27,14 @@ gowhile1		 nop		% Start of the while condition block
 		addi r12,r0,2		% Loading 2 into r12
 		add r9, r11, r12		% r11 + r12 = r9
 		add r10,r0,r9		% Assigning r9 to r10
+		addi r10,r0,6		% Loading 6 into r10
+		addi r14,r0, topaddr		% Load the top address of the stack
+		sw -8(r14),r10
+		addi r10,r0,buf		% Put the address on the buffer stack
+		sw -12(r14),r10
+		jl r15, intstr		% Call the int to string subroutine
+		sw -8(r14),r13		% Copy the result to the stack
+		jl r15, putstr		% Call the print string subroutine
 		j gowhile1		% Jump to gowhile1
 endwhile1		 nop		% End of the while block
 endif1		 nop		% End of the if block
@@ -35,3 +43,4 @@ hlt
 % Data Section
 a_3		res 4  		% Declaring a : integer
 b_4		res 4  		% Declaring b : integer
+buf		res 20

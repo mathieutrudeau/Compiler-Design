@@ -100,4 +100,7 @@ public interface IMoonCodeGenerator
     public void WhileCond(ref int whileCount);
     public void EndWhile(ref int whileCount);
 
+
+    public void Write();
+
 }

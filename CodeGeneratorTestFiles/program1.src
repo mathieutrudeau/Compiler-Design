@@ -16,6 +16,7 @@ func main() -> void
         while(1<2)
         {
             b=b+2;
+            write(6);
         };
     };
 }

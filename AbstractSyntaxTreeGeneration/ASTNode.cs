@@ -1324,6 +1324,7 @@ public class ASTNode : IASTNode
         switch(Operation)
         {
 
+
             case WhileStat:
 
                 // Run the code generation for the while statement expression
@@ -1336,7 +1337,7 @@ public class ASTNode : IASTNode
                 LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
 
                 moonCodeGenerator.EndWhile(ref whileCount);
-        
+
 
                 return;
 
@@ -1415,6 +1416,13 @@ public class ASTNode : IASTNode
         // Perform the following actions when exiting a node based on its operation
         switch (Operation)
         {
+             case WriteStat:
+
+                // Run the code generation for the write statement
+                moonCodeGenerator.Write();
+
+                break;
+
             case NotFactor:
                     
                     moonCodeGenerator.NotExpr();
