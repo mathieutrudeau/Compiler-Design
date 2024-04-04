@@ -1,22 +1,25 @@
 func main() -> void
 {
-    let a: integer;
-    let b: integer;
+
+    let a:integer;
+    a=4;
+
+    write(a);
+
+    //let c: integer[2][2];
+
+    //c[0][0]=5;
+
+    //write(c[0][0]);
+    //write(c[0][1]);
+    //write(c[1][0]);
+    //write(c[1][1]);
     
-    if(2<1) then
-    {   
-        if(3>2)then
-        {
-            b = 4;
-        }
-        else;
-    }
-    else
-    {
-        while(1<2)
-        {
-            b=b+2;
-            write(6);
-        };
-    };
 }
+
+/*
+func f1(a:integer, b:integer) -> integer
+{
+    return (a+b);
+}
+*/

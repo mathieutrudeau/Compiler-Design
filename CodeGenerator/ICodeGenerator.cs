@@ -75,11 +75,11 @@ public interface IMoonCodeGenerator
     /// </remarks>
     public string GetTempVarNumber();
 
+    public void DeclareVariable(ISymbolTableEntry variableEntry);
 
-    public string DeclareVariable(ISymbolTableEntry variableEntry);
+    public void LoadVariable(ISymbolTableEntry variableEntry, ISymbolTable table);
 
-    public void LoadVariable(ISymbolTableEntry variableEntry);
-    public string LoadInteger(string value);
+    public void LoadInteger(string value);
 
     public void NotExpr();
 

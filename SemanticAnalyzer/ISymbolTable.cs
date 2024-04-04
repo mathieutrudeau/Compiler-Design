@@ -25,6 +25,11 @@ public interface ISymbolTable
     public ISymbolTable? Parent { get; set; }
 
     /// <summary>
+    /// The size of the scope.
+    /// </summary>
+    public int ScopeSize { get; set; }
+
+    /// <summary>
     /// Adds an entry to the symbol table.
     /// </summary>
     public void AddEntry(ISymbolTableEntry entry);
@@ -75,6 +80,16 @@ public interface ISymbolTable
     /// This method will set the offset for all the symbol table entries in the symbol table. The offset will be used to calculate the memory location of the entry.
     /// </remarks>
     public void SetOffset(int currentOffset);
+
+    /// <summary>
+    /// Gets the size of the scope.
+    /// </summary>
+    /// <returns>The size of the scope.</returns>
+    /// <remarks>
+    /// This method will return the size of the scope. The size of the scope is the total size of all the entries in the symbol table.
+    /// </remarks>
+    public int GetScopeSize();
+
 
 }
 

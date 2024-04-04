@@ -24,23 +24,44 @@ public class SymbolTable : ISymbolTable
     /// </summary>
     public ISymbolTable? Parent { get; set; } = null;
 
+
+    /// <summary>
+    /// The size of the scope.
+    /// </summary>
+    public int ScopeSize { get; set; } = 0;
+
     #region Public Methods
 
+    public int GetScopeSize()
+    {
+        int size = 0;
+        foreach (var entry in Entries)
+        {
+            if (entry.Link != null)
+                size += entry.Link!.GetScopeSize();
+            else
+                size += entry.Size;
+        }
+
+        return size;
+    }
 
     public void SetOffset(int offset)
     {
         foreach (var entry in Entries)
         {
-            WriteLine($"Setting offset for {entry.Kind} {entry.Name} to {offset}");
-
-            offset -= entry.Size;
-
-            if (entry.Kind != SymbolEntryKind.Inherit)
-                entry.Link?.SetOffset(offset);
-
-            offset = entry.Link?.Entries.Last?.Value.Offset ?? offset;
-
-            entry.Offset = offset;
+            if (entry.Link != null)
+            {
+                entry.Link!.SetOffset(offset);
+                entry.Link!.ScopeSize = entry.Link!.GetScopeSize();
+                entry.Size = entry.Link!.ScopeSize;
+                offset -= entry.Link!.ScopeSize;
+            }
+            else
+            {
+                entry.Offset = offset;
+                offset -= entry.Size;
+            }
         }
     }
 
@@ -290,7 +311,7 @@ public class SymbolTable : ISymbolTable
             indent = -1;
 
         string tableName = start_str
-        + "| Symbol Table: " + table.Name + "    | Parent: " + (table.Parent == null ? "None" : table.Parent.Name);
+        + "| Symbol Table: " + table.Name + "    | Parent: " + (table.Parent == null ? "None" : table.Parent.Name + "    | Scope Size: " + table.ScopeSize);
 
         string tableContents = "";
 
@@ -436,6 +457,22 @@ public enum VisibilityType
 public enum SymbolEntryKind
 {
     Variable,
+
+    /// <summary>
+    /// Represents a temporary variable. These are variables that are created during the compilation process and are not part of the source code.
+    /// </summary>
+    TempVar,
+
+    /// <summary>
+    /// Represents the address from which the function/method was called.
+    /// </summary>
+    JumpAddress,
+
+    /// <summary>
+    /// Represents the return value of a function/method.
+    /// </summary>
+    ReturnVal,
+
     Function,
     Parameter,
     ClassDeclaration,

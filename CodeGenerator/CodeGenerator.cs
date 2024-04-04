@@ -35,11 +35,15 @@ public class CodeGenerator : ICodeGenerator
         string outputFileName = SourceFileName.Replace(".src", ".m");
 
         // Add the entry point to the code and the halt instruction
+        MoonCodeGenerator.Code.Insert(0, "\t\taddi r14,r0,topaddr\n");
         MoonCodeGenerator.Code.Insert(0, "entry\n");
         MoonCodeGenerator.Code.Insert(0, "\n% Execution Code\n");
         MoonCodeGenerator.Code.AppendLine("hlt");
 
+        MoonCodeGenerator.Data.Insert(0, "nl\t\tdb 13, 10, 0\n");
+        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 24\n");
         MoonCodeGenerator.Data.Insert(0, "\n% Data Section\n");
+
 
         File.WriteAllText(outputFileName, MoonCodeGenerator.Code.ToString());
         File.AppendAllText(outputFileName, MoonCodeGenerator.Data.ToString());
@@ -87,64 +91,144 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         return register;
     }
 
-    private string BuildVariableName(ISymbolTableEntry variableEntry)
+    private int GetDimSize(string varType)
     {
-        return $"{variableEntry.Name}_{variableEntry.Line}";
+        int dimSize = -1;
+
+        if (varType.Contains(']'))
+        {
+            List<int> arrayDims = new();
+
+            foreach (string dimension in varType.Split('[').Skip(1))
+                arrayDims.Add(int.Parse(dimension.Split(']')[0]));
+
+            dimSize = arrayDims.Aggregate((a, b) => a * b);
+        }
+
+        return dimSize;
     }
 
-    public string DeclareVariable(ISymbolTableEntry variableEntry)
+    private int GetDimCount(string varType)
     {
-        // Get the size of the variable
-        int size = variableEntry.Size;
+        int dimSize = -1;
 
-        // Assign memory to the variable
-        Data.AppendLine($"{BuildVariableName(variableEntry)}\t\tres {size}  \t\t% Declaring {variableEntry.Name} : {variableEntry.Type}");
-
-        var defaultSize = variableEntry.Type.Split('[')[0] == "float" ? 8 : 4;
-
-        // Check if the variable is an array
-        if (variableEntry.Type.Contains(']'))
+        if (varType.Contains(']'))
         {
-            var arrayDimensions = new List<int>();
+            List<int> arrayDims = new();
 
-            foreach (var dimension in variableEntry.Type.Split('[').Skip(1))
+            foreach (string dimension in varType.Split('[').Skip(1))
+                arrayDims.Add(int.Parse(dimension.Split(']')[0]));
+
+            return arrayDims.Count;
+        }
+
+        return dimSize;
+    }
+
+    public void DeclareVariable(ISymbolTableEntry variableEntry)
+    {
+        // Get the offset of the variable
+        int offset = variableEntry.Offset;
+
+        // Var dimensions 
+        int arrayDims = GetDimSize(variableEntry.Type);
+
+        int defaultSize = variableEntry.Size / (arrayDims < 0 ? 1 : arrayDims);
+
+        for (int i = 0; i < arrayDims; i++)
+            Code.AppendLine($"\t\tsw {offset - i * defaultSize}(r14),r0 \t\t% Initializing {variableEntry.Name}(pos {i}) to 0 (Default Value)");
+
+        if (arrayDims < 0)
+            Code.AppendLine($"\t\tsw {offset}(r14),r0 \t\t% Initializing {variableEntry.Name} to 0 (Default Value)");
+
+    }
+
+    private void LoadArrayIndex(ISymbolTableEntry variableEntry, ISymbolTable table)
+    {
+        string varType = variableEntry.Type;
+
+        // Get all dimensions
+        if (varType.Contains(']'))
+        {
+            List<int> arrayDims = new();
+
+            foreach (string dimension in varType.Split('[').Skip(1))
+                arrayDims.Add(int.Parse(dimension.Split(']')[0]));
+
+            int elSize = variableEntry.Size/arrayDims.Aggregate((a, b) => a * b);
+
+            int size = 1;
+
+            string tReg = GetRegister();
+            RegistersInUse.Pop();
+
+            Code.AppendLine($"\t\taddi {tReg},r0,0");
+
+            foreach (int d in arrayDims.Reverse<int>())
             {
-                arrayDimensions.Add(int.Parse(dimension.Split(']')[0]));
-            }
+                string r = RegistersInUse.Pop();
 
-            var arrayDims = arrayDimensions.Aggregate((a, b) => a * b);
+                Code.AppendLine($"\t\tmuli {r},{r},{size}");
+                Code.AppendLine($"\t\tadd {tReg},{tReg},{r}");
 
-            for (int i = 0; i < arrayDims; i++)
-            {
-                //Code.AppendLine($"sw {BuildVariableName(variableEntry)}({i*defaultSize}),r0");
+                size *= d;
+
+                FreeRegister(r);
             }
+            Code.AppendLine($"\t\tmuli {tReg},{tReg},-{elSize}");
+            Code.AppendLine($"\t\taddi {tReg},{tReg},{variableEntry.Offset}");
+            Code.AppendLine($"\t\tadd {tReg},{tReg},r14");
+
+
+            RegistersInUse.Push(tReg);
+        }
+
+        
+    }
+
+    public void LoadVariable(ISymbolTableEntry variableEntry, ISymbolTable table)
+    {
+        // Get the offset of the variable
+        int offset = variableEntry.Offset;
+
+        // Dimensions 
+        int dimCount = GetDimCount(variableEntry.Type);
+        int dimSize = GetDimSize(variableEntry.Type);
+
+        if (dimSize > -1)
+        {
+            LoadArrayIndex(variableEntry, table);
+
+            string aReg = RegistersInUse.Pop();
+
+            // Get the register to load the variable into
+            string register = GetRegister();
+
+            Code.AppendLine($"\t\tlw {register},0({aReg}) \t\t% Loading {variableEntry.Name} into {register}");
+
+            // Frame offset
+            //int tableOffset = table.Parent!.Entries.Where(e => e.Name == table.Name).First().Offset;
+
+            // Move the pointer back to the start of the current scope
+            //Code.AppendLine($"\t\taddi r14,r0,{tableOffset}");
+
+            FreeRegister(aReg);
         }
         else
         {
-            // Initialize the variable to 0
-            //Code.AppendLine($"sw {BuildVariableName(variableEntry)}(r0),r0 \t\t% Initializing {variableEntry.Name} to 0 (Default Value)");
+            // Get the register to load the variable into
+            string register = GetRegister();
+
+            Code.AppendLine($"\t\tlw {register},{offset}(r14) \t\t% Loading {variableEntry.Name} into {register}");
         }
-
-        return "";
     }
 
-    public void LoadVariable(ISymbolTableEntry variableEntry)
-    {
-        // Get the register to load the variable into
-        string register = GetRegister();
-
-        // Load the variable into the register
-        Code.AppendLine($"\t\tlw {register},{BuildVariableName(variableEntry)}(r0) \t\t% Loading {variableEntry.Name} : {variableEntry.Type}");
-    }
-
-    public string LoadInteger(string value)
+    public void LoadInteger(string value)
     {
         string register = GetRegister();
 
         // Load the value into the register
         Code.AppendLine($"\t\taddi {register},r0,{value}\t\t% Loading {value} into {register}");
-
-        return register;
     }
 
     public void NotExpr()
@@ -292,8 +376,20 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Get the variable to assign to
         string variable = RegistersInUse.Pop();
 
+
+
+        //WriteLine(Code.ToString());
+        //WriteLine("value: " + value);
+        //WriteLine("Var: " + variable);
+
+        // Get the location of the variable, by looking at the last reference to the register
+        string variableOffset = Code.ToString().Split('\n').Where(x => x.Contains(variable) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0];
+
         // Assign the value to the variable
         Code.AppendLine($"\t\tadd {variable},r0,{value}\t\t% Assigning {value} to {variable}");
+
+        // Store the value in the variable
+        Code.AppendLine($"\t\tsw {variableOffset}(r14),{variable}");
 
         // Free the value and the variable registers
         FreeRegister(value);
@@ -341,7 +437,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
         Code.AppendLine($"{goWhileLabel}\t\t nop\t\t% Start of the while condition block");
     }
-    
+
     public void While(ref int whileCount)
     {
         string endWhileLabel = $"endwhile{whileCount}";
@@ -372,13 +468,13 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         string value = RegistersInUse.Pop();
 
         // Write the value
-        
+
         // Load the top address of the stack
         Code.AppendLine($"\t\taddi r14,r0, topaddr\t\t% Load the top address of the stack");
 
         // Write the value to the stack
         Code.AppendLine($"\t\tsw -8(r14),{value}");
-        
+
         // Put the address on the buffer stack
         Code.AppendLine($"\t\taddi {value},r0,buf\t\t% Put the address on the buffer stack");
 
@@ -397,10 +493,19 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
 
         // Add a buffer of 20 bytes
-        Data.AppendLine("buf\t\tres 20");
+        //Data.AppendLine("buf\t\tres 20");
 
         // Free the value
         FreeRegister(value);
+
+        // Add a new line
+        string newlineRegister = GetRegister();
+
+        Code.AppendLine($"\t\taddi {newlineRegister},r0,nl\t\t% Load the newline character");
+        Code.AppendLine($"\t\tsw -8(r14),{newlineRegister}");
+        Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
+
+        FreeRegister(newlineRegister);
     }
 
 }

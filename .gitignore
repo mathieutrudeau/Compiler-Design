@@ -10,3 +10,5 @@ obj/**
 .vs/**
 .vs
 Properties/**
+moon.exe
+samples/**
