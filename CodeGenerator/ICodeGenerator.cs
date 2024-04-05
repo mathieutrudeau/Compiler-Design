@@ -102,5 +102,6 @@ public interface IMoonCodeGenerator
 
 
     public void Write();
+    public void Read();
 
 }

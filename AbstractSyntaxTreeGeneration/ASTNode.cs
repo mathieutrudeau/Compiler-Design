@@ -1447,6 +1447,7 @@ public class ASTNode : IASTNode
 
                 currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
 
+                moonCodeGenerator.Code.AppendLine($"\t\t%-------------------- {currentTable.Name} ----------------------");
 
 
 
@@ -1487,6 +1488,13 @@ public class ASTNode : IASTNode
 
                 break;
 
+            case ReadStat:
+                
+                    // Run the code generation for the read statement
+                    moonCodeGenerator.Read();
+    
+                    break;
+
             case NotFactor:
 
                 moonCodeGenerator.NotExpr();
@@ -1525,8 +1533,6 @@ public class ASTNode : IASTNode
                 break;
 
             case IndexList:
-
-                WriteLine("index list");
 
                 break;
 

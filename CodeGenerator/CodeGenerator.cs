@@ -40,8 +40,9 @@ public class CodeGenerator : ICodeGenerator
         MoonCodeGenerator.Code.Insert(0, "\n% Execution Code\n");
         MoonCodeGenerator.Code.AppendLine("hlt");
 
+        MoonCodeGenerator.Data.Insert(0, "entint\t\tdb \"Enter an integer: \", 0\n");
         MoonCodeGenerator.Data.Insert(0, "nl\t\tdb 13, 10, 0\n");
-        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 24\n");
+        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 20\n");
         MoonCodeGenerator.Data.Insert(0, "\n% Data Section\n");
 
 
@@ -469,6 +470,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
         // Write the value
 
+        Code.AppendLine($"\n\t\t%----------------- WRITE -----------------");
+
         // Load the top address of the stack
         Code.AppendLine($"\t\taddi r14,r0, topaddr\t\t% Load the top address of the stack");
 
@@ -506,6 +509,30 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
 
         FreeRegister(newlineRegister);
+    }
+
+
+    public void Read()
+    {
+        // Free a register to store the value
+        string value = GetRegister();
+
+        Code.AppendLine($"\n\t\t%----------------- READ -----------------");
+
+        // Get the address of the buffer
+
+        Code.AppendLine($"\t\taddi {value},r0,entint");
+        Code.AppendLine($"\t\tsw -8(r14),{value}");
+        Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
+
+        Code.AppendLine($"\t\taddi {value},r0,buf\t\t% Get the address of the buffer");
+        Code.AppendLine($"\t\tsw -8(r14),{value}");
+        Code.AppendLine($"\t\tjl r15, getstr\t\t% Call the get string subroutine");
+        Code.AppendLine($"\t\tjl r15, strint\t\t% Call the string to int subroutine");
+        Code.AppendLine($"\t\taddi {value},r13,0\t\t% Copy the result to the register");
+
+        // Store the value in the variable
+        Assign();
     }
 
 }
