@@ -51,7 +51,10 @@ public class SymbolTable : ISymbolTable
         offset=0;
         foreach (var entry in Entries)
         {
-            if (entry.Link != null)
+            if (entry.Link != null 
+            && (entry.Kind == SymbolEntryKind.Class
+            || entry.Kind == SymbolEntryKind.Method
+            || entry.Kind == SymbolEntryKind.Function))
             {
                 entry.Link!.SetOffset(offset);
                 entry.Link!.ScopeSize = entry.Link!.GetScopeSize();

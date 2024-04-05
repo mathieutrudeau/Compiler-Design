@@ -32,6 +32,28 @@ public interface IMoonCodeGenerator
     public Stack<string> RegistersInUse { get; set; }
 
     /// <summary>
+    /// The temporary variables in use.
+    /// </summary>
+    /// <value>The temporary variables.</value>
+    /// <remarks>
+    /// This stack will contain the temporary variables that are currently in use.
+    /// </remarks>
+    public Stack<ISymbolTableEntry> TempVarsInUse { get; set; }
+
+    /// <summary>
+    /// The temporary variables.
+    /// </summary>
+    /// <value>The temporary variables.</value>
+    /// <remarks>
+    /// This stack will contain the temporary variables that are available for use.
+    /// </remarks>
+    public Stack<ISymbolTableEntry> TempVars { get; set; }
+
+
+    public Stack<List<string>> FrameEscapes { get; set; }
+
+
+    /// <summary>
     /// Gets the next available register.
     /// </summary>
     /// <returns>The next available register.</returns>
@@ -127,8 +149,14 @@ public interface IMoonCodeGenerator
     public void FunctionDeclarationEnd(ISymbolTable currentTable);
 
     public void Return(ISymbolTable currentTable);
-
-
     public void CallFunction(ISymbolTable currentTable, ISymbolTable functionTable);
 
+
+
+    public void ClassDeclaration(ISymbolTable currentTable);
+    public void ClassDeclarationEnd(ISymbolTable currentTable);
+
+
+    public void ClassVariable(ISymbolTable currentTable,  ISymbolTableEntry entry);
+    public void ClassVariableEnd(ISymbolTable currentTable, ISymbolTable classTable);
 }

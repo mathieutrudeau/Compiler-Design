@@ -5,21 +5,34 @@ func main() -> void
 
     let c:integer;
 
-    // Read a and b
-    read(a);
-    read(b);
+    a=3;
+    b=4;
 
-    f1(a,b);
+    c=a+b;
 
-    c=3;
     write(c);
+
+    let d: c1;    
+    
+    write(d.A);
+
+    write(c);
+
 }
 
-
-func f1(a:integer, b:integer) -> void
+struct c1
 {
-    let c:integer;
-    c = a+b;
+    public let A:integer;
+    private let B:integer;
+};
 
-    write(c);
+impl c1
+{
+
+}
+
+func f1() -> c1
+{
+    let a:c1;
+    return(a);
 }

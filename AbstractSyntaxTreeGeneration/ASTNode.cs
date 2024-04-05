@@ -346,7 +346,7 @@ public class ASTNode : IASTNode
                     for (int i = 0; i < dimensions; i++)
                         dims += "[]";
 
-                    if(!type.Contains('['))
+                    if (!type.Contains('['))
                         return type;
 
                     return string.Concat(type.AsSpan(0, type.IndexOf('[')), dims); ;
@@ -1223,7 +1223,36 @@ public class ASTNode : IASTNode
                 // Check if the variable type is valid (i.e. declared in the current scope or a built-in type)
                 if (LeftMostChild!.RightSibling!.Token!.Lexeme != "integer" && LeftMostChild!.RightSibling!.Token!.Lexeme != "float"
                     && !currentTable.IsAccessibleWithinScope(LeftMostChild!.RightSibling!.Token!.Lexeme, LeftMostChild!.RightSibling!.Token!.Location, currentTable, warnings, errors, Array.Empty<string>(), false, SymbolEntryKind.Class))
+                {
                     errors.Add(new SemanticError(SemanticErrorType.UndeclaredType, LeftMostChild!.RightSibling!.Token!.Location, $"No declaration found for type '{LeftMostChild!.RightSibling!.Token!.Lexeme}'."));
+                    return;
+                }
+
+                // If the variable type is a class, set the size of the variable to the size of the class
+                if (LeftMostChild!.RightSibling!.Token!.Lexeme != "integer" && LeftMostChild!.RightSibling!.Token!.Lexeme != "float")
+                {
+                    int arraySize = 1;
+
+                    // Get the array size of the variable
+                    IASTNode? arraySizeNode = LeftMostChild!.RightSibling!.RightSibling!.LeftMostChild;
+
+                    while (arraySizeNode != null)
+                    {
+                        arraySize *= int.Parse(arraySizeNode.Token!.Lexeme);
+                        arraySizeNode = arraySizeNode.RightSibling;
+                    }
+
+                    try
+                    {
+                        currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Size = currentTable.Lookup(LeftMostChild!.RightSibling!.Token!.Lexeme, Array.Empty<string>(), SymbolEntryKind.Class)!.Size * arraySize;
+                        currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link = currentTable.Lookup(LeftMostChild!.RightSibling!.Token!.Lexeme, Array.Empty<string>(), SymbolEntryKind.Class)!.Link;
+                    }
+                    catch (Exception)
+                    {
+                        errors.Add(new SemanticError(SemanticErrorType.UndeclaredType, LeftMostChild!.RightSibling!.Token!.Location, $"Type '{LeftMostChild!.RightSibling!.Token!.Lexeme}' cannot be used as a data member within its declaration scope."));
+                        return;
+                    }
+                }
 
                 break;
 
@@ -1435,6 +1464,10 @@ public class ASTNode : IASTNode
                     - Allocate memory for the variable
                 */
 
+                // Skip the variable declaration if it is a data member
+                if (Parent!.Operation == StructMember)
+                    return;
+
                 moonCodeGenerator.DeclareVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
 
                 break;
@@ -1449,7 +1482,7 @@ public class ASTNode : IASTNode
 
                 // Add the function frame to the symbol table
                 moonCodeGenerator.FunctionDeclaration(currentTable);
-                
+
                 break;
 
             case IntLit:
@@ -1462,6 +1495,36 @@ public class ASTNode : IASTNode
                     return;
 
                 moonCodeGenerator.LoadInteger(Token!.Lexeme);
+
+                break;
+
+
+            case StructDecl:
+                /*
+                    The following steps are performed for a class implementation:
+                    - Set the current class table
+                */
+
+                //currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
+
+                //moonCodeGenerator.ClassDeclaration(currentTable);
+
+                break;
+
+
+            case DotChain:
+
+                //if (LeftMostChild!.Operation == DataMember)
+               // {
+                //    moonCodeGenerator.ClassVariable(currentTable, currentTable.Lookup(LeftMostChild.LeftMostChild!.Token!.Lexeme)!);
+                //    WriteLine("Add Class Frame");
+                //}
+
+                break;
+
+            case DataMember:
+
+                //moonCodeGenerator.LoadVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!,currentTable);
 
                 break;
 
@@ -1494,11 +1557,11 @@ public class ASTNode : IASTNode
                 break;
 
             case ReadStat:
-                
-                    // Run the code generation for the read statement
-                    moonCodeGenerator.Read(currentTable);
-    
-                    break;
+
+                // Run the code generation for the read statement
+                moonCodeGenerator.Read(currentTable);
+
+                break;
 
             case NotFactor:
 
@@ -1533,7 +1596,16 @@ public class ASTNode : IASTNode
 
             case DataMember:
 
-                moonCodeGenerator.LoadVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!,currentTable);
+                if(Parent!.Operation == DotChain 
+                && Parent!.LeftMostChild!.LeftMostChild?.Token?.Lexeme == LeftMostChild!.Token?.Lexeme)
+                {
+                    moonCodeGenerator.Code.AppendLine($"addi r14,r14,{currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Offset}");
+                    
+                    currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
+                    break;
+                }
+
+                moonCodeGenerator.LoadVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!, currentTable);
 
                 break;
 
@@ -1555,6 +1627,21 @@ public class ASTNode : IASTNode
 
                 // Run the code generation for the function call
                 moonCodeGenerator.CallFunction(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!);
+
+                break;
+
+            case StructDecl:
+
+                //moonCodeGenerator.ClassDeclarationEnd(currentTable);
+
+                break;
+
+            case DotChain:
+
+                if (LeftMostChild!.Operation == DataMember)
+                {
+                    WriteLine("Remove Class Frame");
+                }
 
                 break;
 

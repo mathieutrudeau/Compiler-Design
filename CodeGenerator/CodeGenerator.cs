@@ -55,6 +55,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     public Stack<string> RegistersInUse { get; set; } = new();
 
+    public Stack<ISymbolTableEntry> TempVarsInUse { get; set; } = new();
+
+    public Stack<ISymbolTableEntry> TempVars { get; set; } = new();
+
+    public Stack<List<string>> FrameEscapes { get; set; } = new();
+
     public StringBuilder Code { get; set; } = new StringBuilder();
 
     public StringBuilder Data { get; set; } = new StringBuilder();
@@ -139,6 +145,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         if (arrayDims < 0)
             Code.AppendLine($"\t\tsw {offset}(r14),r0 \t\t% Initializing {variableEntry.Name} to 0 (Default Value)");
 
+        
     }
 
     private void LoadArrayIndex(ISymbolTableEntry variableEntry, ISymbolTable table)
@@ -277,7 +284,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             string nonZeroSubroutine = $"nonzero{nonZeroSubroutineCount}";
             string endOrSubroutine = $"endOr{nonZeroSubroutineCount}";
 
-            Code.AppendLine($"\t\tbnz {operand1},{nonZeroSubroutine}\t\t% Check if {operand1} is not zero");
+            Code.AppendLine($"\n\t\tbnz {operand1},{nonZeroSubroutine}\t\t% Check if {operand1} is not zero");
             Code.AppendLine($"\t\tbnz {operand2},{nonZeroSubroutine}\t\t% Check if {operand2} is not zero");
             Code.AppendLine($"\t\taddi {resultRegister},r0,1\t\t% {operand1} {operation} {operand2} = {resultRegister}");
             Code.AppendLine($"\t\tj {endOrSubroutine}\t\t% Jump to the end of the {operation} subroutine");
@@ -287,7 +294,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         else
         {
             // Add the two operands
-            Code.AppendLine($"\t\t{op} {resultRegister}, {operand1}, {operand2}\t\t% {operand1} {operation} {operand2} = {resultRegister}");
+            Code.AppendLine($"\n\t\t{op} {resultRegister}, {operand1}, {operand2}\t\t% {operand1} {operation} {operand2} = {resultRegister}");
         }
 
         // Free the operands
@@ -524,9 +531,15 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     public void FunctionDeclaration(ISymbolTable currentTable)
     {
+        Code.AppendLine($"\n\t\t%==================== Function/Method: {currentTable.Name} ====================\n");
 
+        // Add the temporary variables to the stack frame
+        TempVars = new Stack<ISymbolTableEntry>(currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.TempVar).Reverse());
+        TempVarsInUse = new Stack<ISymbolTableEntry>();
 
-        Code.AppendLine($"\n\t\t%==================== {currentTable.Name} ====================\n");
+        //foreach (ISymbolTableEntry tempVar in TempVars)
+        //    WriteLine("TempVar: " + tempVar.Name);
+
 
         if (currentTable.Name == "main")
         {
@@ -581,13 +594,13 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     public void CallFunction(ISymbolTable currentTable, ISymbolTable functionTable)
     {
 
-        WriteLine("Calling function: " + functionTable.Name+" from "+currentTable.Name);
+        //WriteLine("Calling function: " + functionTable.Name+" from "+currentTable.Name);
 
         List<ISymbolTableEntry> parameters = functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.Parameter).ToList();
 
         foreach (ISymbolTableEntry parameter in parameters)
         {
-            WriteLine("Parameter: " + parameter.Name);
+            //WriteLine("Parameter: " + parameter.Name);
 
             // Get the parameter value
             string parameterValue = RegistersInUse.Pop();
@@ -609,6 +622,56 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Decrement the stack frame
         Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t\t% Decrement the stack frame");
 
+        // Get the return value register
+        string returnValReg = GetRegister();
+
+        // Get the address where the return value should be stored in the stack
+        int returnOffset = functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset - currentTable.ScopeSize;
+
+        // Load the return value
+        Code.AppendLine($"\t\tlw {returnValReg},{returnOffset}(r14)\t\t\t\t% Loading the return value");
     }
 
+
+
+
+
+
+    public void ClassDeclaration(ISymbolTable currentTable)
+    {
+
+        Code.AppendLine($"\n\t\t%************************* Class: {currentTable.Name} **********************************n");
+
+        
+
+
+        WriteLine("Class Declaration");
+    }
+
+    public void ClassDeclarationEnd(ISymbolTable currentTable)
+    {
+        WriteLine("Class Declaration End");
+
+
+        Code.AppendLine($"\n\t\t%************************* End of {currentTable.Name} **********************************n");
+    }
+
+    public void ClassVariable(ISymbolTable currentTable, ISymbolTableEntry entry)
+    {
+        WriteLine("Class Variable");
+
+        // Get the offset of the variable
+        int offset = entry.Offset;
+
+        WriteLine("Offset: " + offset);
+
+        // Set the frame pointer to the start of the class
+        Code.AppendLine($"\t\taddi r14,r14,{offset}\t\t% Set the frame pointer to the start of the class variable");
+
+    }
+
+    public void ClassVariableEnd(ISymbolTable currentTable, ISymbolTable classTable)
+    {
+        WriteLine("Class Variable End");
+    }
 }
