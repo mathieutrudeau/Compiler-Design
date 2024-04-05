@@ -35,14 +35,11 @@ public class CodeGenerator : ICodeGenerator
         string outputFileName = SourceFileName.Replace(".src", ".m");
 
         // Add the entry point to the code and the halt instruction
-        MoonCodeGenerator.Code.Insert(0, "\t\taddi r14,r0,topaddr\n");
-        MoonCodeGenerator.Code.Insert(0, "entry\n");
         MoonCodeGenerator.Code.Insert(0, "\n% Execution Code\n");
-        MoonCodeGenerator.Code.AppendLine("hlt");
 
+        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 20\n");
         MoonCodeGenerator.Data.Insert(0, "entint\t\tdb \"Enter an integer: \", 0\n");
         MoonCodeGenerator.Data.Insert(0, "nl\t\tdb 13, 10, 0\n");
-        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 20\n");
         MoonCodeGenerator.Data.Insert(0, "\n% Data Section\n");
 
 
@@ -156,7 +153,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             foreach (string dimension in varType.Split('[').Skip(1))
                 arrayDims.Add(int.Parse(dimension.Split(']')[0]));
 
-            int elSize = variableEntry.Size/arrayDims.Aggregate((a, b) => a * b);
+            int elSize = variableEntry.Size / arrayDims.Aggregate((a, b) => a * b);
 
             int size = 1;
 
@@ -184,7 +181,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             RegistersInUse.Push(tReg);
         }
 
-        
+
     }
 
     public void LoadVariable(ISymbolTableEntry variableEntry, ISymbolTable table)
@@ -463,76 +460,155 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
 
 
-    public void Write()
+    public void Write(ISymbolTable currentTable)
     {
-        // Get the value to write
+        // Store the value in a register
         string value = RegistersInUse.Pop();
 
         // Write the value
-
         Code.AppendLine($"\n\t\t%----------------- WRITE -----------------");
 
-        // Load the top address of the stack
-        Code.AppendLine($"\t\taddi r14,r0, topaddr\t\t% Load the top address of the stack");
+        // Go to the next stack frame
+        Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
 
-        // Write the value to the stack
+        // Write the value to the console/screen
         Code.AppendLine($"\t\tsw -8(r14),{value}");
-
-        // Put the address on the buffer stack
-        Code.AppendLine($"\t\taddi {value},r0,buf\t\t% Put the address on the buffer stack");
-
-        // Write the value to the stack
+        Code.AppendLine($"\t\taddi {value},r0,buf");
         Code.AppendLine($"\t\tsw -12(r14),{value}");
+        Code.AppendLine($"\t\tjl r15,intstr\t\t% Call the int -> string subroutine");
+        Code.AppendLine($"\t\tsw -8(r14),r13");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+        Code.AppendLine($"\t\taddi {value},r0,nl");
+        Code.AppendLine($"\t\tsw -8(r14),{value}");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Print a newline");
 
-        // Call the int to string subroutine
-        Code.AppendLine($"\t\tjl r15, intstr\t\t% Call the int to string subroutine");
+        // Go back to the current stack frame
+        Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Move back to the current stack frame\n");
 
-        // Copy the result to the stack
-        Code.AppendLine($"\t\tsw -8(r14),r13\t\t% Copy the result to the stack");
-
-        // Call the print string subroutine
-        Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
-
-
-
-        // Add a buffer of 20 bytes
-        //Data.AppendLine("buf\t\tres 20");
-
-        // Free the value
+        // Free the value register
         FreeRegister(value);
-
-        // Add a new line
-        string newlineRegister = GetRegister();
-
-        Code.AppendLine($"\t\taddi {newlineRegister},r0,nl\t\t% Load the newline character");
-        Code.AppendLine($"\t\tsw -8(r14),{newlineRegister}");
-        Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
-
-        FreeRegister(newlineRegister);
     }
 
 
-    public void Read()
+    public void Read(ISymbolTable currentTable)
     {
-        // Free a register to store the value
+        // Get a register to store the value
         string value = GetRegister();
 
         Code.AppendLine($"\n\t\t%----------------- READ -----------------");
 
-        // Get the address of the buffer
+        // Go to the next stack frame
+        Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t\t% Go to the next stack frame");
 
-        Code.AppendLine($"\t\taddi {value},r0,entint");
+        // Prompt the user for an integer
+        Code.AppendLine($"\t\taddi {value},r0,entint\t\t\t% Prompt for an integer");
         Code.AppendLine($"\t\tsw -8(r14),{value}");
-        Code.AppendLine($"\t\tjl r15, putstr\t\t% Call the print string subroutine");
+        Code.AppendLine($"\t\tjl r15,putstr");
 
-        Code.AppendLine($"\t\taddi {value},r0,buf\t\t% Get the address of the buffer");
+        // Get the integer from the user
+        Code.AppendLine($"\t\taddi {value},r0,buf");
         Code.AppendLine($"\t\tsw -8(r14),{value}");
-        Code.AppendLine($"\t\tjl r15, getstr\t\t% Call the get string subroutine");
-        Code.AppendLine($"\t\tjl r15, strint\t\t% Call the string to int subroutine");
-        Code.AppendLine($"\t\taddi {value},r13,0\t\t% Copy the result to the register");
+        Code.AppendLine($"\t\tjl r15,getstr\t\t\t% Call the get string subroutine");
+        Code.AppendLine($"\t\tjl r15,strint\t\t\t% Call the string -> int subroutine");
+        Code.AppendLine($"\t\taddi {value},r13,0");
+
+        // Restore the memory location
+        Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t% Go back to the current stack frame\n");
 
         // Store the value in the variable
         Assign();
+    }
+
+
+
+
+    public void FunctionDeclaration(ISymbolTable currentTable)
+    {
+
+
+        Code.AppendLine($"\n\t\t%==================== {currentTable.Name} ====================\n");
+
+        if (currentTable.Name == "main")
+        {
+            Code.AppendLine("entry\t\t% Start of the program");
+            Code.AppendLine($"\t\taddi r14,r0,topaddr\t\t% Set the top of the stack");
+            return;
+        }
+
+        int jumpOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.JumpAddress).First().Offset;
+
+        // Tag the function's call address
+        Code.AppendLine($"{currentTable.Name}\t\tsw {jumpOffset}(r14),r15\t\t\t% Tag the function call address");
+    }
+
+
+    public void FunctionDeclarationEnd(ISymbolTable currentTable)
+    {
+        if (currentTable.Name == "main")
+            Code.AppendLine("hlt\t\t% Halt the program\n");
+        else
+        {
+            // Get the return address to jump back to
+            int jumpOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.JumpAddress).First().Offset;
+
+            // Jump back to the return address
+            Code.AppendLine($"\t\tlw r15,{jumpOffset}(r14)\t\t\t% Jump back to the return address");
+            Code.AppendLine($"\t\tjr r15\t\t\t\t\t% Jump back to the return address");
+        }
+
+        Code.AppendLine($"\n\t\t%==================== End of {currentTable.Name} ====================\n");
+    }
+
+
+
+    public void Return(ISymbolTable currentTable)
+    {
+        // Get the return value register
+        string returnValReg = RegistersInUse.Pop();
+
+        // Get the address where the return value should be stored in the stack
+        int returnOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset;
+
+        // Store the return
+        Code.AppendLine($"\t\tsw {returnOffset}(r14),{returnValReg}\t\t\t% Storing the return value"); 
+    
+        // Free the return value register
+        FreeRegister(returnValReg);
+    }
+
+
+
+    public void CallFunction(ISymbolTable currentTable, ISymbolTable functionTable)
+    {
+
+        WriteLine("Calling function: " + functionTable.Name+" from "+currentTable.Name);
+
+        List<ISymbolTableEntry> parameters = functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.Parameter).ToList();
+
+        foreach (ISymbolTableEntry parameter in parameters)
+        {
+            WriteLine("Parameter: " + parameter.Name);
+
+            // Get the parameter value
+            string parameterValue = RegistersInUse.Pop();
+
+            // Get the parameter offset
+            int parameterOffset = parameter.Offset-currentTable.ScopeSize;
+
+            // Store the parameter value in the function's stack frame
+            Code.AppendLine($"\t\tsw {parameterOffset}(r14),{parameterValue}\t\t\t\t% Storing the parameter {parameter.Name}");
+        }
+
+        
+        // Increment the stack frame
+        Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t\t% Increment the stack frame");
+        
+        // Jump to the function
+        Code.AppendLine($"\t\tjl r15,{functionTable.Name}\t\t\t\t\t% Jump to the function {functionTable.Name}");
+
+        // Decrement the stack frame
+        Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t\t% Decrement the stack frame");
+
     }
 
 }

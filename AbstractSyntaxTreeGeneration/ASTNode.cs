@@ -1311,7 +1311,7 @@ public class ASTNode : IASTNode
         switch (Operation)
         {
             case Program:
-                currentTable.SetOffset(-20);
+                currentTable.SetOffset(0);
                 break;
 
             case RelExpr:
@@ -1447,10 +1447,9 @@ public class ASTNode : IASTNode
 
                 currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
 
-                moonCodeGenerator.Code.AppendLine($"\t\t%-------------------- {currentTable.Name} ----------------------");
-
-
-
+                // Add the function frame to the symbol table
+                moonCodeGenerator.FunctionDeclaration(currentTable);
+                
                 break;
 
             case IntLit:
@@ -1481,17 +1480,23 @@ public class ASTNode : IASTNode
         // Perform the following actions when exiting a node based on its operation
         switch (Operation)
         {
+            case FuncDef:
+
+                moonCodeGenerator.FunctionDeclarationEnd(currentTable);
+
+                break;
+
             case WriteStat:
 
                 // Run the code generation for the write statement
-                moonCodeGenerator.Write();
+                moonCodeGenerator.Write(currentTable);
 
                 break;
 
             case ReadStat:
                 
                     // Run the code generation for the read statement
-                    moonCodeGenerator.Read();
+                    moonCodeGenerator.Read(currentTable);
     
                     break;
 
@@ -1533,6 +1538,23 @@ public class ASTNode : IASTNode
                 break;
 
             case IndexList:
+
+                break;
+
+            case ReturnStat:
+
+                // Run the code generation for the return statement
+                moonCodeGenerator.Return(currentTable);
+
+                break;
+
+            case FuncCall:
+
+                if (LeftMostChild!.Operation == FuncCall)
+                    return;
+
+                // Run the code generation for the function call
+                moonCodeGenerator.CallFunction(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!);
 
                 break;
 

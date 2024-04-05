@@ -48,6 +48,7 @@ public class SymbolTable : ISymbolTable
 
     public void SetOffset(int offset)
     {
+        offset=0;
         foreach (var entry in Entries)
         {
             if (entry.Link != null)

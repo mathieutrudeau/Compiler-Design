@@ -9,12 +9,17 @@ func main() -> void
     read(a);
     read(b);
 
-    c = f1(a,b);
+    f1(a,b);
 
+    c=3;
     write(c);
 }
 
-func f1(a:integer, b:integer) -> integer
+
+func f1(a:integer, b:integer) -> void
 {
-    return (a+b);
+    let c:integer;
+    c = a+b;
+
+    write(c);
 }

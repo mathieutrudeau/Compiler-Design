@@ -1,4 +1,5 @@
 
+using System.Diagnostics.Contracts;
 using System.Text;
 using SemanticAnalyzer;
 
@@ -101,7 +102,33 @@ public interface IMoonCodeGenerator
     public void EndWhile(ref int whileCount);
 
 
-    public void Write();
-    public void Read();
+    /// <summary>
+    /// Outputs the code to the console.
+    /// </summary>
+    /// <param name="currentTable">The current symbol table.</param>
+    /// <remarks>
+    /// This method will output the code to the console.
+    /// </remarks>
+    public void Write(ISymbolTable currentTable);
+
+    /// <summary>
+    /// Reads input from the console.
+    /// </summary>
+    /// <param name="currentTable">The current symbol table.</param>
+    /// <remarks>
+    /// This method will read input from the console.
+    /// </remarks>
+    public void Read(ISymbolTable currentTable);
+
+
+
+    public void FunctionDeclaration(ISymbolTable currentTable);
+
+    public void FunctionDeclarationEnd(ISymbolTable currentTable);
+
+    public void Return(ISymbolTable currentTable);
+
+
+    public void CallFunction(ISymbolTable currentTable, ISymbolTable functionTable);
 
 }
