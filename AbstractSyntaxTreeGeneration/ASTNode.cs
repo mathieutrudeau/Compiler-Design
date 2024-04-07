@@ -1498,6 +1498,16 @@ public class ASTNode : IASTNode
 
                 break;
 
+            case FloatLit:
+                /*
+                    The following steps are performed for a float literal:
+                    - Load the the float into a register
+                */
+
+                moonCodeGenerator.LoadFloat(Token!.Lexeme);
+
+                break;
+
 
             case StructDecl:
                 /*
@@ -1551,15 +1561,24 @@ public class ASTNode : IASTNode
 
             case WriteStat:
 
+
                 // Run the code generation for the write statement
-                moonCodeGenerator.Write(currentTable);
+                if(GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()) == "float")
+                    moonCodeGenerator.WriteFloat(currentTable);
+                else
+                    moonCodeGenerator.WriteInteger(currentTable);
 
                 break;
 
             case ReadStat:
 
-                // Run the code generation for the read statement
-                moonCodeGenerator.Read(currentTable);
+                // Check the type of the variable being read into
+                string readType = GetType(LeftMostChild!.LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>());
+
+                if (readType == "float")
+                    moonCodeGenerator.ReadFloat(currentTable);
+                else
+                    moonCodeGenerator.ReadInteger(currentTable);
 
                 break;
 
@@ -1589,7 +1608,13 @@ public class ASTNode : IASTNode
 
             case AssignStat:
 
-                moonCodeGenerator.Assign();
+                // Check the type of the left hand side of the assignment
+                string type = GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>());
+
+                if (type == "float")
+                    moonCodeGenerator.AssignFloat();
+                else
+                    moonCodeGenerator.AssignInteger();
 
                 break;
 
@@ -1604,8 +1629,8 @@ public class ASTNode : IASTNode
                     currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
                     break;
                 }
-
-                moonCodeGenerator.LoadVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!, currentTable);
+            
+                moonCodeGenerator.LoadVariable(GetType(this,currentTable,currentTable,new List<ISemanticWarning>(),new List<ISemanticError>()),currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!, currentTable);
 
                 break;
 

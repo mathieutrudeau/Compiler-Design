@@ -1,5 +1,6 @@
 
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 using System.Text;
 using SemanticAnalyzer;
 
@@ -100,9 +101,11 @@ public interface IMoonCodeGenerator
 
     public void DeclareVariable(ISymbolTableEntry variableEntry);
 
-    public void LoadVariable(ISymbolTableEntry variableEntry, ISymbolTable table);
+    public void LoadVariable(string type,ISymbolTableEntry variableEntry, ISymbolTable table);
 
     public void LoadInteger(string value);
+
+    public void LoadFloat(string value);
 
     public void NotExpr();
 
@@ -112,7 +115,8 @@ public interface IMoonCodeGenerator
 
     public void RelExpr(string operation);
 
-    public void Assign();
+    public void AssignFloat();
+    public void AssignInteger();
 
     public void If(ref int ifCount);
     public void Else(ref int ifCount);
@@ -131,7 +135,7 @@ public interface IMoonCodeGenerator
     /// <remarks>
     /// This method will output the code to the console.
     /// </remarks>
-    public void Write(ISymbolTable currentTable);
+    public void WriteInteger(ISymbolTable currentTable);
 
     /// <summary>
     /// Reads input from the console.
@@ -140,8 +144,12 @@ public interface IMoonCodeGenerator
     /// <remarks>
     /// This method will read input from the console.
     /// </remarks>
-    public void Read(ISymbolTable currentTable);
+    public void ReadInteger(ISymbolTable currentTable);
 
+
+    public void WriteFloat(ISymbolTable currentTable);
+
+    public void ReadFloat(ISymbolTable currentTable);
 
 
     public void FunctionDeclaration(ISymbolTable currentTable);

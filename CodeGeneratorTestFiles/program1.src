@@ -1,25 +1,29 @@
 func main() -> void
 {
-    let a:integer;
+    let a:float;
     let b:integer;
 
-    let c:integer;
 
-    a=3;
-    b=4;
 
-    c=a+b;
+    a=33.22;
 
-    write(c);
+    write(a);
 
-    let d: c1;    
+    read(a);
+
+    write(a);
+
+    f1();
     
-    write(d.A);
+}
 
-    write(c);
+
+func f1()->void
+{
 
 }
 
+/*
 struct c1
 {
     public let A:integer;
@@ -36,3 +40,5 @@ func f1() -> c1
     let a:c1;
     return(a);
 }
+
+*/

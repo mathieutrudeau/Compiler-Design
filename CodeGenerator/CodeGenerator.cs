@@ -4,6 +4,8 @@ using System.Text;
 using AbstractSyntaxTreeGeneration;
 using SemanticAnalyzer;
 using static System.Console;
+using System;
+using System.Numerics;
 
 namespace CodeGenerator;
 
@@ -37,8 +39,10 @@ public class CodeGenerator : ICodeGenerator
         // Add the entry point to the code and the halt instruction
         MoonCodeGenerator.Code.Insert(0, "\n% Execution Code\n");
 
-        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 20\n");
+        MoonCodeGenerator.Data.Insert(0, "buf\t\tres 100\n");
+        MoonCodeGenerator.Data.Insert(0, "entfloat\t\tdb \"Enter a float: \", 0\n");
         MoonCodeGenerator.Data.Insert(0, "entint\t\tdb \"Enter an integer: \", 0\n");
+        MoonCodeGenerator.Data.Insert(0, "dot\t\tdb \".\", 0\n");
         MoonCodeGenerator.Data.Insert(0, "nl\t\tdb 13, 10, 0\n");
         MoonCodeGenerator.Data.Insert(0, "\n% Data Section\n");
 
@@ -66,6 +70,13 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     public StringBuilder Data { get; set; } = new StringBuilder();
 
     private int tempVarNumber = 0;
+
+
+    public MoonCodeGenerator()
+    {
+        FloatWriteSubroutine();
+        ReadFloatSubroutine();
+    }
 
     public string GetTempVarNumber()
     {
@@ -145,7 +156,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         if (arrayDims < 0)
             Code.AppendLine($"\t\tsw {offset}(r14),r0 \t\t% Initializing {variableEntry.Name} to 0 (Default Value)");
 
-        
+
     }
 
     private void LoadArrayIndex(ISymbolTableEntry variableEntry, ISymbolTable table)
@@ -191,49 +202,97 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     }
 
-    public void LoadVariable(ISymbolTableEntry variableEntry, ISymbolTable table)
+    public void LoadVariable(string type, ISymbolTableEntry variableEntry, ISymbolTable table)
     {
         // Get the offset of the variable
         int offset = variableEntry.Offset;
 
-        // Dimensions 
-        int dimCount = GetDimCount(variableEntry.Type);
-        int dimSize = GetDimSize(variableEntry.Type);
+        WriteLine("Loading Variable: " + type);
 
-        if (dimSize > -1)
+        if (type == "integer")
         {
-            LoadArrayIndex(variableEntry, table);
-
-            string aReg = RegistersInUse.Pop();
-
-            // Get the register to load the variable into
+            // Load the variable into a register
             string register = GetRegister();
 
-            Code.AppendLine($"\t\tlw {register},0({aReg}) \t\t% Loading {variableEntry.Name} into {register}");
+            // Load the variable from the stack
+            Code.AppendLine($"\t\tlw {register},{offset}(r14) \t\t% Loading {variableEntry.Name} into {register}");
 
-            // Frame offset
-            //int tableOffset = table.Parent!.Entries.Where(e => e.Name == table.Name).First().Offset;
-
-            // Move the pointer back to the start of the current scope
-            //Code.AppendLine($"\t\taddi r14,r0,{tableOffset}");
-
-            FreeRegister(aReg);
         }
-        else
+        else if (type == "float")
         {
-            // Get the register to load the variable into
+            // Load the variable into a register
             string register = GetRegister();
+
+            // Load the variable point position from the stack and store it in a register
+            string pointReg = GetRegister();
 
             Code.AppendLine($"\t\tlw {register},{offset}(r14) \t\t% Loading {variableEntry.Name} into {register}");
+            Code.AppendLine($"\t\tlw {pointReg},{offset - 4}(r14) \t\t% Loading the point position of {variableEntry.Name} into {pointReg}");
         }
     }
 
     public void LoadInteger(string value)
     {
+
+        Code.AppendLine($"\n\t\t% Loading Integer Value: {value}");
+
         string register = GetRegister();
 
-        // Load the value into the register
-        Code.AppendLine($"\t\taddi {register},r0,{value}\t\t% Loading {value} into {register}");
+        // Convert the value to an integer
+        bool isValid = int.TryParse(value, out int intValue);
+
+        if (!isValid)
+        {
+            WriteLine("Invalid Integer Value: " + value);
+            intValue = 0;
+        }
+
+        // Get the number of bits needed to represent the integer
+        int minBits = (int)Math.Ceiling(Math.Log(intValue + 1, 2));
+
+        // Convert the integer to binary
+        string binary = Convert.ToString(intValue, 2);
+
+        // Pad the binary string with zeros to make it 32 bits
+        if (binary.Length < 32)
+            binary = binary.PadLeft(32, '0');
+
+        // Load the integer into the register
+        // If the integer is larger than 8 bits, load it in 8-bit chunks and shift the register
+        if (minBits > 8)
+            for (int i = 0; i < binary.Length; i += 8)
+            {
+                int val = Convert.ToInt32(binary.Substring(i, 8), 2);
+
+                if (i == 0)
+                    Code.AppendLine($"\t\taddi {register},r0,{val}");
+                else
+                    Code.AppendLine($"\t\taddi {register},{register},{val}");
+
+                if (i != 24)
+                    Code.AppendLine($"\t\tsl {register},8");
+            }
+        else
+            Code.AppendLine($"\t\taddi {register},r0,{intValue}");
+    }
+
+
+    public void LoadFloat(string value)
+    {
+        Code.AppendLine($"\n\t\t% Loading Float Value: {value}");
+
+        // Transform the float value into an integer and while keeping the position of the decimal point (relative to the right)
+        // For example, 3.14 will be transformed into 314 with a decimal point at the 2nd position from the right
+        int pointPosition = value.Length - (value.IndexOf('.') + 1);
+        value = value.Replace(".", "");
+
+        // Load the integer value
+        LoadInteger(value);
+
+        // Load the point position
+        string pointReg = GetRegister();
+
+        Code.AppendLine($"\t\taddi {pointReg},r0,{pointPosition}\t\t% Load the point position of the float value");
     }
 
     public void NotExpr()
@@ -373,19 +432,50 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     }
 
 
-    public void Assign()
+    public void AssignFloat()
+    {
+        // Get the point position
+        string pointReg = RegistersInUse.Pop();
+
+        // Get the value to assign
+        string valueReg = RegistersInUse.Pop();
+
+        // Get the location of the variable, by looking at the last reference to the register
+        string variablePointReg = RegistersInUse.Pop();
+
+        // Get the variable to assign to
+        string variableReg = RegistersInUse.Pop();
+
+        // Get the location of the variable, by looking at the last reference to the register
+        int variableOffset = int.Parse(Code.ToString().Split('\n').Where(x => x.Contains(variableReg) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0]);
+
+        WriteLine("Assigning Float: " + valueReg + " to " + variableReg + " with point position " + pointReg);
+
+        Code.AppendLine($"\n\t\t% Assignment of Float Value");
+
+        // Assign the value to the variable
+        Code.AppendLine($"\t\tadd {variableReg},r0,{valueReg}\t\t% Assigning {valueReg} to {variableReg}");
+
+        // Store the value in the variable
+        Code.AppendLine($"\t\tsw {variableOffset}(r14),{variableReg}");
+
+        // Store the point position in the variable
+        Code.AppendLine($"\t\tsw {variableOffset - 4}(r14),{pointReg}");
+
+        // Free the registers
+        FreeRegister(pointReg);
+        FreeRegister(valueReg);
+        FreeRegister(variableReg);
+        FreeRegister(variablePointReg);
+    }
+
+    public void AssignInteger()
     {
         // Get the value to assign
         string value = RegistersInUse.Pop();
 
         // Get the variable to assign to
         string variable = RegistersInUse.Pop();
-
-
-
-        //WriteLine(Code.ToString());
-        //WriteLine("value: " + value);
-        //WriteLine("Var: " + variable);
 
         // Get the location of the variable, by looking at the last reference to the register
         string variableOffset = Code.ToString().Split('\n').Where(x => x.Contains(variable) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0];
@@ -399,6 +489,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Free the value and the variable registers
         FreeRegister(value);
         FreeRegister(variable);
+
+        WriteLine("Freeing Registers: " + value + " " + variable);
     }
 
     public void If(ref int ifCount)
@@ -467,13 +559,13 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
 
 
-    public void Write(ISymbolTable currentTable)
+    public void WriteInteger(ISymbolTable currentTable)
     {
         // Store the value in a register
         string value = RegistersInUse.Pop();
 
         // Write the value
-        Code.AppendLine($"\n\t\t%----------------- WRITE -----------------");
+        Code.AppendLine($"\n\t\t%----------------- WRITE Integer -----------------");
 
         // Go to the next stack frame
         Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
@@ -496,8 +588,166 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         FreeRegister(value);
     }
 
+    public void WriteFloat(ISymbolTable currentTable)
+    {
+        // Store the value in a register
+        string pointReg = RegistersInUse.Pop();
 
-    public void Read(ISymbolTable currentTable)
+        // Store the point position in a register
+        string value = RegistersInUse.Pop();
+
+        // Write the value
+        Code.AppendLine($"\n\t\t%----------------- WRITE Float -----------------");
+
+        // Go to the next stack frame
+        Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
+
+        Code.AppendLine($"\t\tsw -28(r14),{value}\t\t\t% Save contents of value");
+        Code.AppendLine($"\t\tsw -32(r14),{pointReg}\t\t\t% Save contents of point position");
+
+        // Call the float write subroutine
+        Code.AppendLine($"\t\tjl r15,floatwrite\t\t% Call the float write subroutine");
+
+        // Go back to the current stack frame
+        Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t% Move back to the current stack frame\n");
+
+        // Free both registers
+        FreeRegister(value);
+        FreeRegister(pointReg);
+    }
+
+    private void FloatWriteSubroutine()
+    {
+        Code.AppendLine($"\n\t\t%----------------- Write float subroutine -----------------");
+
+        Code.AppendLine($"floatwrite\t\t nop\t\t% Start of the float write subroutine");
+
+        // Save the contents of r1, r2, r3 and r4
+        Code.AppendLine($"\t\tsw -36(r14),r1\t\t% Save contents of r1");
+        Code.AppendLine($"\t\tsw -40(r14),r2\t\t% Save contents of r2");
+        Code.AppendLine($"\t\tsw -44(r14),r3\t\t% Save contents of r3");
+        Code.AppendLine($"\t\tsw -48(r14),r4\t\t% Save contents of r4");
+
+        // Save the return address
+        Code.AppendLine($"\t\tsw -52(r14),r15\t\t% Save the return address");
+
+        // Load the float value
+        Code.AppendLine($"\t\tlw r1,-28(r14)\t\t% Load the float value");
+        Code.AppendLine($"\t\tlw r2,-32(r14)\t\t% Load the point position");
+
+        // Calculate the modulus divisor for the point position
+        Code.AppendLine($"\t\taddi r3,r0,1\t\t% Initialize the modulus divisor");
+
+        Code.AppendLine($"whilemodulus\t\tceq r4,r2,r0\t\t% Check if the point position is 0");
+        Code.AppendLine($"\t\tbnz r4,endwhilemodulus\t\t% If the point position is 0, exit the loop");
+        Code.AppendLine($"\t\t\tmuli r3,r3,10\t\t% Multiply the modulus divisor by 10");
+        Code.AppendLine($"\t\t\tsubi r2,r2,1\t\t% Decrement the point position");
+        Code.AppendLine($"\t\t\tbz r2,endwhilemodulus\t\t% If the point position is 0, exit the loop");
+        Code.AppendLine($"\t\t\tj whilemodulus\t\t% Jump back to the start of the loop");
+        Code.AppendLine($"endwhilemodulus\t\t nop\t\t% End of the while loop");
+
+        // Calculate the integer part of the float value
+        Code.AppendLine($"\t\tmod r4,r1,r3\t\t% Calculate the integer part of the float value");
+        Code.AppendLine($"\t\tsub r1,r1,r4\t\t% Remove the fractional part of the float value");
+        Code.AppendLine($"\t\tdiv r1,r1,r3\t\t% Divide the integer part by the modulus divisor");
+
+        // Keep the fractional part of the float value in r2
+        Code.AppendLine($"\t\tadd r2,r0,r4\t\t% Save the fractional part of the float value");
+
+        // Print the integer part of the float value
+        Code.AppendLine($"\n\t\tsw -8(r14),r1\t\t% Store the integer part of the float value");
+        Code.AppendLine($"\t\taddi r2,r0,buf\t\t% Load the buffer address");
+        Code.AppendLine($"\t\tsw -12(r14),r2\t\t% Store the buffer address");
+        Code.AppendLine($"\t\tjl r15,intstr\t\t% Call the int -> string subroutine");
+        Code.AppendLine($"\t\tsw -8(r14),r13\t\t% Store the string address");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+
+        // Print the decimal point
+        Code.AppendLine($"\n\t\taddi r2,r0,dot\t\t% Load the decimal point");
+        Code.AppendLine($"\t\tsw -8(r14),r2\t\t% Store the decimal point");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+
+        // Print the fractional part of the float value
+        Code.AppendLine($"\n\t\tsw -8(r14),r4\t\t% Store the fractional part of the float value");
+        Code.AppendLine($"\t\taddi r2,r0,buf\t\t% Load the buffer address");
+        Code.AppendLine($"\t\tsw -12(r14),r2\t\t% Store the buffer address");
+        Code.AppendLine($"\t\tjl r15,intstr\t\t% Call the int -> string subroutine");
+        Code.AppendLine($"\t\tsw -8(r14),r13\t\t% Store the string address");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+
+        // Print a newline
+        Code.AppendLine($"\n\t\taddi r4,r0,nl\t\t% Load the newline");
+        Code.AppendLine($"\t\tsw -8(r14),r4\t\t% Store the newline");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+
+        // Restore the contents of r1, r2 and r3
+        Code.AppendLine($"\t\tlw r1,-36(r14)\t\t% Restore contents of r1");
+        Code.AppendLine($"\t\tlw r2,-40(r14)\t\t% Restore contents of r2");
+        Code.AppendLine($"\t\tlw r3,-44(r14)\t\t% Restore contents of r3");
+        Code.AppendLine($"\t\tlw r4,-48(r14)\t\t% Restore contents of r4");
+
+        // Restore the return address
+        Code.AppendLine($"\t\tlw r15,-52(r14)\t\t% Restore the return address");
+
+        // Return from the subroutine
+        Code.AppendLine($"\t\tjr r15\t\t% Return from the float write subroutine");
+
+    }
+
+    private void ReadFloatSubroutine()
+    {
+        Code.AppendLine($"\n\t\t%----------------- Read float subroutine -----------------");
+
+        Code.AppendLine($"getfloat\t\t nop\t\t% Start of the float read subroutine");
+
+        // Save the contents of r1, r2, r3, r4 and r15 (return address)
+        Code.AppendLine($"\t\tsw -36(r14),r1\t\t% Save contents of r1");
+        Code.AppendLine($"\t\tsw -40(r14),r2\t\t% Save contents of r2");
+        Code.AppendLine($"\t\tsw -44(r14),r3\t\t% Save contents of r3");
+        Code.AppendLine($"\t\tsw -48(r14),r4\t\t% Save contents of r4");
+        Code.AppendLine($"\t\tsw -52(r14),r15\t\t% Save the return address");
+
+        // Initialize the point position to 0 (no decimal point) and load the buffer address
+        Code.AppendLine($"\t\taddi r4,r0,0\t\t% Initialize the point position");
+        Code.AppendLine($"\t\taddi r1,r0,buf\t\t% Load the buffer address");
+
+        // Get the first part of the float value (before the decimal point)
+        Code.AppendLine($"\ngetfloat1\t\tgetc r2\t\t% Get the next character");
+        Code.AppendLine($"\t\tceqi r3,r2,46\t\t% Check if the character is a decimal point");
+        Code.AppendLine($"\t\tbnz r3,getfloat2\t\t% If the character is not a decimal point, jump to getfloat2");
+        Code.AppendLine($"\t\tceqi r3,r2,10\t\t% Check if the character is a newline");
+        Code.AppendLine($"\t\tbnz r3,endgetfloat\t\t% If the character is a newline, jump to endgetfloat");
+        Code.AppendLine($"\t\tsb 0(r1),r2\t\t% Store the character in the buffer");
+        Code.AppendLine($"\t\taddi r1,r1,1\t\t% Increment the buffer address");
+        Code.AppendLine($"\t\tj getfloat1\t\t% Get the next character");
+
+        // Get the second part of the float value (after the decimal point)
+        Code.AppendLine($"\ngetfloat2\t\tgetc r2\t\t% Get the next character");
+        Code.AppendLine($"\t\tceqi r3,r2,10\t\t% Check if the character is a newline");
+        Code.AppendLine($"\t\tbnz r3,endgetfloat\t\t% If the character is a newline, jump to endgetfloat");
+        Code.AppendLine($"\t\taddi r4,r4,1\t\t% Increment the point position");
+        Code.AppendLine($"\t\tsb 0(r1),r2\t\t% Store the character in the buffer");
+        Code.AppendLine($"\t\taddi r1,r1,1\t\t% Increment the buffer address");
+        Code.AppendLine($"\t\tj getfloat2\t\t% Get the next character");
+
+        // End of the float read subroutine
+        Code.AppendLine($"\nendgetfloat\t\t sb 0(r1),r0\t\t% Add a null terminator to the buffer");
+        Code.AppendLine($"\t\tsw -56(r14),r4\t\t% Store the point position");
+        Code.AppendLine($"\t\tjl r15,strint\t\t% Call the string -> int subroutine");
+        Code.AppendLine($"\t\tsw -60(r14),r13\t\t% Store the integer part of the float value");
+
+        // Restore the contents of r1, r2, r3, r4 and r15 (return address)
+        Code.AppendLine($"\t\tlw r1,-36(r14)\t\t% Restore contents of r1");
+        Code.AppendLine($"\t\tlw r2,-40(r14)\t\t% Restore contents of r2");
+        Code.AppendLine($"\t\tlw r3,-44(r14)\t\t% Restore contents of r3");
+        Code.AppendLine($"\t\tlw r4,-48(r14)\t\t% Restore contents of r4");
+        Code.AppendLine($"\t\tlw r15,-52(r14)\t\t% Restore the return address");
+
+        // Return from the subroutine
+        Code.AppendLine($"\t\tjr r15\t\t% Return from the float read subroutine");
+    }
+
+    public void ReadInteger(ISymbolTable currentTable)
     {
         // Get a register to store the value
         string value = GetRegister();
@@ -523,7 +773,45 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t% Go back to the current stack frame\n");
 
         // Store the value in the variable
-        Assign();
+        AssignInteger();
+    }
+
+
+    public void ReadFloat(ISymbolTable currentTable)
+    {
+        // Get a register to store the value
+        string value = GetRegister();
+
+        // Get a register to store the point position
+        string pointReg = GetRegister();
+
+        Code.AppendLine($"\n\t\t%----------------- READ Float -----------------");
+
+        // Go to the next stack frame
+        Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t\t\t% Go to the next stack frame");
+
+        // Prompt the user for a float
+        Code.AppendLine($"\t\taddi {value},r0,entfloat\t\t\t% Prompt for a float");
+        Code.AppendLine($"\t\tsw -8(r14),{value}");
+        Code.AppendLine($"\t\tjl r15,putstr");
+
+        // Store the buffer address
+        Code.AppendLine($"\t\taddi {value},r0,buf");
+        Code.AppendLine($"\t\tsw -8(r14),{value}");
+
+        // Get the float from the user
+        Code.AppendLine($"\t\tjl r15,getfloat\t\t\t% Call the float read subroutine");
+
+        // Get the integer and point position from the stack
+        Code.AppendLine($"\t\tlw {value},-60(r14)\t\t\t% Load the integer part of the float value");
+        Code.AppendLine($"\t\tlw {pointReg},-56(r14)\t\t\t% Load the point position of the float value");
+
+        // Restore the memory location
+        Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t% Go back to the current stack frame\n");
+
+        // Store the value in the variable
+        AssignFloat();
+
     }
 
 
@@ -583,8 +871,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         int returnOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset;
 
         // Store the return
-        Code.AppendLine($"\t\tsw {returnOffset}(r14),{returnValReg}\t\t\t% Storing the return value"); 
-    
+        Code.AppendLine($"\t\tsw {returnOffset}(r14),{returnValReg}\t\t\t% Storing the return value");
+
         // Free the return value register
         FreeRegister(returnValReg);
     }
@@ -606,16 +894,16 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             string parameterValue = RegistersInUse.Pop();
 
             // Get the parameter offset
-            int parameterOffset = parameter.Offset-currentTable.ScopeSize;
+            int parameterOffset = parameter.Offset - currentTable.ScopeSize;
 
             // Store the parameter value in the function's stack frame
             Code.AppendLine($"\t\tsw {parameterOffset}(r14),{parameterValue}\t\t\t\t% Storing the parameter {parameter.Name}");
         }
 
-        
+
         // Increment the stack frame
         Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t\t% Increment the stack frame");
-        
+
         // Jump to the function
         Code.AppendLine($"\t\tjl r15,{functionTable.Name}\t\t\t\t\t% Jump to the function {functionTable.Name}");
 
@@ -642,7 +930,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
         Code.AppendLine($"\n\t\t%************************* Class: {currentTable.Name} **********************************n");
 
-        
+
 
 
         WriteLine("Class Declaration");
