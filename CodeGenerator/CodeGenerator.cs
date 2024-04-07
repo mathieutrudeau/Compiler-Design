@@ -76,6 +76,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     {
         FloatWriteSubroutine();
         ReadFloatSubroutine();
+        FloatOpSubroutines();
     }
 
     public string GetTempVarNumber()
@@ -207,7 +208,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Get the offset of the variable
         int offset = variableEntry.Offset;
 
-        WriteLine("Loading Variable: " + type);
+        //WriteLine("Loading Variable: " + type);
 
         if (type == "integer")
         {
@@ -319,7 +320,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         FreeRegister(operand);
     }
 
-    public void AddExpr(string operation)
+    public void AddExpr(string operation, ISymbolTable currentTable, bool isFloat = false)
     {
         string op = operation switch
         {
@@ -328,6 +329,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             "|" => "or",
             _ => "add"
         };
+
+        if(isFloat)
+        {
+            FloatOp(op, currentTable);
+            return;
+        }
 
         // Get the two operands from the stack
         string operand2 = RegistersInUse.Pop();
@@ -361,7 +368,122 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         FreeRegister(operand2);
     }
 
-    public void MultExpr(string operation)
+
+
+    private void FloatOp(string op, ISymbolTable currentTable)
+    {
+        // Get the two operands from the stack
+        string pointReg2 = RegistersInUse.Pop();
+        string valueReg2 = RegistersInUse.Pop();
+
+        string pointReg1 = RegistersInUse.Pop();
+        string valueReg1 = RegistersInUse.Pop();
+
+        // Store the result in a register
+        string resultReg = GetRegister();
+        string pointReg = GetRegister();
+
+        if(op=="or" || op=="and")
+        {
+
+        }
+        else
+        {
+            // Go to the next stack frame
+            Code.AppendLine($"\n\t\t%----------------- {op} Float -----------------");
+            Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
+
+            // Store the float values
+            Code.AppendLine($"\t\tsw 0(r14),{valueReg1}\t\t% Store the first float value");
+            Code.AppendLine($"\t\tsw -4(r14),{pointReg1}\t\t% Store the point position of the first float value");
+            Code.AppendLine($"\t\tsw -8(r14),{valueReg2}\t\t% Store the second float value");
+            Code.AppendLine($"\t\tsw -12(r14),{pointReg2}\t\t% Store the point position of the second float value");
+
+            // Call the add/sub float subroutine
+            Code.AppendLine($"\t\tjl r15,{op}float\t\t% Call the {op} float subroutine");
+
+            // Load the result
+            Code.AppendLine($"\t\tlw {resultReg},0(r14)\t\t% Load the result of the {op} operation");
+            Code.AppendLine($"\t\tlw {pointReg},-4(r14)\t\t% Load the point position of the result");
+
+            // Go back to the current stack frame
+            Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Move back to the current stack frame");
+        }
+
+        // Free the registers
+        FreeRegister(pointReg2);
+        FreeRegister(valueReg2);
+
+        FreeRegister(pointReg1);
+        FreeRegister(valueReg1);
+    }
+
+
+    private void FloatOpSubroutines()
+    {
+        string[] addOps = new string[] { "add", "mul","div", "sub", "clt", "cle", "cgt", "cge", "ceq", "cne"};
+
+        // Add/Sub Float Subroutine
+
+        foreach (string op in addOps)
+        {
+            Code.AppendLine($"\n\t\t%----------------- {op} Float Subroutine -----------------");
+
+            Code.AppendLine($"{op}float\t\t nop\t\t% Start of the {op} float subroutine");
+
+            // Save the contents of r1, r2, r3, r4 and return address
+            Code.AppendLine($"\t\tsw -16(r14),r1\t\t% Save contents of r1");
+            Code.AppendLine($"\t\tsw -20(r14),r2\t\t% Save contents of r2");
+            Code.AppendLine($"\t\tsw -24(r14),r3\t\t% Save contents of r3");
+            Code.AppendLine($"\t\tsw -28(r14),r4\t\t% Save contents of r4");
+            Code.AppendLine($"\t\tsw -32(r14),r15\t\t% Save the return address");
+
+            // Load the float values
+            Code.AppendLine($"\t\tlw r1,0(r14)\t\t% Load the first float value");
+            Code.AppendLine($"\t\tlw r2,-4(r14)\t\t% Load the point position of the first float value");
+            Code.AppendLine($"\t\tlw r3,-8(r14)\t\t% Load the second float value");
+            Code.AppendLine($"\t\tlw r4,-12(r14)\t\t% Load the point position of the second float value");
+        
+            Code.AppendLine($"{op}float1\t\tceq r15,r2,r4\t\t% Check if the point positions are equal");
+            Code.AppendLine($"\t\tbnz r15,{op}float2\t\t% If the point positions are equal, jump to {op}float2");
+            Code.AppendLine($"\t\tclt r15,r2,r4\t\t% Check if the first point position is less than the second point position");
+            Code.AppendLine($"\t\tbnz r15,{op}float3\t\t% If the first point position is less than the second point position, jump to {op}float3");
+            Code.AppendLine($"\t\tj {op}float4\t\t% Jump to {op}float4");
+
+            Code.AppendLine($"{op}float3\t\taddi r2,r2,1\t\t% Increment the first point position");
+            Code.AppendLine($"\t\tmuli r1,r1,10\t\t% Multiply the first float value by 10");
+            Code.AppendLine($"\t\tj {op}float1\t\t% Jump to {op}float1");
+
+            Code.AppendLine($"{op}float4\t\taddi r4,r4,1\t\t% Increment the second point position");
+            Code.AppendLine($"\t\tmuli r3,r3,10\t\t% Multiply the second float value by 10");
+            Code.AppendLine($"\t\tj {op}float1\t\t% Jump to {op}float1");
+
+            Code.AppendLine($"{op}float2\t\t{op} r15,r1,r3\t\t% Perform the {op} operation on the float values");
+            Code.AppendLine($"\t\tsw 0(r14),r15\t\t% Store the result of the {op} operation");
+            Code.AppendLine($"\t\tsw -4(r14),r2\t\t% Store the point position of the result");
+
+            // Restore the contents of r1, r2, r3, r4 and return address
+            Code.AppendLine($"\t\tlw r1,-16(r14)\t\t% Restore contents of r1");
+            Code.AppendLine($"\t\tlw r2,-20(r14)\t\t% Restore contents of r2");
+            Code.AppendLine($"\t\tlw r3,-24(r14)\t\t% Restore contents of r3");
+            Code.AppendLine($"\t\tlw r4,-28(r14)\t\t% Restore contents of r4");
+            Code.AppendLine($"\t\tlw r15,-32(r14)\t\t% Restore the return address");
+
+            Code.AppendLine($"\t\tjr r15\t\t% Return from the {op} float subroutine");
+        }
+
+
+        // Add the multiplication float subroutine
+        Code.AppendLine($"\n\t\t%----------------- Mult Float Subroutine -----------------");
+
+        // Add the division float subroutine
+        Code.AppendLine($"\n\t\t%----------------- Div Float Subroutine -----------------");
+
+
+    }
+
+
+    public void MultExpr(string operation, ISymbolTable currentTable, bool isFloat=false)
     {
         string op = operation switch
         {
@@ -370,6 +492,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             "&" => "and",
             _ => "mul"
         };
+
+        if (isFloat)
+        {
+            FloatOp(op, currentTable);
+            return;
+        }
 
         // Get the two operands from the stack
         string operand2 = RegistersInUse.Pop();
@@ -403,7 +531,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         FreeRegister(operand2);
     }
 
-    public void RelExpr(string operation)
+    public void RelExpr(string operation, ISymbolTable currentTable, bool isFloat = false)
     {
         string op = operation switch
         {
@@ -415,6 +543,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             "!=" => "cne",
             _ => "blt"
         };
+
+        if (isFloat)
+        {
+            FloatOp(op, currentTable);
+            return;
+        }
 
         // Get the two operands from the stack
         string operand2 = RegistersInUse.Pop();
@@ -449,7 +583,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Get the location of the variable, by looking at the last reference to the register
         int variableOffset = int.Parse(Code.ToString().Split('\n').Where(x => x.Contains(variableReg) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0]);
 
-        WriteLine("Assigning Float: " + valueReg + " to " + variableReg + " with point position " + pointReg);
+        //WriteLine("Assigning Float: " + valueReg + " to " + variableReg + " with point position " + pointReg);
 
         Code.AppendLine($"\n\t\t% Assignment of Float Value");
 

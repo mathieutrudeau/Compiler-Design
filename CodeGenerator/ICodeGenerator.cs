@@ -109,11 +109,11 @@ public interface IMoonCodeGenerator
 
     public void NotExpr();
 
-    public void AddExpr(string operation);
+    public void AddExpr(string operation, ISymbolTable currentTable, bool isFloat);
 
-    public void MultExpr(string operation);
+    public void MultExpr(string operation, ISymbolTable currentTable, bool isFloat);
 
-    public void RelExpr(string operation);
+    public void RelExpr(string operation, ISymbolTable currentTable, bool isFloat);
 
     public void AssignFloat();
     public void AssignInteger();

@@ -1590,19 +1590,20 @@ public class ASTNode : IASTNode
 
             case AddExpr:
 
-                moonCodeGenerator.AddExpr(LeftMostChild!.RightSibling!.Token!.Lexeme);
+                
+                moonCodeGenerator.AddExpr(LeftMostChild!.RightSibling!.Token!.Lexeme, currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>())=="float");
 
                 break;
 
             case MultExpr:
 
-                moonCodeGenerator.MultExpr(LeftMostChild!.RightSibling!.Token!.Lexeme);
+                moonCodeGenerator.MultExpr(LeftMostChild!.RightSibling!.Token!.Lexeme, currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>())=="float");
 
                 break;
 
             case RelExpr:
 
-                moonCodeGenerator.RelExpr(LeftMostChild!.RightSibling!.Token!.Lexeme);
+                moonCodeGenerator.RelExpr(LeftMostChild!.RightSibling!.Token!.Lexeme, currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>())=="float");
 
                 break;
 

@@ -1,20 +1,24 @@
 func main() -> void
 {
     let a:float;
-    let b:integer;
+    let b:float;
 
 
 
-    a=33.22;
+    a=33.2;
+    b=2.332;
 
     write(a);
+    write(b);
 
     read(a);
+    read(b);
+
+    a = a/b;
 
     write(a);
 
-    f1();
-    
+    f1();    
 }
 
 
