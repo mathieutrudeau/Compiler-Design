@@ -179,7 +179,7 @@ public interface IVisitor
     /// <remarks>
     /// This method will generate the code for the node. The code will be added to the code generator.
     /// </remarks>
-    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator);
+    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator,ref bool isArray);
 
 }
 

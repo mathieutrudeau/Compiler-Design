@@ -1411,7 +1411,7 @@ public class ASTNode : IASTNode
 
     #region Methods for Code Generation
 
-    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator)
+    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator, ref bool isArray)
     {
 
         switch (Operation)
@@ -1423,11 +1423,11 @@ public class ASTNode : IASTNode
                 // Run the code generation for the while statement expression
                 int whileCount = 0;
                 moonCodeGenerator.WhileCond(ref whileCount);
-                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator);
+                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
 
                 // Run the code generation for the while statement block
                 moonCodeGenerator.While(ref whileCount);
-                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
+                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
 
                 moonCodeGenerator.EndWhile(ref whileCount);
 
@@ -1437,16 +1437,16 @@ public class ASTNode : IASTNode
             case IfStat:
 
                 // Run the code generation for the if statement expression
-                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator);
+                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
 
                 int labelCount = 0;
 
                 // Run the code generation for the if statement block
                 moonCodeGenerator.If(ref labelCount);
-                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
+                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
                 moonCodeGenerator.Else(ref labelCount);
                 // Run the code generation for the else statement block
-                LeftMostChild!.RightSibling!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator);
+                LeftMostChild!.RightSibling!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
                 moonCodeGenerator.EndIf(ref labelCount);
 
 
@@ -1538,6 +1538,14 @@ public class ASTNode : IASTNode
 
                 break;
 
+            case IndexList:
+
+                // Skip the index list if no index is present
+                if (LeftMostChild is null)
+                    return;
+
+                break;
+
             default:
                 break;
         }
@@ -1546,7 +1554,7 @@ public class ASTNode : IASTNode
         IASTNode? child = LeftMostChild;
         while (child != null)
         {
-            child.GenerateCode(currentTable, moonCodeGenerator);
+            child.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
             child = child.RightSibling;
         }
 
@@ -1561,6 +1569,7 @@ public class ASTNode : IASTNode
 
             case WriteStat:
 
+                
 
                 // Run the code generation for the write statement
                 if(GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()) == "float")
@@ -1613,9 +1622,11 @@ public class ASTNode : IASTNode
                 string type = GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>());
 
                 if (type == "float")
-                    moonCodeGenerator.AssignFloat();
+                    moonCodeGenerator.AssignFloat(isArray);
                 else
-                    moonCodeGenerator.AssignInteger();
+                    moonCodeGenerator.AssignInteger(isArray);
+
+                isArray = false;
 
                 break;
 
@@ -1631,11 +1642,22 @@ public class ASTNode : IASTNode
                     break;
                 }
             
+
                 moonCodeGenerator.LoadVariable(GetType(this,currentTable,currentTable,new List<ISemanticWarning>(),new List<ISemanticError>()),currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!, currentTable);
+
+                if(Parent!.Operation != AssignStat 
+                && Parent!.Operation != ReadStat && isArray)
+                {
+                    moonCodeGenerator.FreeRegister(moonCodeGenerator.RegistersInUse.Pop());
+                    isArray = false;
+                }
 
                 break;
 
             case IndexList:
+                
+                isArray = true;
+
 
                 break;
 

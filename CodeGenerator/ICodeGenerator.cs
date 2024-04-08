@@ -115,8 +115,8 @@ public interface IMoonCodeGenerator
 
     public void RelExpr(string operation, ISymbolTable currentTable, bool isFloat);
 
-    public void AssignFloat();
-    public void AssignInteger();
+    public void AssignFloat(bool isArray=false);
+    public void AssignInteger(bool isArray=false);
 
     public void If(ref int ifCount);
     public void Else(ref int ifCount);

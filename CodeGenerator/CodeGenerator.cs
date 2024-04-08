@@ -32,7 +32,8 @@ public class CodeGenerator : ICodeGenerator
 
     public void GenerateCode()
     {
-        Root.GenerateCode(SymbolTable, MoonCodeGenerator);
+        bool isArray = false;
+        Root.GenerateCode(SymbolTable, MoonCodeGenerator, ref isArray);
 
         string outputFileName = SourceFileName.Replace(".src", ".m");
 
@@ -141,6 +142,20 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         return dimSize;
     }
 
+    private void GetDims(string varType, int[] dims)
+    {
+        if (varType.Contains(']'))
+        {
+            List<int> arrayDims = new();
+
+            foreach (string dimension in varType.Split('[').Skip(1))
+                arrayDims.Add(int.Parse(dimension.Split(']')[0]));
+
+            for (int i = 0; i < arrayDims.Count; i++)
+                dims[i] = arrayDims[i];
+        }
+    }
+
     public void DeclareVariable(ISymbolTableEntry variableEntry)
     {
         // Get the offset of the variable
@@ -208,7 +223,50 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Get the offset of the variable
         int offset = variableEntry.Offset;
 
-        //WriteLine("Loading Variable: " + type);
+        string locReg = GetRegister();
+        locReg = RegistersInUse.Pop();
+
+        Code.AppendLine($"\n\t\taddi {locReg},r0,0");
+
+        if (type != variableEntry.Type)
+        {
+            Code.AppendLine($"\t\t% Load array index frame");
+
+            int dimCount = GetDimCount(variableEntry.Type);
+            int dimSize = GetDimSize(variableEntry.Type);
+            int[] dims = new int[dimCount];
+            GetDims(variableEntry.Type, dims);
+
+            int index = dimSize;
+
+            for (int i = dimCount - 1; i >= 0; i--)
+            {
+                // Get the index register
+                string indexReg = RegistersInUse.Pop();
+                index /= dims[i];
+
+                Code.AppendLine($"\t\tmuli {indexReg},{indexReg},-{index}");
+                Code.AppendLine($"\t\tadd {locReg},{locReg},{indexReg}");
+
+                // Free the index register
+                FreeRegister(indexReg);
+            }
+
+            // Multiply the index by the size of the element
+            Code.AppendLine($"\t\tmuli {locReg},{locReg},{variableEntry.Size / dimSize}");
+
+            // Add the offset to the location register
+            Code.AppendLine($"\t\taddi {locReg},{locReg},{offset}");
+            Code.AppendLine($"\t\tadd {locReg},{locReg},r14");
+        }
+        else
+        {
+            Code.AppendLine($"\t\taddi {locReg},{locReg},{offset}");
+            Code.AppendLine($"\t\tadd {locReg},{locReg},r14");
+        }
+
+
+        //WriteLine("Loading Variable: " + variableEntry.Type);
 
         if (type == "integer")
         {
@@ -216,7 +274,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             string register = GetRegister();
 
             // Load the variable from the stack
-            Code.AppendLine($"\t\tlw {register},{offset}(r14) \t\t% Loading {variableEntry.Name} into {register}");
+            Code.AppendLine($"\t\tlw {register},0({locReg}) \t\t% Loading {variableEntry.Name} into {register}");
 
         }
         else if (type == "float")
@@ -227,8 +285,16 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             // Load the variable point position from the stack and store it in a register
             string pointReg = GetRegister();
 
-            Code.AppendLine($"\t\tlw {register},{offset}(r14) \t\t% Loading {variableEntry.Name} into {register}");
+            Code.AppendLine($"\t\tlw {register},0(r14) \t\t% Loading {variableEntry.Name} into {register}");
             Code.AppendLine($"\t\tlw {pointReg},{offset - 4}(r14) \t\t% Loading the point position of {variableEntry.Name} into {pointReg}");
+        }
+
+        if (type == variableEntry.Type)
+            // Free the location register
+            FreeRegister(locReg);
+        else
+        {
+            RegistersInUse.Push(locReg);
         }
     }
 
@@ -330,7 +396,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             _ => "add"
         };
 
-        if(isFloat)
+        if (isFloat)
         {
             FloatOp(op, currentTable);
             return;
@@ -383,7 +449,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         string resultReg = GetRegister();
         string pointReg = GetRegister();
 
-        if(op=="or" || op=="and")
+        if (op == "or" || op == "and")
         {
 
         }
@@ -421,7 +487,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     private void FloatOpSubroutines()
     {
-        string[] addOps = new string[] { "add", "mul","div", "sub", "clt", "cle", "cgt", "cge", "ceq", "cne"};
+        string[] addOps = new string[] { "add", "mul", "div", "sub", "clt", "cle", "cgt", "cge", "ceq", "cne" };
 
         // Add/Sub Float Subroutine
 
@@ -443,7 +509,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             Code.AppendLine($"\t\tlw r2,-4(r14)\t\t% Load the point position of the first float value");
             Code.AppendLine($"\t\tlw r3,-8(r14)\t\t% Load the second float value");
             Code.AppendLine($"\t\tlw r4,-12(r14)\t\t% Load the point position of the second float value");
-        
+
             Code.AppendLine($"{op}float1\t\tceq r15,r2,r4\t\t% Check if the point positions are equal");
             Code.AppendLine($"\t\tbnz r15,{op}float2\t\t% If the point positions are equal, jump to {op}float2");
             Code.AppendLine($"\t\tclt r15,r2,r4\t\t% Check if the first point position is less than the second point position");
@@ -483,7 +549,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     }
 
 
-    public void MultExpr(string operation, ISymbolTable currentTable, bool isFloat=false)
+    public void MultExpr(string operation, ISymbolTable currentTable, bool isFloat = false)
     {
         string op = operation switch
         {
@@ -566,7 +632,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     }
 
 
-    public void AssignFloat()
+    public void AssignFloat(bool isArray = false)
     {
         // Get the point position
         string pointReg = RegistersInUse.Pop();
@@ -603,28 +669,45 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         FreeRegister(variablePointReg);
     }
 
-    public void AssignInteger()
+    public void AssignInteger(bool isArray = false)
     {
+
         // Get the value to assign
         string value = RegistersInUse.Pop();
+
+        string locReg = isArray ? RegistersInUse.Pop() : "r14";
 
         // Get the variable to assign to
         string variable = RegistersInUse.Pop();
 
-        // Get the location of the variable, by looking at the last reference to the register
-        string variableOffset = Code.ToString().Split('\n').Where(x => x.Contains(variable) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0];
+        if (isArray)
+        {
+            // Assign the value to the variable
+            Code.AppendLine($"\t\tadd {variable},r0,{value}\t\t% Assigning {value} to {variable}");
 
-        // Assign the value to the variable
-        Code.AppendLine($"\t\tadd {variable},r0,{value}\t\t% Assigning {value} to {variable}");
+            // Store the value in the variable
+            Code.AppendLine($"\t\tsw 0({locReg}),{variable}");
 
-        // Store the value in the variable
-        Code.AppendLine($"\t\tsw {variableOffset}(r14),{variable}");
+            FreeRegister(locReg);
+        }
+        else
+        {
+
+            // Get the location of the variable, by looking at the last reference to the register
+            string variableOffset = Code.ToString().Split('\n').Where(x => x.Contains(variable) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0];
+
+            // Assign the value to the variable
+            Code.AppendLine($"\t\tadd {variable},r0,{value}\t\t% Assigning {value} to {variable}");
+
+            // Store the value in the variable
+            Code.AppendLine($"\t\tsw {variableOffset}(r14),{variable}");
+        }
 
         // Free the value and the variable registers
         FreeRegister(value);
         FreeRegister(variable);
 
-        WriteLine("Freeing Registers: " + value + " " + variable);
+        //WriteLine("Freeing Registers: " + value + " " + variable);
     }
 
     public void If(ref int ifCount)
@@ -695,6 +778,9 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     public void WriteInteger(ISymbolTable currentTable)
     {
+        while(RegistersInUse.Count > 1)
+            FreeRegister(RegistersInUse.Pop());
+
         // Store the value in a register
         string value = RegistersInUse.Pop();
 

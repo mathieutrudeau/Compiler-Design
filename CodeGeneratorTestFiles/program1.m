@@ -417,142 +417,222 @@ cnefloat2		cne r15,r1,r3		% Perform the cne operation on the float values
 
 entry		% Start of the program
 		addi r14,r0,topaddr		% Set the top of the stack
-		sw 0(r14),r0 		% Initializing a to 0 (Default Value)
-		sw -8(r14),r0 		% Initializing b to 0 (Default Value)
-		lw r12,0(r14) 		% Loading a into r12
-		lw r11,-4(r14) 		% Loading the point position of a into r11
+		sw 0(r14),r0 		% Initializing b to 0 (Default Value)
 
-		% Loading Float Value: 33.2
+		addi r12,r0,0
+		addi r12,r12,0
+		add r12,r12,r14
+		lw r11,0(r12) 		% Loading b into r11
 
-		% Loading Integer Value: 332
+		% Loading Integer Value: 4
+		addi r12,r0,4
+		add r11,r0,r12		% Assigning r12 to r11
+		sw 0(r14),r11
+		sw -4(r14),r0 		% Initializing a(pos 0) to 0 (Default Value)
+		sw -8(r14),r0 		% Initializing a(pos 1) to 0 (Default Value)
+		sw -12(r14),r0 		% Initializing a(pos 2) to 0 (Default Value)
+		sw -16(r14),r0 		% Initializing a(pos 3) to 0 (Default Value)
+		sw -20(r14),r0 		% Initializing a(pos 4) to 0 (Default Value)
+		sw -24(r14),r0 		% Initializing a(pos 5) to 0 (Default Value)
+		sw -28(r14),r0 		% Initializing a(pos 6) to 0 (Default Value)
+		sw -32(r14),r0 		% Initializing a(pos 7) to 0 (Default Value)
+		sw -36(r14),r0 		% Initializing a(pos 8) to 0 (Default Value)
+		sw -40(r14),r0 		% Initializing a(pos 9) to 0 (Default Value)
+		sw -44(r14),r0 		% Initializing a(pos 10) to 0 (Default Value)
+		sw -48(r14),r0 		% Initializing a(pos 11) to 0 (Default Value)
+
+		addi r11,r0,0
+		addi r11,r11,0
+		add r11,r11,r14
+		lw r12,0(r11) 		% Loading b into r12
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-56		% Move to the next stack frame
+		sw -8(r14),r12
+		addi r12,r0,buf
+		sw -12(r14),r12
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13
+		jl r15,putstr		% Call the print subroutine
+		addi r12,r0,nl
+		sw -8(r14),r12
+		jl r15,putstr		% Print a newline
+		addi r14,r14,56		% Move back to the current stack frame
+
+
+		% Loading Integer Value: 2
+		addi r12,r0,2
+
+		% Loading Integer Value: 1
+		addi r11,r0,1
+
 		addi r10,r0,0
-		sl r10,8
-		addi r10,r10,0
-		sl r10,8
-		addi r10,r10,1
-		sl r10,8
-		addi r10,r10,76
-		addi r9,r0,1		% Load the point position of the float value
+		% Load array index frame
+		muli r11,r11,-4
+		add r10,r10,r11
+		muli r12,r12,-1
+		add r10,r10,r12
+		muli r10,r10,4
+		addi r10,r10,-4
+		add r10,r10,r14
+		lw r12,0(r10) 		% Loading a into r12
 
-		% Assignment of Float Value
-		add r12,r0,r10		% Assigning r10 to r12
-		sw 0(r14),r12
-		sw -4(r14),r9
-		lw r11,-8(r14) 		% Loading b into r11
-		lw r12,-12(r14) 		% Loading the point position of b into r12
+		% Loading Integer Value: 6
+		addi r11,r0,6
+		add r12,r0,r11		% Assigning r11 to r12
+		sw 0(r10),r12
 
-		% Loading Float Value: 2.332
+		% Loading Integer Value: 1
+		addi r12,r0,1
 
-		% Loading Integer Value: 2332
+		% Loading Integer Value: 0
+		addi r11,r0,0
+
 		addi r10,r0,0
-		sl r10,8
-		addi r10,r10,0
-		sl r10,8
-		addi r10,r10,9
-		sl r10,8
-		addi r10,r10,28
-		addi r9,r0,3		% Load the point position of the float value
+		% Load array index frame
+		muli r11,r11,-4
+		add r10,r10,r11
+		muli r12,r12,-1
+		add r10,r10,r12
+		muli r10,r10,4
+		addi r10,r10,-4
+		add r10,r10,r14
+		lw r12,0(r10) 		% Loading a into r12
 
-		% Assignment of Float Value
-		add r11,r0,r10		% Assigning r10 to r11
-		sw -8(r14),r11
+		% Loading Integer Value: 12
+		addi r11,r0,12
+		add r12,r0,r11		% Assigning r11 to r12
+		sw 0(r10),r12
+
+		% Loading Integer Value: 1
+		addi r12,r0,1
+
+		% Loading Integer Value: 2
+		addi r11,r0,2
+
+		addi r10,r0,0
+		% Load array index frame
+		muli r11,r11,-4
+		add r10,r10,r11
+		muli r12,r12,-1
+		add r10,r10,r12
+		muli r10,r10,4
+		addi r10,r10,-4
+		add r10,r10,r14
+		lw r12,0(r10) 		% Loading a into r12
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-56		% Move to the next stack frame
+		sw -8(r14),r12
+		addi r12,r0,buf
+		sw -12(r14),r12
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13
+		jl r15,putstr		% Call the print subroutine
+		addi r12,r0,nl
+		sw -8(r14),r12
+		jl r15,putstr		% Print a newline
+		addi r14,r14,56		% Move back to the current stack frame
+
+
+		% Loading Integer Value: 2
+		addi r12,r0,2
+
+		% Loading Integer Value: 1
+		addi r10,r0,1
+
+		addi r11,r0,0
+		% Load array index frame
+		muli r10,r10,-4
+		add r11,r11,r10
+		muli r12,r12,-1
+		add r11,r11,r12
+		muli r11,r11,4
+		addi r11,r11,-4
+		add r11,r11,r14
+		lw r12,0(r11) 		% Loading a into r12
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-56		% Move to the next stack frame
+		sw -8(r14),r12
+		addi r12,r0,buf
+		sw -12(r14),r12
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13
+		jl r15,putstr		% Call the print subroutine
+		addi r12,r0,nl
+		sw -8(r14),r12
+		jl r15,putstr		% Print a newline
+		addi r14,r14,56		% Move back to the current stack frame
+
+
+		% Loading Integer Value: 1
+		addi r12,r0,1
+
+		% Loading Integer Value: 0
+		addi r11,r0,0
+
+		addi r10,r0,0
+		% Load array index frame
+		muli r11,r11,-4
+		add r10,r10,r11
+		muli r12,r12,-1
+		add r10,r10,r12
+		muli r10,r10,4
+		addi r10,r10,-4
+		add r10,r10,r14
+		lw r12,0(r10) 		% Loading a into r12
+
+		% Loading Integer Value: 2
+		addi r10,r0,2
+
+		% Loading Integer Value: 1
+		addi r11,r0,1
+
+		addi r9,r0,0
+		% Load array index frame
+		muli r11,r11,-4
+		add r9,r9,r11
+		muli r10,r10,-1
+		add r9,r9,r10
+		muli r9,r9,4
+		addi r9,r9,-4
+		add r9,r9,r14
+		lw r10,0(r9) 		% Loading a into r10
+		mul r9, r12, r10		% r12 * r10 = r9
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-56		% Move to the next stack frame
+		sw -8(r14),r9
+		addi r9,r0,buf
 		sw -12(r14),r9
-		lw r12,0(r14) 		% Loading a into r12
-		lw r11,-4(r14) 		% Loading the point position of a into r11
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13
+		jl r15,putstr		% Call the print subroutine
+		addi r9,r0,nl
+		sw -8(r14),r9
+		jl r15,putstr		% Print a newline
+		addi r14,r14,56		% Move back to the current stack frame
 
-		%----------------- WRITE Float -----------------
-		addi r14,r14,-24		% Move to the next stack frame
-		sw -28(r14),r12			% Save contents of value
-		sw -32(r14),r11			% Save contents of point position
-		jl r15,floatwrite		% Call the float write subroutine
-		addi r14,r14,24			% Move back to the current stack frame
 
-		lw r11,-8(r14) 		% Loading b into r11
-		lw r12,-12(r14) 		% Loading the point position of b into r12
+		addi r9,r0,0
+		addi r9,r9,0
+		add r9,r9,r14
+		lw r10,0(r9) 		% Loading b into r10
 
-		%----------------- WRITE Float -----------------
-		addi r14,r14,-24		% Move to the next stack frame
-		sw -28(r14),r11			% Save contents of value
-		sw -32(r14),r12			% Save contents of point position
-		jl r15,floatwrite		% Call the float write subroutine
-		addi r14,r14,24			% Move back to the current stack frame
-
-		lw r12,0(r14) 		% Loading a into r12
-		lw r11,-4(r14) 		% Loading the point position of a into r11
-
-		%----------------- READ Float -----------------
-		addi r14,r14,-24				% Go to the next stack frame
-		addi r10,r0,entfloat			% Prompt for a float
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-56		% Move to the next stack frame
 		sw -8(r14),r10
-		jl r15,putstr
 		addi r10,r0,buf
+		sw -12(r14),r10
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13
+		jl r15,putstr		% Call the print subroutine
+		addi r10,r0,nl
 		sw -8(r14),r10
-		jl r15,getfloat			% Call the float read subroutine
-		lw r10,-60(r14)			% Load the integer part of the float value
-		lw r9,-56(r14)			% Load the point position of the float value
-		addi r14,r14,24			% Go back to the current stack frame
+		jl r15,putstr		% Print a newline
+		addi r14,r14,56		% Move back to the current stack frame
 
-
-		% Assignment of Float Value
-		add r12,r0,r10		% Assigning r10 to r12
-		sw 0(r14),r12
-		sw -4(r14),r9
-		lw r11,-8(r14) 		% Loading b into r11
-		lw r12,-12(r14) 		% Loading the point position of b into r12
-
-		%----------------- READ Float -----------------
-		addi r14,r14,-24				% Go to the next stack frame
-		addi r10,r0,entfloat			% Prompt for a float
-		sw -8(r14),r10
-		jl r15,putstr
-		addi r10,r0,buf
-		sw -8(r14),r10
-		jl r15,getfloat			% Call the float read subroutine
-		lw r10,-60(r14)			% Load the integer part of the float value
-		lw r9,-56(r14)			% Load the point position of the float value
-		addi r14,r14,24			% Go back to the current stack frame
-
-
-		% Assignment of Float Value
-		add r11,r0,r10		% Assigning r10 to r11
-		sw -8(r14),r11
-		sw -12(r14),r9
-		lw r12,0(r14) 		% Loading a into r12
-		lw r11,-4(r14) 		% Loading the point position of a into r11
-		lw r10,0(r14) 		% Loading a into r10
-		lw r9,-4(r14) 		% Loading the point position of a into r9
-		lw r8,-8(r14) 		% Loading b into r8
-		lw r7,-12(r14) 		% Loading the point position of b into r7
-
-		%----------------- div Float -----------------
-		addi r14,r14,-24		% Move to the next stack frame
-		sw 0(r14),r10		% Store the first float value
-		sw -4(r14),r9		% Store the point position of the first float value
-		sw -8(r14),r8		% Store the second float value
-		sw -12(r14),r7		% Store the point position of the second float value
-		jl r15,divfloat		% Call the div float subroutine
-		lw r6,0(r14)		% Load the result of the div operation
-		lw r5,-4(r14)		% Load the point position of the result
-		addi r14,r14,24		% Move back to the current stack frame
-
-		% Assignment of Float Value
-		add r12,r0,r6		% Assigning r6 to r12
-		sw 0(r14),r12
-		sw -4(r14),r5
-		lw r11,0(r14) 		% Loading a into r11
-		lw r12,-4(r14) 		% Loading the point position of a into r12
-
-		%----------------- WRITE Float -----------------
-		addi r14,r14,-24		% Move to the next stack frame
-		sw -28(r14),r11			% Save contents of value
-		sw -32(r14),r12			% Save contents of point position
-		jl r15,floatwrite		% Call the float write subroutine
-		addi r14,r14,24			% Move back to the current stack frame
-
-		addi r14,r14,-24			% Increment the stack frame
-		jl r15,f1					% Jump to the function f1
-		addi r14,r14,24				% Decrement the stack frame
-		lw r12,-28(r14)				% Loading the return value
 hlt		% Halt the program
 
 
