@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Security.Cryptography.X509Certificates;
 using AbstractSyntaxTreeGeneration;
 using static System.Console;
@@ -31,6 +32,96 @@ public class SymbolTable : ISymbolTable
     public int ScopeSize { get; set; } = 0;
 
     #region Public Methods
+
+
+    public void CurateTable()
+    {
+        //WriteLine("Curating...");
+
+        // Get the inherited tables
+        Entries.Where(e => e.Kind == SymbolEntryKind.Inherit).Select(e => e.Link).ToList().ForEach(e => AddInherited(this, e!));
+        
+        // Delete the inherit entries
+        Entries.Where(e => e.Kind == SymbolEntryKind.Inherit).ToList().ForEach(e => Entries.Remove(e));
+
+        foreach (var entry in Entries)
+        {
+            // If the entry is a method, add an address reference to the class
+            if (entry.Kind == SymbolEntryKind.Method)
+            {
+                ISymbolTableEntry thisRef = new SymbolTableEntry
+                {
+                    Name = "this",
+                    Kind = SymbolEntryKind.ClassAddress,
+                    Type = Name,
+                    Visibility = VisibilityType.Public,
+                    Link = this,
+                    Offset = 0,
+                    Size = 4
+                };
+
+                entry.Link!.AddEntry(thisRef);
+            }
+
+            // If the entry is a method or function, add a buffer
+            if (entry.Kind == SymbolEntryKind.Method || entry.Kind == SymbolEntryKind.Function)
+            {
+                ISymbolTableEntry buffer = new SymbolTableEntry
+                {
+                    Name = "buffer",
+                    Kind = SymbolEntryKind.Buffer,
+                    Type = "Buffer",
+                    Visibility = VisibilityType.Public,
+                    Link = null,
+                    Offset = 0,
+                    Size = 56
+                };
+
+                entry.Link!.AddEntry(buffer);
+            }
+
+            if (entry.Link != null && entry.Kind != SymbolEntryKind.Variable && entry.Kind != SymbolEntryKind.ClassAddress)
+                    entry.Link!.CurateTable();
+
+            Entries.OrderBy(e => e.Kind).ThenBy(e => e.Name);
+        }
+
+        SetOffsets(this);
+    }
+
+    private void AddInherited(ISymbolTable parentTable, ISymbolTable currentTable)
+    {
+        // Get the inherited tables
+        currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.Inherit).Select(e => e.Link).ToList().ForEach(e => AddInherited(parentTable, e!));
+
+        foreach (var entry in currentTable.Entries)
+        {
+            // If the entry is a method or data, add it to the parent table if it does not already exist
+            if(!parentTable.Entries.Any(e=>e.Name==entry.Name && e.Kind == entry.Kind && e.Type == entry.Type && e.Visibility==VisibilityType.Public) && (entry.Kind == SymbolEntryKind.Method || entry.Kind == SymbolEntryKind.Data))
+              parentTable.AddEntry(entry);  
+
+        }
+
+    }
+
+    private void SetOffsets(ISymbolTable symbolTable)
+    {
+        int offset = 0;
+        int scopeSize = 0;
+        foreach (var entry in symbolTable.Entries)
+        {
+            // If the table is a class, do not set offsets for methods
+            if (symbolTable.Name != "Global" && entry.Kind == SymbolEntryKind.Method)
+                continue;
+
+            entry.Offset = offset;
+            offset -= entry.Size;
+            scopeSize += entry.Size;
+        }
+
+        symbolTable.ScopeSize = scopeSize;
+    }
+
 
     public int GetScopeSize()
     {
@@ -345,8 +436,8 @@ public class SymbolTable : ISymbolTable
                 tableContents += "\n";
 
 
-                if (entry.Link != null)
-                    tableContents += PrintSymbolTable(entry.Link, depth + 1);
+                if ((entry.Link != null && table.Name == "Global") || entry.Kind == SymbolEntryKind.Method)
+                    tableContents += PrintSymbolTable(entry.Link!, depth + 1);
             }
 
             tableContents = tableContents.TrimEnd('\n');
@@ -477,6 +568,8 @@ public enum SymbolEntryKind
     /// </summary>
     ReturnVal,
 
+    ClassAddress,
+
     Function,
     Parameter,
     ClassDeclaration,
@@ -484,5 +577,7 @@ public enum SymbolEntryKind
     Data,
     MethodDeclaration,
     Method,
-    Inherit
+    Inherit,
+
+    Buffer,
 }

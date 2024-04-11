@@ -6,6 +6,8 @@ using SemanticAnalyzer;
 using static System.Console;
 using System;
 using System.Numerics;
+using System.Linq.Expressions;
+using System.Data.Common;
 
 namespace CodeGenerator;
 
@@ -33,7 +35,9 @@ public class CodeGenerator : ICodeGenerator
     public void GenerateCode()
     {
         bool isArray = false;
-        Root.GenerateCode(SymbolTable, MoonCodeGenerator, ref isArray);
+        ISymbolTable chainedTable = SymbolTable;
+        int scopeSize = 0;
+        Root.GenerateCode(SymbolTable, MoonCodeGenerator, ref scopeSize, ref chainedTable, ref isArray);
 
         string outputFileName = SourceFileName.Replace(".src", ".m");
 
@@ -76,6 +80,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     public MoonCodeGenerator()
     {
         FloatWriteSubroutine();
+        IntegerWriteSubroutine();
         ReadFloatSubroutine();
         FloatOpSubroutines();
     }
@@ -175,48 +180,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     }
 
-    private void LoadArrayIndex(ISymbolTableEntry variableEntry, ISymbolTable table)
-    {
-        string varType = variableEntry.Type;
-
-        // Get all dimensions
-        if (varType.Contains(']'))
-        {
-            List<int> arrayDims = new();
-
-            foreach (string dimension in varType.Split('[').Skip(1))
-                arrayDims.Add(int.Parse(dimension.Split(']')[0]));
-
-            int elSize = variableEntry.Size / arrayDims.Aggregate((a, b) => a * b);
-
-            int size = 1;
-
-            string tReg = GetRegister();
-            RegistersInUse.Pop();
-
-            Code.AppendLine($"\t\taddi {tReg},r0,0");
-
-            foreach (int d in arrayDims.Reverse<int>())
-            {
-                string r = RegistersInUse.Pop();
-
-                Code.AppendLine($"\t\tmuli {r},{r},{size}");
-                Code.AppendLine($"\t\tadd {tReg},{tReg},{r}");
-
-                size *= d;
-
-                FreeRegister(r);
-            }
-            Code.AppendLine($"\t\tmuli {tReg},{tReg},-{elSize}");
-            Code.AppendLine($"\t\taddi {tReg},{tReg},{variableEntry.Offset}");
-            Code.AppendLine($"\t\tadd {tReg},{tReg},r14");
 
 
-            RegistersInUse.Push(tReg);
-        }
-
-
-    }
 
     public void LoadVariable(string type, ISymbolTableEntry variableEntry, ISymbolTable table)
     {
@@ -226,7 +191,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         string locReg = GetRegister();
         locReg = RegistersInUse.Pop();
 
-        Code.AppendLine($"\n\t\taddi {locReg},r0,0");
+        Code.AppendLine($"\n\t\taddi {locReg},r0,0\t\t% Load the location of {variableEntry.Name} into {locReg}");
 
         if (type != variableEntry.Type)
         {
@@ -285,13 +250,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             // Load the variable point position from the stack and store it in a register
             string pointReg = GetRegister();
 
-            Code.AppendLine($"\t\tlw {register},0(r14) \t\t% Loading {variableEntry.Name} into {register}");
-            Code.AppendLine($"\t\tlw {pointReg},{offset - 4}(r14) \t\t% Loading the point position of {variableEntry.Name} into {pointReg}");
+            Code.AppendLine($"\t\tlw {register},0({locReg}) \t\t% Loading {variableEntry.Name} into {register}");
+            Code.AppendLine($"\t\tlw {pointReg},-4({locReg}) \t\t% Loading the point position of {variableEntry.Name} into {pointReg}");
         }
 
         if (type == variableEntry.Type)
-            // Free the location register
-            FreeRegister(locReg);
+            RegistersInUse.Push(locReg);
         else
         {
             RegistersInUse.Push(locReg);
@@ -341,6 +305,9 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             }
         else
             Code.AppendLine($"\t\taddi {register},r0,{intValue}");
+
+
+        GetRegister();
     }
 
 
@@ -356,15 +323,20 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Load the integer value
         LoadInteger(value);
 
+        string locReg = RegistersInUse.Pop();
+
         // Load the point position
         string pointReg = GetRegister();
 
         Code.AppendLine($"\t\taddi {pointReg},r0,{pointPosition}\t\t% Load the point position of the float value");
+
+        RegistersInUse.Push(locReg);
     }
 
     public void NotExpr()
     {
         // Get the operand from the stack
+        FreeRegister(RegistersInUse.Pop());
         string operand = RegistersInUse.Pop();
 
         // Store the result in a register
@@ -403,11 +375,14 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
 
         // Get the two operands from the stack
+        FreeRegister(RegistersInUse.Pop());
         string operand2 = RegistersInUse.Pop();
+        FreeRegister(RegistersInUse.Pop());
         string operand1 = RegistersInUse.Pop();
 
         // Store the result in a register
         string resultRegister = GetRegister();
+        GetRegister();
 
         if (op == "or")
         {
@@ -439,9 +414,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     private void FloatOp(string op, ISymbolTable currentTable)
     {
         // Get the two operands from the stack
+
+        FreeRegister(RegistersInUse.Pop());
         string pointReg2 = RegistersInUse.Pop();
         string valueReg2 = RegistersInUse.Pop();
 
+        FreeRegister(RegistersInUse.Pop());
         string pointReg1 = RegistersInUse.Pop();
         string valueReg1 = RegistersInUse.Pop();
 
@@ -510,21 +488,30 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             Code.AppendLine($"\t\tlw r3,-8(r14)\t\t% Load the second float value");
             Code.AppendLine($"\t\tlw r4,-12(r14)\t\t% Load the point position of the second float value");
 
-            Code.AppendLine($"{op}float1\t\tceq r15,r2,r4\t\t% Check if the point positions are equal");
-            Code.AppendLine($"\t\tbnz r15,{op}float2\t\t% If the point positions are equal, jump to {op}float2");
-            Code.AppendLine($"\t\tclt r15,r2,r4\t\t% Check if the first point position is less than the second point position");
-            Code.AppendLine($"\t\tbnz r15,{op}float3\t\t% If the first point position is less than the second point position, jump to {op}float3");
-            Code.AppendLine($"\t\tj {op}float4\t\t% Jump to {op}float4");
+            if (op == "mul")
+            {
+                Code.AppendLine($"\t\tmul r15,r1,r3\t\t% Perform the {op} operation on the float values");
+                Code.AppendLine($"\t\tadd r2,r2,r4\t\t% Add the point positions");
+            }
+            else
+            {
+                Code.AppendLine($"{op}float1\t\tceq r15,r2,r4\t\t% Check if the point positions are equal");
+                Code.AppendLine($"\t\tbnz r15,{op}float2\t\t% If the point positions are equal, jump to {op}float2");
+                Code.AppendLine($"\t\tclt r15,r2,r4\t\t% Check if the first point position is less than the second point position");
+                Code.AppendLine($"\t\tbnz r15,{op}float3\t\t% If the first point position is less than the second point position, jump to {op}float3");
+                Code.AppendLine($"\t\tj {op}float4\t\t% Jump to {op}float4");
 
-            Code.AppendLine($"{op}float3\t\taddi r2,r2,1\t\t% Increment the first point position");
-            Code.AppendLine($"\t\tmuli r1,r1,10\t\t% Multiply the first float value by 10");
-            Code.AppendLine($"\t\tj {op}float1\t\t% Jump to {op}float1");
+                Code.AppendLine($"{op}float3\t\taddi r2,r2,1\t\t% Increment the first point position");
+                Code.AppendLine($"\t\tmuli r1,r1,10\t\t% Multiply the first float value by 10");
+                Code.AppendLine($"\t\tj {op}float1\t\t% Jump to {op}float1");
 
-            Code.AppendLine($"{op}float4\t\taddi r4,r4,1\t\t% Increment the second point position");
-            Code.AppendLine($"\t\tmuli r3,r3,10\t\t% Multiply the second float value by 10");
-            Code.AppendLine($"\t\tj {op}float1\t\t% Jump to {op}float1");
+                Code.AppendLine($"{op}float4\t\taddi r4,r4,1\t\t% Increment the second point position");
+                Code.AppendLine($"\t\tmuli r3,r3,10\t\t% Multiply the second float value by 10");
+                Code.AppendLine($"\t\tj {op}float1\t\t% Jump to {op}float1");
 
-            Code.AppendLine($"{op}float2\t\t{op} r15,r1,r3\t\t% Perform the {op} operation on the float values");
+                Code.AppendLine($"{op}float2\t\t{op} r15,r1,r3\t\t% Perform the {op} operation on the float values");
+            }
+
             Code.AppendLine($"\t\tsw 0(r14),r15\t\t% Store the result of the {op} operation");
             Code.AppendLine($"\t\tsw -4(r14),r2\t\t% Store the point position of the result");
 
@@ -565,12 +552,19 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             return;
         }
 
+        FreeRegister(RegistersInUse.Pop());
+
         // Get the two operands from the stack
         string operand2 = RegistersInUse.Pop();
+
+        FreeRegister(RegistersInUse.Pop());
+
         string operand1 = RegistersInUse.Pop();
 
         // Store the result in a register
         string resultRegister = GetRegister();
+
+        GetRegister();
 
         if (op == "and")
         {
@@ -617,11 +611,15 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
 
         // Get the two operands from the stack
+        FreeRegister(RegistersInUse.Pop());
         string operand2 = RegistersInUse.Pop();
+        FreeRegister(RegistersInUse.Pop());
         string operand1 = RegistersInUse.Pop();
 
         // Store the result in a register
         string resultRegister = GetRegister();
+
+        GetRegister();
 
         // Compare the two operands
         Code.AppendLine($"\t\t{op} {resultRegister}, {operand1}, {operand2}\t\t% {operand1} {operation} {operand2} = {resultRegister}");
@@ -632,13 +630,16 @@ public class MoonCodeGenerator : IMoonCodeGenerator
     }
 
 
-    public void AssignFloat(bool isArray = false)
+    public void AssignFloat(ISymbolTable currentTable, bool isArray = false)
     {
+
         // Get the point position
         string pointReg = RegistersInUse.Pop();
 
         // Get the value to assign
         string valueReg = RegistersInUse.Pop();
+
+        string locReg = RegistersInUse.Pop();
 
         // Get the location of the variable, by looking at the last reference to the register
         string variablePointReg = RegistersInUse.Pop();
@@ -646,21 +647,33 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Get the variable to assign to
         string variableReg = RegistersInUse.Pop();
 
-        // Get the location of the variable, by looking at the last reference to the register
-        int variableOffset = int.Parse(Code.ToString().Split('\n').Where(x => x.Contains(variableReg) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0]);
-
-        //WriteLine("Assigning Float: " + valueReg + " to " + variableReg + " with point position " + pointReg);
-
         Code.AppendLine($"\n\t\t% Assignment of Float Value");
 
-        // Assign the value to the variable
-        Code.AppendLine($"\t\tadd {variableReg},r0,{valueReg}\t\t% Assigning {valueReg} to {variableReg}");
+        if (isArray)
+        {
+            Code.AppendLine($"\t\tsw 0({locReg}),{valueReg}");
+            Code.AppendLine($"\t\tsw -4({locReg}),{pointReg}");
 
-        // Store the value in the variable
-        Code.AppendLine($"\t\tsw {variableOffset}(r14),{variableReg}");
+            FreeRegister(locReg);
+        }
+        else
+        {
+            // Get the location of the variable, by looking at the last reference to the register
+            int variableOffset = int.Parse(Code.ToString().Split('\n').Where(x => x.Contains(variableReg) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0]);
 
-        // Store the point position in the variable
-        Code.AppendLine($"\t\tsw {variableOffset - 4}(r14),{pointReg}");
+            //WriteLine("Assigning Float: " + valueReg + " to " + variableReg + " with point position " + pointReg);
+
+            // Assign the value to the variable
+            Code.AppendLine($"\t\tadd {variableReg},r0,{valueReg}\t\t% Assigning {valueReg} to {variableReg}");
+
+            // Store the value in the variable
+            Code.AppendLine($"\t\tsw 0({locReg}),{variableReg}");
+
+            // Store the point position in the variable
+            Code.AppendLine($"\t\tsw -4({locReg}),{pointReg}");
+
+            FreeRegister(locReg);
+        }
 
         // Free the registers
         FreeRegister(pointReg);
@@ -669,16 +682,19 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         FreeRegister(variablePointReg);
     }
 
-    public void AssignInteger(bool isArray = false)
+    public void AssignInteger(ISymbolTable currentTable, bool isArray = false)
     {
 
-        // Get the value to assign
+        FreeRegister(RegistersInUse.Pop());
         string value = RegistersInUse.Pop();
-
-        string locReg = isArray ? RegistersInUse.Pop() : "r14";
-
-        // Get the variable to assign to
+        string locReg = RegistersInUse.Pop();
         string variable = RegistersInUse.Pop();
+
+
+
+        //        FreeRegister(RegistersInUse.Pop());
+
+
 
         if (isArray)
         {
@@ -692,15 +708,13 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
         else
         {
-
-            // Get the location of the variable, by looking at the last reference to the register
-            string variableOffset = Code.ToString().Split('\n').Where(x => x.Contains(variable) && x.Contains("lw")).Last().Split(',')[1].Split('(')[0];
-
             // Assign the value to the variable
             Code.AppendLine($"\t\tadd {variable},r0,{value}\t\t% Assigning {value} to {variable}");
 
             // Store the value in the variable
-            Code.AppendLine($"\t\tsw {variableOffset}(r14),{variable}");
+            Code.AppendLine($"\t\tsw 0({locReg}),{variable}");
+
+            FreeRegister(locReg);
         }
 
         // Free the value and the variable registers
@@ -778,8 +792,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     public void WriteInteger(ISymbolTable currentTable)
     {
-        while(RegistersInUse.Count > 1)
-            FreeRegister(RegistersInUse.Pop());
+        // Free the location register, not needed for writing
+        FreeRegister(RegistersInUse.Pop());
 
         // Store the value in a register
         string value = RegistersInUse.Pop();
@@ -810,6 +824,9 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
     public void WriteFloat(ISymbolTable currentTable)
     {
+        // Free the location register, not needed for writing
+        FreeRegister(RegistersInUse.Pop());
+
         // Store the value in a register
         string pointReg = RegistersInUse.Pop();
 
@@ -834,6 +851,52 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Free both registers
         FreeRegister(value);
         FreeRegister(pointReg);
+    }
+
+
+    private void IntegerWriteSubroutine()
+    {
+        Code.AppendLine($"\n\t\t%----------------- Write integer subroutine -----------------");
+
+        Code.AppendLine($"\nintwrite\t\t nop\t\t% Start of the integer write subroutine");
+
+        // Save the contents of r1, r2, r3 and r4
+        Code.AppendLine($"\t\tsw -36(r14),r1\t\t% Save contents of r1");
+        Code.AppendLine($"\t\tsw -40(r14),r2\t\t% Save contents of r2");
+        Code.AppendLine($"\t\tsw -44(r14),r3\t\t% Save contents of r3");
+        Code.AppendLine($"\t\tsw -48(r14),r4\t\t% Save contents of r4");
+
+        // Save the return address
+        Code.AppendLine($"\t\tsw -52(r14),r15\t\t% Save the return address");
+
+
+        // Load the integer value
+        Code.AppendLine($"\t\tlw r1,-28(r14)\t\t% Load the integer value");
+
+        // Print the integer value
+        Code.AppendLine($"\n\t\tsw -8(r14),r1\t\t% Store the integer value");
+        Code.AppendLine($"\t\taddi r2,r0,buf\t\t% Load the buffer address");
+        Code.AppendLine($"\t\tsw -12(r14),r2\t\t% Store the buffer address");
+        Code.AppendLine($"\t\tjl r15,intstr\t\t% Call the int -> string subroutine");
+        Code.AppendLine($"\t\tsw -8(r14),r13\t\t% Store the string address");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+
+        // Print a newline
+        Code.AppendLine($"\n\t\taddi r4,r0,nl\t\t% Load the newline");
+        Code.AppendLine($"\t\tsw -8(r14),r4\t\t% Store the newline");
+        Code.AppendLine($"\t\tjl r15,putstr\t\t% Call the print subroutine");
+
+        // Restore the contents of r1, r2, r3 and r4
+        Code.AppendLine($"\t\tlw r1,-36(r14)\t\t% Restore contents of r1");
+        Code.AppendLine($"\t\tlw r2,-40(r14)\t\t% Restore contents of r2");
+        Code.AppendLine($"\t\tlw r3,-44(r14)\t\t% Restore contents of r3");
+        Code.AppendLine($"\t\tlw r4,-48(r14)\t\t% Restore contents of r4");
+
+        // Restore the return address
+        Code.AppendLine($"\t\tlw r15,-52(r14)\t\t% Restore the return address");
+
+        // Return from the subroutine
+        Code.AppendLine($"\t\tjr r15\t\t% Return from the integer write subroutine");
     }
 
     private void FloatWriteSubroutine()
@@ -913,7 +976,6 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\tjr r15\t\t% Return from the float write subroutine");
 
     }
-
     private void ReadFloatSubroutine()
     {
         Code.AppendLine($"\n\t\t%----------------- Read float subroutine -----------------");
@@ -967,7 +1029,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\tjr r15\t\t% Return from the float read subroutine");
     }
 
-    public void ReadInteger(ISymbolTable currentTable)
+    public void ReadInteger(ISymbolTable currentTable, bool isArray = false)
     {
         // Get a register to store the value
         string value = GetRegister();
@@ -993,11 +1055,11 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t% Go back to the current stack frame\n");
 
         // Store the value in the variable
-        AssignInteger();
+        AssignInteger(currentTable, isArray);
     }
 
 
-    public void ReadFloat(ISymbolTable currentTable)
+    public void ReadFloat(ISymbolTable currentTable, bool isArray = false)
     {
         // Get a register to store the value
         string value = GetRegister();
@@ -1030,55 +1092,14 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t\t% Go back to the current stack frame\n");
 
         // Store the value in the variable
-        AssignFloat();
+        AssignFloat(currentTable, isArray);
 
     }
 
 
 
 
-    public void FunctionDeclaration(ISymbolTable currentTable)
-    {
-        Code.AppendLine($"\n\t\t%==================== Function/Method: {currentTable.Name} ====================\n");
 
-        // Add the temporary variables to the stack frame
-        TempVars = new Stack<ISymbolTableEntry>(currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.TempVar).Reverse());
-        TempVarsInUse = new Stack<ISymbolTableEntry>();
-
-        //foreach (ISymbolTableEntry tempVar in TempVars)
-        //    WriteLine("TempVar: " + tempVar.Name);
-
-
-        if (currentTable.Name == "main")
-        {
-            Code.AppendLine("entry\t\t% Start of the program");
-            Code.AppendLine($"\t\taddi r14,r0,topaddr\t\t% Set the top of the stack");
-            return;
-        }
-
-        int jumpOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.JumpAddress).First().Offset;
-
-        // Tag the function's call address
-        Code.AppendLine($"{currentTable.Name}\t\tsw {jumpOffset}(r14),r15\t\t\t% Tag the function call address");
-    }
-
-
-    public void FunctionDeclarationEnd(ISymbolTable currentTable)
-    {
-        if (currentTable.Name == "main")
-            Code.AppendLine("hlt\t\t% Halt the program\n");
-        else
-        {
-            // Get the return address to jump back to
-            int jumpOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.JumpAddress).First().Offset;
-
-            // Jump back to the return address
-            Code.AppendLine($"\t\tlw r15,{jumpOffset}(r14)\t\t\t% Jump back to the return address");
-            Code.AppendLine($"\t\tjr r15\t\t\t\t\t% Jump back to the return address");
-        }
-
-        Code.AppendLine($"\n\t\t%==================== End of {currentTable.Name} ====================\n");
-    }
 
 
 
@@ -1164,22 +1185,672 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\n\t\t%************************* End of {currentTable.Name} **********************************n");
     }
 
-    public void ClassVariable(ISymbolTable currentTable, ISymbolTableEntry entry)
-    {
-        WriteLine("Class Variable");
 
+
+
+
+
+
+
+    public void AddFramePointer(ISymbolTable currentTable)
+    {
+        Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Add the frame pointer");
+    }
+
+    public void RemoveFramePointer(ISymbolTable currentTable)
+    {
+        Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Remove the frame pointer");
+    }
+
+
+
+    public void FunctionDeclaration(ISymbolTable currentTable)
+    {
+        Code.AppendLine($"\n\t\t%==================== Function/Method: {currentTable.Name} ====================\n");
+
+        if (currentTable.Name == "main")
+        {
+            Code.AppendLine("entry\t\t% Start of the program");
+            Code.AppendLine($"\t\taddi r14,r0,topaddr\t\t% Set the top of the stack");
+            return;
+        }
+
+        int jumpOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.JumpAddress).First().Offset;
+
+        // Tag the function's call address
+        Code.AppendLine($"{currentTable.Name}\t\tsw {jumpOffset}(r14),r15\t\t\t% Tag the function call address");
+
+        if (currentTable.Name != "main")
+            BufferSave(currentTable);
+
+    }
+
+
+    public void FunctionDeclarationEnd(ISymbolTable currentTable)
+    {
+        if (currentTable.Name == "main")
+            Code.AppendLine("hlt\t\t% Halt the program\n");
+        else
+        {
+            // Get the return address to jump back to
+            int jumpOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.JumpAddress).First().Offset;
+
+            BufferRestore(currentTable);
+
+            // Jump back to the return address
+            Code.AppendLine($"\t\tlw r15,{jumpOffset}(r14)\t\t\t% Jump back to the return address");
+            Code.AppendLine($"\t\tjr r15");
+        }
+
+
+        Code.AppendLine($"\n\t\t%==================== End of {currentTable.Name} ====================\n");
+    }
+
+
+    public void VarDeclaration(ISymbolTable currentTable, ISymbolTableEntry entry)
+    {
         // Get the offset of the variable
         int offset = entry.Offset;
 
-        WriteLine("Offset: " + offset);
-
-        // Set the frame pointer to the start of the class
-        Code.AppendLine($"\t\taddi r14,r14,{offset}\t\t% Set the frame pointer to the start of the class variable");
-
+        // Declare the variable in the stack frame
+        Code.AppendLine($"\t\tsw {offset}(r14),r0\t\t% Declare the variable {entry.Name}");
     }
 
-    public void ClassVariableEnd(ISymbolTable currentTable, ISymbolTable classTable)
+
+    public void LoadDataMember(ISymbolTable currentTable, ISymbolTableEntry entry)
     {
-        WriteLine("Class Variable End");
+        // Get the offset of the variable
+        int offset = entry.Offset;
+
+        // Check if the current table contains a class reference
+        if (currentTable.Entries.Any(e => e.Kind == SymbolEntryKind.ClassAddress))
+        {
+            return;
+        }
+
+        //WriteLine(currentTable.Name + " Load Data Member: " + entry.Name + " with offset: " + offset);
+
+
+        Code.AppendLine("\t\taddi r14,r14," + offset + "\t\t% Load Data Member: " + entry.Name);
     }
+
+    public void UnloadDataMember(ISymbolTable currentTable, int offset)
+    {
+        // Check if the current table contains a class reference
+        if (currentTable.Entries.Any(e => e.Kind == SymbolEntryKind.ClassAddress))
+        {
+            return;
+        }
+
+        //WriteLine("Unload Data Member");
+        Code.AppendLine("\n\t\tsubi r14,r14," + offset + "\t\t% Unload Data Member");
+    }
+
+    public void LoadVariableFromDataMember(ISymbolTable currentTable, ISymbolTableEntry entry)
+    {
+        // Get a register to store the location of the variable
+        string locReg = GetRegister();
+
+        // Check if the entry is a class data member
+        if (currentTable.Entries.Any(e => e.Kind == SymbolEntryKind.ClassAddress) && !currentTable.Entries.Any(e => e.Name == entry.Name))
+        {
+            ISymbolTableEntry classRef = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ClassAddress).First();
+            ISymbolTable classTable = classRef.Link!;
+
+            // Load the class reference
+            Code.AppendLine($"\n\t\tlw {locReg},{classRef.Offset}(r14)\t\t% Load the class reference {classRef.Name}");
+
+            // Get the offset of the data member
+            int offset = classTable.Entries.Where(e => e.Name == entry.Name).First().Offset;
+            offset += classTable.ScopeSize;
+
+            // Add the offset to the class reference
+            Code.AppendLine($"\t\taddi {locReg},{locReg},{offset}\t\t% Load the location of the variable {entry.Name}: <|DATA|>");
+
+            //WriteLine("Load Variable From Data Member: " + entry.Name);
+            return;
+        }
+
+        //WriteLine(currentTable.Name + " Load Variable From Data Member: " + entry.Name);
+
+        Code.AppendLine($"\n\t\taddi {locReg},r14,0\t\t% Load the location of the variable {entry.Name} ");
+    }
+
+
+    public void AssignDataMember(ISymbolTable currentTable, ISymbolTableEntry? entry, string type, bool isArray = false)
+    {
+        //WriteLine(currentTable.Name + " Assign Data Member: " + type);
+
+        if (type == "integer")
+        {
+            string valueLocReg = RegistersInUse.Pop();
+            string locReg = RegistersInUse.Pop();
+
+            // Check if the valueLocReg is a value or a memory location
+            // Get the value to assign
+            if (IsMemLoc(valueLocReg))
+                Code.AppendLine($"\n\t\tlw {valueLocReg},0({valueLocReg})\t\t% Get the value to assign to the data member");
+            Code.AppendLine($"\t\tsw 0({locReg}),{valueLocReg}\t\t% Assign Data Member\n");
+
+            // Free the registers
+            FreeRegister(valueLocReg);
+            FreeRegister(locReg);
+        }
+        else if (type == "float")
+        {
+            WriteLine("Assign Data Member: " + type);
+
+            string pointReg = RegistersInUse.Pop();
+            string valueLocReg = RegistersInUse.Pop();
+            string locReg = RegistersInUse.Pop();
+
+            // Check if the valueLocReg is a value or a memory location
+            if (IsMemLoc(valueLocReg))
+                Code.AppendLine($"\n\t\tlw {valueLocReg},0({valueLocReg})\t\t% Get the value to assign to the data member");
+            // Check if the pointReg is a value or a memory location
+            if (IsMemLoc(pointReg))
+                Code.AppendLine($"\t\tlw {pointReg},0({pointReg})\t\t% Get the point position of the float value");
+
+            // Store the value
+            Code.AppendLine($"\t\tsw 0({locReg}),{valueLocReg}\t\t% Assign Data Member: Value");
+            Code.AppendLine($"\t\tsw -4({locReg}),{pointReg}\t\t% Assign Data Member: Point Position\n");
+
+            // Free the registers
+            FreeRegister(pointReg);
+            FreeRegister(valueLocReg);
+            FreeRegister(locReg);
+        }
+        else
+        {
+            string valueLocReg = RegistersInUse.Pop();
+            string locReg = RegistersInUse.Pop();
+
+            WriteLine("Return Value: " + valueLocReg);
+            WriteLine("Location: " + locReg);
+
+            // Get the table of the class
+            ISymbolTable classTable = currentTable.Entries.Where(e => e.Type == type).First().Link!;
+
+            // Get all data members of the class
+            List<ISymbolTableEntry> dataMembers = classTable.Entries.Where(e => e.Kind == SymbolEntryKind.Data).ToList();
+
+            Code.AppendLine($"\n\t\t%----------------- Assign {classTable.Name} -----------------");
+
+            int offset = 0;
+
+            foreach (ISymbolTableEntry dataMember in dataMembers)
+            {
+                string valueReg = GetRegister();
+
+
+                // Update the location register for both the value and the data member
+                Code.AppendLine($"\n\t\taddi {locReg},{locReg},{offset}\t\t% Update the location register for the data member {dataMember.Name}");
+                Code.AppendLine($"\t\taddi {valueLocReg},{valueLocReg},{offset}\t\t% Update the location register for the value {dataMember.Name}");
+
+                // Load the value from the data member
+                Code.AppendLine($"\t\tlw {valueReg},0({valueLocReg})\t\t% Load the value of the data member {dataMember.Name}");
+
+                // Store the value
+                Code.AppendLine($"\t\tsw 0({locReg}),{valueReg}\t\t% Assign Data Member: {dataMember.Name}");
+
+                offset = -dataMember.Size;
+
+                FreeRegister(RegistersInUse.Pop());
+                WriteLine("Data Member: " + dataMember.Name);
+            }
+
+
+
+
+            // Free the registers
+            FreeRegister(valueLocReg);
+            FreeRegister(locReg);
+        }
+
+
+        Code.AppendLine();
+
+    }
+
+
+    public void LoadIntegerValue(string value)
+    {
+        string register = GetRegister();
+
+        // Convert the value to an integer
+        bool isValid = int.TryParse(value, out int intValue);
+
+        if (!isValid)
+        {
+            WriteLine("Invalid Integer Value: " + value);
+            intValue = 0;
+        }
+
+        // Get the number of bits needed to represent the integer
+        int minBits = (int)Math.Ceiling(Math.Log(intValue + 1, 2));
+
+        // Convert the integer to binary
+        string binary = Convert.ToString(intValue, 2);
+
+        // Pad the binary string with zeros to make it 32 bits
+        if (binary.Length < 32)
+            binary = binary.PadLeft(32, '0');
+
+        // Load the integer into the register
+        // If the integer is larger than 8 bits, load it in 8-bit chunks and shift the register
+        if (minBits > 8)
+            for (int i = 0; i < binary.Length; i += 8)
+            {
+                int val = Convert.ToInt32(binary.Substring(i, 8), 2);
+
+                if (i == 0)
+                    Code.AppendLine($"\n\t\taddi {register},r0,{val}\t\t% Load the integer value {value} into {register}");
+                else
+                    Code.AppendLine($"\t\taddi {register},{register},{val}");
+
+                if (i != 24)
+                    Code.AppendLine($"\t\tsl {register},8");
+            }
+        else
+            Code.AppendLine($"\n\t\taddi {register},r0,{intValue}\t\t% Load the integer value {value} into {register}");
+    }
+
+    public void LoadFloatValue(string value)
+    {
+        // Convert the value to a float
+        bool isValid = float.TryParse(value, out float floatValue);
+
+        if (!isValid)
+        {
+            WriteLine("Invalid Float Value: " + value);
+            floatValue = 0;
+        }
+
+        // Get the point position of the float
+        int pointPos = value.Length - (value.IndexOf('.') + 1);
+        value = value.Replace(".", "");
+
+        LoadIntegerValue(value);
+
+        // Get the register to store the point position
+        string pointReg = GetRegister();
+
+        // Load the point position into the register
+        Code.AppendLine($"\t\taddi {pointReg},r0,{pointPos}\t\t% Load the point position of the float value {value} into {pointReg}");
+    }
+
+    public void FunctionCall(ISymbolTable currentTable, ISymbolTable functionTable, int? offset = null)
+    {
+
+        Code.AppendLine($"\n\t\t%----------------- Function Call: {currentTable.Name} -> {functionTable.Name} -----------------");
+
+        // Get the current table scope size
+        int currentScopeSize = offset == null ? currentTable.ScopeSize : currentTable.ScopeSize + offset.Value;
+
+        // Get the parameters of the function
+        List<ISymbolTableEntry> parameters = functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.Parameter).ToList();
+
+        // Register to store the parameter address
+        string paramReg;
+
+        //Code.AppendLine($"{currentScopeSize}");
+
+        foreach (ISymbolTableEntry parameter in parameters)
+        {
+            // Get the parameter register
+            paramReg = RegistersInUse.Pop();
+
+            // Check if the param is a value (integer or float)
+            // If it is a value, load the value into the register
+            if (parameter.Type == "integer")
+            {
+                Code.AppendLine($"\t\tlw {paramReg},0({paramReg})\t\t% Load param {parameter.Name} value");
+                Code.AppendLine($"\t\tsw {parameter.Offset - currentScopeSize}(r14),{paramReg}\t\t% Pass param {parameter.Name}");
+            }
+            else if (parameter.Type == "float")
+            {
+                string valueReg = GetRegister();
+
+                // Load the float value
+                Code.AppendLine($"\t\tlw {valueReg},0({paramReg})\t\t% Load param {parameter.Name} value");
+                Code.AppendLine($"\t\tlw {paramReg},-4({paramReg})\t\t% Pass param {parameter.Name}");
+                Code.AppendLine($"\t\tsw {parameter.Offset - currentScopeSize}(r14),{valueReg}\t\t% Pass param {parameter.Name}");
+                Code.AppendLine($"\t\tsw {parameter.Offset - currentScopeSize - 4}(r14),{paramReg}\t\t% Pass param {parameter.Name} point position");
+            }
+            else
+                Code.AppendLine($"\t\tsw {parameter.Offset - currentScopeSize}(r14),{paramReg}\t\t% Pass param {parameter.Name} reference");
+
+            // Free the parameter register
+            FreeRegister(paramReg);
+        }
+
+        // Set the this pointer to the current object
+        functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ClassAddress).ToList().ForEach(e => Code.AppendLine($"\t\tsw {e.Offset - currentScopeSize}(r14),r14\t\t% Set the pointer to the current class instance"));
+
+        // Load the function stack frame
+        Code.AppendLine($"\n\t\taddi r14,r14,-{currentScopeSize}\t\t% Load the function stack frame");
+
+        // Jump to the function
+        Code.AppendLine($"\t\tjl r15,{functionTable.Name}\t\t% Jump to the function {functionTable.Name}");
+
+        // Restore the stack frame
+        Code.AppendLine($"\t\taddi r14,r14,{currentScopeSize}\t\t% Restore the stack frame");
+
+        // If the function returns a value, get the return value
+        if (functionTable.Entries.Any(e => e.Kind == SymbolEntryKind.ReturnVal && e.Type != "void"))
+        {
+            // Get the return type  
+            string returnType = functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Type;
+
+            if (returnType == "integer")
+            {
+                string returnValReg = GetRegister();
+
+                // Get the return value
+                Code.AppendLine($"\t\tlw {returnValReg},{functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset - currentScopeSize}(r14)\t\t% Get the return value");
+                Code.AppendLine($"\t\taddi {returnValReg},{returnValReg},0");
+            }
+            else if (returnType == "float")
+            {
+                string returnValReg = GetRegister();
+                string pointReg = GetRegister();
+
+                // Get the return value
+                Code.AppendLine($"\t\tlw {returnValReg},{functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset - currentScopeSize}(r14)\t\t% Get the return value");
+                Code.AppendLine($"\t\tlw {pointReg},{functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset - currentScopeSize - 4}(r14)\t\t% Get the point position");
+
+                Code.AppendLine($"\t\taddi {returnValReg},{returnValReg},0");
+                Code.AppendLine($"\t\taddi {pointReg},{pointReg},0");
+            }
+            else
+            {
+                string returnValReg = GetRegister();
+
+                // Get the return value
+                Code.AppendLine($"\t\tlw {returnValReg},{functionTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset - currentScopeSize}(r14)\t\t% Get the return value");
+            }
+        }
+    }
+
+    public void Write(ISymbolTable currentTable, string type)
+    {
+        if (type == "integer")
+        {
+            Code.AppendLine($"\n\t\t%----------------- WRITE Integer -----------------");
+
+            // Go to the next stack frame
+            Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
+
+            // Get the integer value register
+            string valueReg = RegistersInUse.Pop();
+
+            // Check if the valueLocReg is a value or a memory location
+            if (IsMemLoc(valueReg))
+                Code.AppendLine($"\t\tlw {valueReg},0({valueReg})\t\t% Get the integer value to write");
+
+            // Write the value to the console/screen
+            Code.AppendLine($"\t\tsw -28(r14),{valueReg}");
+            Code.AppendLine($"\t\tjl r15,intwrite\t\t% Call the integer write subroutine");
+
+            // Free the value register
+            FreeRegister(valueReg);
+
+            // Go back to the current stack frame
+            Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Move back to the current stack frame\n");
+        }
+        else if (type == "float")
+        {
+            string valueLocReg = RegistersInUse.Pop();
+            string pointReg;
+
+            if (IsMemLoc(valueLocReg))
+            {
+                pointReg = GetRegister();
+                pointReg = RegistersInUse.Pop();
+                Code.AppendLine($"\n\t\tlw {pointReg},-4({valueLocReg})\t\t% Load the point position of the float value to write");
+                Code.AppendLine($"\t\tlw {valueLocReg},0({valueLocReg})\t\t% Load the float value to write");
+            }
+            else
+            {
+                pointReg = valueLocReg;
+                valueLocReg = RegistersInUse.Pop();
+            }
+
+            Code.AppendLine($"\n\t\t%----------------- WRITE Float -----------------");
+
+            // Go to the next stack frame
+            Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
+
+            Code.AppendLine($"\t\tsw -28(r14),{valueLocReg}\t\t% Store the float value");
+            Code.AppendLine($"\t\tsw -32(r14),{pointReg}\t\t% Store the point position");
+
+            // Call the float write subroutine
+            Code.AppendLine($"\t\tjl r15,floatwrite\t\t% Call the float write subroutine");
+
+            // Go back to the current stack frame
+            Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Move back to the current stack frame\n");
+
+            // Free the value register
+            FreeRegister(valueLocReg);
+            FreeRegister(pointReg);
+
+
+        }
+
+    }
+
+    public void Read(ISymbolTable currentTable, string type)
+    {
+        if (type == "integer")
+        {
+            Code.AppendLine($"\n\t\t%----------------- READ Integer -----------------");
+
+            // Go to the next stack frame
+            Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
+
+            // Prompt the user for an integer
+            Code.AppendLine($"\t\taddi r2,r0,entint\t\t% Prompt for an integer");
+            Code.AppendLine($"\t\tsw -8(r14),r2");
+            Code.AppendLine($"\t\tjl r15,putstr");
+
+            // Get the integer from the user
+            Code.AppendLine($"\t\taddi r2,r0,buf");
+            Code.AppendLine($"\t\tsw -8(r14),r2");
+            Code.AppendLine($"\t\tjl r15,getstr\t\t% Call the get string subroutine");
+            Code.AppendLine($"\t\tjl r15,strint\t\t% Call the string -> int subroutine");
+
+            // Get the integer value register
+            string valueReg = GetRegister();
+
+            // Store the integer value
+            Code.AppendLine($"\t\taddi {valueReg},r13,0");
+
+            // Restore the memory location
+            Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Move back to the current stack frame\n");
+
+            // Store the value in the variable
+            AssignDataMember(currentTable, null, "integer");
+        }
+        else
+        {
+            WriteLine("Read Float");
+
+            Code.AppendLine($"\n\t\t%----------------- READ Float -----------------");
+
+            // Go to the next stack frame
+            Code.AppendLine($"\t\taddi r14,r14,-{currentTable.ScopeSize}\t\t% Move to the next stack frame");
+
+            // Prompt the user for a float
+            Code.AppendLine($"\t\taddi r2,r0,entfloat\t\t% Prompt for a float");
+            Code.AppendLine($"\t\tsw -8(r14),r2");
+            Code.AppendLine($"\t\tjl r15,putstr");
+
+            // Store the buffer address
+            Code.AppendLine($"\t\taddi r2,r0,buf");
+            Code.AppendLine($"\t\tsw -8(r14),r2");
+
+            // Get the float from the user
+            Code.AppendLine($"\t\tjl r15,getfloat\t\t% Call the float read subroutine");
+
+            // Get registers to store the float value and the point position
+            string valueReg = GetRegister();
+            string pointReg = GetRegister();
+
+            // Get the integer and point position from the stack
+            Code.AppendLine($"\t\tlw {valueReg},-60(r14)\t\t% Load the integer part of the float value");
+            Code.AppendLine($"\t\tlw {pointReg},-56(r14)\t\t% Load the point position of the float value");
+
+            Code.AppendLine($"\t\taddi {valueReg},{valueReg},0");
+            Code.AppendLine($"\t\taddi {pointReg},{pointReg},0");
+
+            // Restore the memory location
+            Code.AppendLine($"\t\taddi r14,r14,{currentTable.ScopeSize}\t\t% Move back to the current stack frame\n");
+
+            // Store the value in the variable
+            AssignDataMember(currentTable, null, "float");
+        }
+    }
+
+    public void Return(ISymbolTable currentTable, string type)
+    {
+        switch (type)
+        {
+            case "integer":
+                // Returns an integer value
+                // Get the return value register
+                string returnIntReg = RegistersInUse.Pop();
+
+                // Make sure the register is not a memory location
+                if (IsMemLoc(returnIntReg))
+                    Code.AppendLine($"\t\tlw {returnIntReg},0({returnIntReg})\t\t% Load the value of {returnIntReg}");
+
+                // Store the return value
+                Code.AppendLine($"\t\tsw {currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset}(r14),{returnIntReg}\t\t% Store the return value");
+                break;
+            case "float":
+                // Returns a float value
+                // Get the return value register
+                string returnFloatReg = RegistersInUse.Pop();
+                string pointReg;
+
+                // Make sure the register is not a memory location
+                if (IsMemLoc(returnFloatReg))
+                {
+                    pointReg = GetRegister();
+                    pointReg = RegistersInUse.Pop();
+
+                    Code.AppendLine($"\t\tlw {pointReg},-4({returnFloatReg})\t\t% Load the point position of the float value");
+                    Code.AppendLine($"\t\tlw {returnFloatReg},0({returnFloatReg})\t\t% Load the value of {returnFloatReg}");
+                }
+                else
+                    pointReg = RegistersInUse.Pop();
+
+                // Store the return value
+                Code.AppendLine($"\t\tsw {currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset}(r14),{returnFloatReg}\t\t% Store the return value");
+                Code.AppendLine($"\t\tsw {currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset - 4}(r14),{pointReg}\t\t% Store the point position of the float value");
+
+                break;
+            default:
+                // Returns a memory location (reference)
+                // Get the return value register
+                string returnReg = RegistersInUse.Pop();
+
+                // Store the return value
+                Code.AppendLine($"\t\tsw {currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.ReturnVal).First().Offset}(r14),{returnReg}\t\t% Store the return value");
+                break;
+        }
+    }
+
+    private bool IsMemLoc(string valueLocReg)
+    {
+        string line = Code.ToString().Split("\n").ToList().Where(l => l.Contains(valueLocReg)).Last();
+
+        return line.Contains("r14") || line.Contains("<|DATA|>");
+    }
+
+
+    private void BufferSave(ISymbolTable currentTable)
+    {
+        Code.AppendLine($"\n\t\t%----------------- Save Buffer -----------------");
+
+        // Get the buffer offset
+        int bufferOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.Buffer).First().Offset;
+
+        for (int i = 1; i < 16; i++)
+        {
+            Code.AppendLine($"\t\tsw {bufferOffset - (i - 1) * 4}(r14),r{i}\t\t% Save buffer register r{i}");
+        }
+    }
+
+    private void BufferRestore(ISymbolTable currentTable)
+    {
+        Code.AppendLine($"\n\t\t%----------------- Restore Buffer -----------------");
+
+        // Get the buffer offset
+        int bufferOffset = currentTable.Entries.Where(e => e.Kind == SymbolEntryKind.Buffer).First().Offset;
+
+        for (int i = 1; i < 16; i++)
+        {
+            Code.AppendLine($"\t\tlw r{i},{bufferOffset - (i - 1) * 4}(r14)\t\t% Save buffer register r{i}");
+        }
+    }
+
+    public void AddExpression(ISymbolTable currentTable, string operation, string type)
+    {
+        WriteLine("Add Expression: " + operation + " Type: " + type);
+
+        string op = operation switch
+        {
+            "+" => "add",
+            "-" => "sub",
+            "|" => "or",
+            _ => "add"
+        };
+
+
+        if (type == "integer")
+        {
+            // Get the registers
+            string reg1 = RegistersInUse.Pop();
+            string reg2 = RegistersInUse.Pop();
+
+            // Make sure the registers are not memory locations
+            if (IsMemLoc(reg1))
+                Code.AppendLine($"\t\tlw {reg1},0({reg1})\t\t% Load the value of {reg1}");
+            if (IsMemLoc(reg2))
+                Code.AppendLine($"\t\tlw {reg2},0({reg2})\t\t% Load the value of {reg2}");
+
+
+            if (op == "or")
+            {
+                // Check how many times the zero subroutine has been declared
+                int nonZeroSubroutineCount = Code.ToString().Split("endOr").Length / 2 + 1;
+                string nonZeroSubroutine = $"nonzero{nonZeroSubroutineCount}";
+                string endOrSubroutine = $"endOr{nonZeroSubroutineCount}";
+
+                Code.AppendLine($"\n\t\tbnz {reg1},{nonZeroSubroutine}\t\t% Check if {reg1} is not zero");
+                Code.AppendLine($"\t\tbnz {reg2},{nonZeroSubroutine}\t\t% Check if {reg2} is not zero");
+                Code.AppendLine($"\t\taddi {reg1},r0,0\t\t% {reg1} {operation} {reg2} = {reg1}");
+                Code.AppendLine($"\t\tj {endOrSubroutine}\t\t% Jump to the end of the {operation} subroutine");
+                Code.AppendLine($"{nonZeroSubroutine}\t\t addi {reg1},r0,1\t\t% Set the result to 1");
+                Code.AppendLine($"{endOrSubroutine}\t\t nop\t\t% End of the {operation} subroutine");
+            }
+            else
+            {
+                // Calculate the result
+                Code.AppendLine($"\t\t{op} {reg1},{reg1},{reg2}\t\t% {operation} the values");
+            }
+
+            // Free the registers that are not used anymore
+            FreeRegister(reg2);
+
+            // Push the result back to the available registers
+            RegistersInUse.Push(reg1);
+        }
+        else if (type == "float")
+        {
+        }
+    }
+
+
 }

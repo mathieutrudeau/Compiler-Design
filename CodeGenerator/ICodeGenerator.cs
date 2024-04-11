@@ -115,8 +115,8 @@ public interface IMoonCodeGenerator
 
     public void RelExpr(string operation, ISymbolTable currentTable, bool isFloat);
 
-    public void AssignFloat(bool isArray=false);
-    public void AssignInteger(bool isArray=false);
+    public void AssignFloat(ISymbolTable currentTable, bool isArray=false);
+    public void AssignInteger(ISymbolTable currentTable, bool isArray=false);
 
     public void If(ref int ifCount);
     public void Else(ref int ifCount);
@@ -144,12 +144,12 @@ public interface IMoonCodeGenerator
     /// <remarks>
     /// This method will read input from the console.
     /// </remarks>
-    public void ReadInteger(ISymbolTable currentTable);
+    public void ReadInteger(ISymbolTable currentTable, bool isArray=false);
 
 
     public void WriteFloat(ISymbolTable currentTable);
 
-    public void ReadFloat(ISymbolTable currentTable);
+    public void ReadFloat(ISymbolTable currentTable, bool isArray=false);
 
 
     public void FunctionDeclaration(ISymbolTable currentTable);
@@ -165,6 +165,36 @@ public interface IMoonCodeGenerator
     public void ClassDeclarationEnd(ISymbolTable currentTable);
 
 
-    public void ClassVariable(ISymbolTable currentTable,  ISymbolTableEntry entry);
-    public void ClassVariableEnd(ISymbolTable currentTable, ISymbolTable classTable);
+
+
+
+
+
+
+    
+    public void AddFramePointer(ISymbolTable currentTable);
+    public void RemoveFramePointer(ISymbolTable currentTable);
+
+    public void VarDeclaration(ISymbolTable currentTable, ISymbolTableEntry entry);
+
+    public void LoadDataMember(ISymbolTable currentTable, ISymbolTableEntry entry);
+    public void UnloadDataMember(ISymbolTable currentTable, int offset);
+
+    public void LoadVariableFromDataMember(ISymbolTable currentTable, ISymbolTableEntry entry);
+
+    public void AssignDataMember(ISymbolTable currentTable, ISymbolTableEntry? entry, string type ,bool isArray=false);
+
+    public void LoadIntegerValue(string value);
+
+    public void LoadFloatValue(string value);
+
+    public void FunctionCall(ISymbolTable currentTable, ISymbolTable functionTable, int? offset=null);
+
+    public void Return(ISymbolTable currentTable, string type);
+
+    public void Write(ISymbolTable currentTable, string type);
+
+    public void Read(ISymbolTable currentTable, string type);
+
+    public void AddExpression(ISymbolTable currentTable, string operation, string type);
 }

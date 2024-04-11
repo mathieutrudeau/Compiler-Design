@@ -91,6 +91,8 @@ public interface ISymbolTable
     public int GetScopeSize();
 
 
+    public void CurateTable();
+
 }
 
 /// <summary>
@@ -179,7 +181,7 @@ public interface IVisitor
     /// <remarks>
     /// This method will generate the code for the node. The code will be added to the code generator.
     /// </remarks>
-    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator,ref bool isArray);
+    public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator, ref int currentScopeSize, ref ISymbolTable chainedTable, ref bool isArray);
 
 }
 

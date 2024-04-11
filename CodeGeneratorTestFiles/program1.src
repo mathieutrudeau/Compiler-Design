@@ -1,48 +1,57 @@
 func main() -> void
 {
-    let b:integer;
+    let avg:integer;
+    let a:float;
+    let ob: c1;
 
-    b=4;
+    
+    read(a);
 
-    let a:integer[4][3];
+    write(a);
 
-    write(b);
+    a=f1();
 
-    a[2][1]=6;
-    a[1][0]=12;
 
-    write(a[1][2]);
-    write(a[2][1]);
-    write(a[1][0]*a[2][1]);
-
-    write(b);
-
+    write(a);
 
 
 }
 
-
-func f1()->void
-{
-
-}
-
-/*
 struct c1
 {
     public let A:integer;
     private let B:integer;
+    public let AA:integer;
+
+    public func Fe(a:integer)->void;
+
+    private func Fa()->void;
 };
 
 impl c1
 {
+    func Fe(a:integer)->void
+    {
+        Fa();
+        write(4);
+    }
+
+    func Fa()->void
+    {
+        B=2;
+        A=4;
+        write(A);
+        write(B);
+        write(AA);
+    }
 
 }
 
-func f1() -> c1
+func f1() -> float
 {
-    let a:c1;
+    let a:float;
+
+    a=23.32;
+
     return(a);
 }
-
-*/
