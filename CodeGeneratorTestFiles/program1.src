@@ -1,15 +1,12 @@
 func main() -> void
-{
-    let avg:integer;
-    let a:float;
-    let ob: c1;
+{  
+    //let a:integer[10][20];
 
-    a = 10.23;
-    a = -a;
+    let  b:integer[10];
 
-    write(a);
 
 }
+
 
 struct c1
 {
@@ -27,13 +24,12 @@ impl c1
     func Fe(a:integer)->void
     {
         Fa();
-        write(4);
     }
 
     func Fa()->void
     {
-        B=2;
-        A=4;
+        //B=2;
+        //A=4;
         write(A);
         write(B);
         write(AA);
@@ -41,11 +37,10 @@ impl c1
 
 }
 
-func f1() -> float
+
+func f1(b:c1) -> float
 {
     let a:float;
-
-    a=23.32;
 
     return(a);
 }

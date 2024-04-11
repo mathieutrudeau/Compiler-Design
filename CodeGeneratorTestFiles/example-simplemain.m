@@ -430,594 +430,155 @@ cnefloat2		cne r15,r1,r3		% Perform the cne operation on the float values
 
 		%----------------- Div Float Subroutine -----------------
 
-		%==================== Function/Method: bubbleSort ====================
-
-bubbleSort		sw -24(r14),r15			% Tag the function call address
-
-		%----------------- Save Buffer -----------------
-		sw -32(r14),r1		% Save buffer register r1
-		sw -36(r14),r2		% Save buffer register r2
-		sw -40(r14),r3		% Save buffer register r3
-		sw -44(r14),r4		% Save buffer register r4
-		sw -48(r14),r5		% Save buffer register r5
-		sw -52(r14),r6		% Save buffer register r6
-		sw -56(r14),r7		% Save buffer register r7
-		sw -60(r14),r8		% Save buffer register r8
-		sw -64(r14),r9		% Save buffer register r9
-		sw -68(r14),r10		% Save buffer register r10
-		sw -72(r14),r11		% Save buffer register r11
-		sw -76(r14),r12		% Save buffer register r12
-		sw -80(r14),r13		% Save buffer register r13
-		sw -84(r14),r14		% Save buffer register r14
-		sw -88(r14),r15		% Save buffer register r15
-		sw -8(r14),r0		% Declare the variable n
-		sw -12(r14),r0		% Declare the variable i
-		sw -16(r14),r0		% Declare the variable j
-		sw -20(r14),r0		% Declare the variable temp
-		addi r14,r14,-8		% Load Data Member: n
-
-		addi r12,r14,0		% Load the location of the variable n (r14)
-
-		subi r14,r14,-8		% Unload Data Member
-		addi r14,r14,-4		% Load Data Member: size
-
-		addi r11,r14,0		% Load the location of the variable size (r14)
-
-		subi r14,r14,-4		% Unload Data Member
-
-		lw r11,0(r11)		% Get the value to assign to the data member
-		sw 0(r12),r11		% Assign Data Member
-
-
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r12,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-
-		addi r11,r0,0		% Load the integer value 0 into r11
-		sw 0(r12),r11		% Assign Data Member
-
-
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r12,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r11,r0,0		% Load the integer value 0 into r11
-		sw 0(r12),r11		% Assign Data Member
-
-
-		addi r14,r14,-20		% Load Data Member: temp
-
-		addi r12,r14,0		% Load the location of the variable temp (r14)
-
-		subi r14,r14,-20		% Unload Data Member
-
-		addi r11,r0,0		% Load the integer value 0 into r11
-		sw 0(r12),r11		% Assign Data Member
-
-
-gowhile1		 nop		% Go to the while loop
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r12,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-		addi r14,r14,-8		% Load Data Member: n
-
-		addi r11,r14,0		% Load the location of the variable n (r14)
-
-		subi r14,r14,-8		% Unload Data Member
-
-		addi r10,r0,1		% Load the integer value 1 into r10
-		lw r11,0(r11)		% Load the value of r11
-		sub r9,r11,r10		% - the values
-		lw r12,0(r12)		% Load the value of r12
-		clt r10,r12,r9		% < the values
-		bz r10,endwhile1		% Check the while condition
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r10,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r9,r0,0		% Load the integer value 0 into r9
-		sw 0(r10),r9		% Assign Data Member
-
-
-gowhile2		 nop		% Go to the while loop
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r10,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-		addi r14,r14,-8		% Load Data Member: n
-
-		addi r9,r14,0		% Load the location of the variable n (r14)
-
-		subi r14,r14,-8		% Unload Data Member
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r12,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-		lw r9,0(r9)		% Load the value of r9
-		lw r12,0(r12)		% Load the value of r12
-		sub r11,r9,r12		% - the values
-
-		addi r12,r0,1		% Load the integer value 1 into r12
-		sub r9,r11,r12		% - the values
-		lw r10,0(r10)		% Load the value of r10
-		clt r12,r10,r9		% < the values
-		bz r12,endwhile2		% Check the while condition
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r12,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r9,r14,0		% Load the location of the variable arr (r14)
-		lw r9,0(r9)		% Load the location of the variable arr 
-		lw r12,0(r12)		% Load the index value
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r9,r9,r12		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r12,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r10,r0,1		% Load the integer value 1 into r10
-		lw r12,0(r12)		% Load the value of r12
-		add r11,r12,r10		% + the values
-
-		addi r10,r14,0		% Load the location of the variable arr (r14)
-		lw r10,0(r10)		% Load the location of the variable arr 
-		muli r11,r11,4		% Multiply the index by the element size
-		sub r10,r10,r11		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-		lw r9,0(r9)		% Load the value of r9
-		lw r10,0(r10)		% Load the value of r10
-		cgt r11,r9,r10		% > the values
-ifthen1		bz r11,else1		% Check the if condition
-		addi r14,r14,-20		% Load Data Member: temp
-
-		addi r11,r14,0		% Load the location of the variable temp (r14)
-
-		subi r14,r14,-20		% Unload Data Member
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r10,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r9,r14,0		% Load the location of the variable arr (r14)
-		lw r9,0(r9)		% Load the location of the variable arr 
-		lw r10,0(r10)		% Load the index value
-		muli r10,r10,4		% Multiply the index by the element size
-		sub r9,r9,r10		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		lw r9,0(r9)		% Get the value to assign to the data member
-		sw 0(r11),r9		% Assign Data Member
-
-
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r11,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r9,r14,0		% Load the location of the variable arr (r14)
-		lw r9,0(r9)		% Load the location of the variable arr 
-		lw r11,0(r11)		% Load the index value
-		muli r11,r11,4		% Multiply the index by the element size
-		sub r9,r9,r11		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r11,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r10,r0,1		% Load the integer value 1 into r10
-		lw r11,0(r11)		% Load the value of r11
-		add r12,r11,r10		% + the values
-
-		addi r10,r14,0		% Load the location of the variable arr (r14)
-		lw r10,0(r10)		% Load the location of the variable arr 
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r10,r10,r12		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		lw r10,0(r10)		% Get the value to assign to the data member
-		sw 0(r9),r10		% Assign Data Member
-
-
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r9,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r10,r0,1		% Load the integer value 1 into r10
-		lw r9,0(r9)		% Load the value of r9
-		add r12,r9,r10		% + the values
-
-		addi r10,r14,0		% Load the location of the variable arr (r14)
-		lw r10,0(r10)		% Load the location of the variable arr 
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r10,r10,r12		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-		addi r14,r14,-20		% Load Data Member: temp
-
-		addi r12,r14,0		% Load the location of the variable temp (r14)
-
-		subi r14,r14,-20		% Unload Data Member
-
-		lw r12,0(r12)		% Get the value to assign to the data member
-		sw 0(r10),r12		% Assign Data Member
-
-
-		j endif1		% Jump to the end of the if statement
-else1		 nop		% Else statement
-endif1		 nop		% End of the if statement
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r10,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-		addi r14,r14,-16		% Load Data Member: j
-
-		addi r12,r14,0		% Load the location of the variable j (r14)
-
-		subi r14,r14,-16		% Unload Data Member
-
-		addi r9,r0,1		% Load the integer value 1 into r9
-		lw r12,0(r12)		% Load the value of r12
-		add r11,r12,r9		% + the values
-		sw 0(r10),r11		% Assign Data Member
-
-
-		j gowhile2		% Go to the while loop
-endwhile2		 nop		% End of the while loop
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r10,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r11,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-
-		addi r9,r0,1		% Load the integer value 1 into r9
-		lw r11,0(r11)		% Load the value of r11
-		add r12,r11,r9		% + the values
-		sw 0(r10),r12		% Assign Data Member
-
-
-		j gowhile1		% Go to the while loop
-endwhile1		 nop		% End of the while loop
-
-		%----------------- Restore Buffer -----------------
-		lw r1,-32(r14)		% Save buffer register r1
-		lw r2,-36(r14)		% Save buffer register r2
-		lw r3,-40(r14)		% Save buffer register r3
-		lw r4,-44(r14)		% Save buffer register r4
-		lw r5,-48(r14)		% Save buffer register r5
-		lw r6,-52(r14)		% Save buffer register r6
-		lw r7,-56(r14)		% Save buffer register r7
-		lw r8,-60(r14)		% Save buffer register r8
-		lw r9,-64(r14)		% Save buffer register r9
-		lw r10,-68(r14)		% Save buffer register r10
-		lw r11,-72(r14)		% Save buffer register r11
-		lw r12,-76(r14)		% Save buffer register r12
-		lw r13,-80(r14)		% Save buffer register r13
-		lw r14,-84(r14)		% Save buffer register r14
-		lw r15,-88(r14)		% Save buffer register r15
-		lw r15,-24(r14)			% Jump back to the return address
-		jr r15
-
-		%==================== End of bubbleSort ====================
-
-
-		%==================== Function/Method: printArray ====================
-
-printArray		sw -16(r14),r15			% Tag the function call address
-
-		%----------------- Save Buffer -----------------
-		sw -24(r14),r1		% Save buffer register r1
-		sw -28(r14),r2		% Save buffer register r2
-		sw -32(r14),r3		% Save buffer register r3
-		sw -36(r14),r4		% Save buffer register r4
-		sw -40(r14),r5		% Save buffer register r5
-		sw -44(r14),r6		% Save buffer register r6
-		sw -48(r14),r7		% Save buffer register r7
-		sw -52(r14),r8		% Save buffer register r8
-		sw -56(r14),r9		% Save buffer register r9
-		sw -60(r14),r10		% Save buffer register r10
-		sw -64(r14),r11		% Save buffer register r11
-		sw -68(r14),r12		% Save buffer register r12
-		sw -72(r14),r13		% Save buffer register r13
-		sw -76(r14),r14		% Save buffer register r14
-		sw -80(r14),r15		% Save buffer register r15
-		sw -8(r14),r0		% Declare the variable n
-		sw -12(r14),r0		% Declare the variable i
-		addi r14,r14,-8		% Load Data Member: n
-
-		addi r10,r14,0		% Load the location of the variable n (r14)
-
-		subi r14,r14,-8		% Unload Data Member
-		addi r14,r14,-4		% Load Data Member: size
-
-		addi r12,r14,0		% Load the location of the variable size (r14)
-
-		subi r14,r14,-4		% Unload Data Member
-
-		lw r12,0(r12)		% Get the value to assign to the data member
-		sw 0(r10),r12		% Assign Data Member
-
-
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r10,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-
-		addi r12,r0,0		% Load the integer value 0 into r12
-		sw 0(r10),r12		% Assign Data Member
-
-
-gowhile5		 nop		% Go to the while loop
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r10,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-		addi r14,r14,-8		% Load Data Member: n
-
-		addi r12,r14,0		% Load the location of the variable n (r14)
-
-		subi r14,r14,-8		% Unload Data Member
-		lw r10,0(r10)		% Load the value of r10
-		lw r12,0(r12)		% Load the value of r12
-		clt r9,r10,r12		% < the values
-		bz r9,endwhile5		% Check the while condition
-		addi r14,r14,0		% Load Data Member: arr
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r9,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-
-		addi r12,r14,0		% Load the location of the variable arr (r14)
-		lw r12,0(r12)		% Load the location of the variable arr 
-		lw r9,0(r9)		% Load the index value
-		muli r9,r9,4		% Multiply the index by the element size
-		sub r12,r12,r9		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		%----------------- WRITE Integer -----------------
-		addi r14,r14,-80		% Move to the next stack frame
-		lw r12,0(r12)		% Get the integer value to write
-		sw -28(r14),r12
-		jl r15,intwrite		% Call the integer write subroutine
-		addi r14,r14,80		% Move back to the current stack frame
-
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r12,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-		addi r14,r14,-12		% Load Data Member: i
-
-		addi r9,r14,0		% Load the location of the variable i (r14)
-
-		subi r14,r14,-12		% Unload Data Member
-
-		addi r10,r0,1		% Load the integer value 1 into r10
-		lw r9,0(r9)		% Load the value of r9
-		add r11,r9,r10		% + the values
-		sw 0(r12),r11		% Assign Data Member
-
-
-		j gowhile5		% Go to the while loop
-endwhile5		 nop		% End of the while loop
-
-		%----------------- Restore Buffer -----------------
-		lw r1,-24(r14)		% Save buffer register r1
-		lw r2,-28(r14)		% Save buffer register r2
-		lw r3,-32(r14)		% Save buffer register r3
-		lw r4,-36(r14)		% Save buffer register r4
-		lw r5,-40(r14)		% Save buffer register r5
-		lw r6,-44(r14)		% Save buffer register r6
-		lw r7,-48(r14)		% Save buffer register r7
-		lw r8,-52(r14)		% Save buffer register r8
-		lw r9,-56(r14)		% Save buffer register r9
-		lw r10,-60(r14)		% Save buffer register r10
-		lw r11,-64(r14)		% Save buffer register r11
-		lw r12,-68(r14)		% Save buffer register r12
-		lw r13,-72(r14)		% Save buffer register r13
-		lw r14,-76(r14)		% Save buffer register r14
-		lw r15,-80(r14)		% Save buffer register r15
-		lw r15,-16(r14)			% Jump back to the return address
-		jr r15
-
-		%==================== End of printArray ====================
-
-
 		%==================== Function/Method: main ====================
 
 entry		% Start of the program
 		addi r14,r0,topaddr		% Set the top of the stack
-		sw 0(r14),r0		% Declare the variable arr
-		addi r14,r14,0		% Load Data Member: arr
+		sw 0(r14),r0		% Declare the variable x
+		sw -4(r14),r0		% Declare the variable y
+		sw -8(r14),r0		% Declare the variable z
+		addi r14,r14,-4		% Load Data Member: y
 
-		addi r12,r0,0		% Load the integer value 0 into r12
+		addi r12,r14,0		% Load the location of the variable y (r14)
 
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r11,r11,r12		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		addi r12,r0,64		% Load the integer value 64 into r12
-		sw 0(r11),r12		% Assign Data Member
-
-
-		addi r14,r14,0		% Load Data Member: arr
+		subi r14,r14,-4		% Unload Data Member
 
 		addi r11,r0,1		% Load the integer value 1 into r11
 
-		addi r12,r14,0		% Load the location of the variable arr (r14)
-		muli r11,r11,4		% Multiply the index by the element size
-		sub r12,r12,r11		% Load memory location of the array arr (r14)
+		addi r10,r0,2		% Load the integer value 2 into r10
+
+		addi r9,r0,3		% Load the integer value 3 into r9
+		mul r8,r10,r9		% * the values
+		add r9,r11,r8		% + the values
+		sw 0(r12),r9		% Assign Data Member
+
+
+		addi r14,r14,0		% Load Data Member: x
+
+		addi r12,r14,0		% Load the location of the variable x (r14)
 
 		subi r14,r14,0		% Unload Data Member
 
-		addi r11,r0,34		% Load the integer value 34 into r11
-		sw 0(r12),r11		% Assign Data Member
+		%----------------- READ Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		addi r2,r0,entint		% Prompt for an integer
+		sw -8(r14),r2
+		jl r15,putstr
+		addi r2,r0,buf
+		sw -8(r14),r2
+		jl r15,getstr		% Call the get string subroutine
+		jl r15,strint		% Call the string -> int subroutine
+		addi r9,r13,0
+		addi r14,r14,68		% Move back to the current stack frame
+
+		sw 0(r12),r9		% Assign Data Member
 
 
-		addi r14,r14,0		% Load Data Member: arr
+		addi r14,r14,0		% Load Data Member: x
 
-		addi r12,r0,2		% Load the integer value 2 into r12
+		addi r12,r14,0		% Load the location of the variable x (r14)
 
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r11,r11,r12		% Load memory location of the array arr (r14)
+		subi r14,r14,0		% Unload Data Member
+		addi r14,r14,-4		% Load Data Member: y
+
+		addi r9,r14,0		% Load the location of the variable y (r14)
+
+		subi r14,r14,-4		% Unload Data Member
+
+		addi r8,r0,10		% Load the integer value 10 into r8
+		lw r9,0(r9)		% Load the value of r9
+		add r11,r9,r8		% + the values
+		lw r12,0(r12)		% Load the value of r12
+		cgt r8,r12,r11		% > the values
+ifthen1		bz r8,else1		% Check the if condition
+		addi r14,r14,0		% Load Data Member: x
+
+		addi r8,r14,0		% Load the location of the variable x (r14)
 
 		subi r14,r14,0		% Unload Data Member
 
-		addi r12,r0,25		% Load the integer value 25 into r12
-		sw 0(r11),r12		% Assign Data Member
+		addi r11,r0,10		% Load the integer value 10 into r11
+		lw r8,0(r8)		% Load the value of r8
+		add r12,r8,r11		% + the values
 
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		sw -28(r14),r12
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
 
-		addi r14,r14,0		% Load Data Member: arr
+		j endif1		% Jump to the end of the if statement
+else1		 nop		% Else statement
+		addi r14,r14,0		% Load Data Member: x
 
-		addi r11,r0,3		% Load the integer value 3 into r11
-
-		addi r12,r14,0		% Load the location of the variable arr (r14)
-		muli r11,r11,4		% Multiply the index by the element size
-		sub r12,r12,r11		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		addi r11,r0,12		% Load the integer value 12 into r11
-		sw 0(r12),r11		% Assign Data Member
-
-
-		addi r14,r14,0		% Load Data Member: arr
-
-		addi r12,r0,4		% Load the integer value 4 into r12
-
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r11,r11,r12		% Load memory location of the array arr (r14)
+		addi r12,r14,0		% Load the location of the variable x (r14)
 
 		subi r14,r14,0		% Unload Data Member
 
-		addi r12,r0,22		% Load the integer value 22 into r12
-		sw 0(r11),r12		% Assign Data Member
+		addi r11,r0,1		% Load the integer value 1 into r11
+		lw r12,0(r12)		% Load the value of r12
+		add r8,r12,r11		% + the values
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		sw -28(r14),r8
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
+
+endif1		 nop		% End of the if statement
+		addi r14,r14,-8		% Load Data Member: z
+
+		addi r8,r14,0		% Load the location of the variable z (r14)
+
+		subi r14,r14,-8		% Unload Data Member
+
+		addi r11,r0,0		% Load the integer value 0 into r11
+		sw 0(r8),r11		% Assign Data Member
 
 
-		addi r14,r14,0		% Load Data Member: arr
+gowhile1		 nop		% Go to the while loop
+		addi r14,r14,-8		% Load Data Member: z
 
-		addi r11,r0,5		% Load the integer value 5 into r11
+		addi r8,r14,0		% Load the location of the variable z (r14)
 
-		addi r12,r14,0		% Load the location of the variable arr (r14)
-		muli r11,r11,4		% Multiply the index by the element size
-		sub r12,r12,r11		% Load memory location of the array arr (r14)
+		subi r14,r14,-8		% Unload Data Member
 
-		subi r14,r14,0		% Unload Data Member
+		addi r11,r0,10		% Load the integer value 10 into r11
+		lw r8,0(r8)		% Load the value of r8
+		cle r12,r8,r11		% <= the values
+		bz r12,endwhile1		% Check the while condition
+		addi r14,r14,-8		% Load Data Member: z
 
-		addi r11,r0,11		% Load the integer value 11 into r11
-		sw 0(r12),r11		% Assign Data Member
+		addi r12,r14,0		% Load the location of the variable z (r14)
+
+		subi r14,r14,-8		% Unload Data Member
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		lw r12,0(r12)		% Get the integer value to write
+		sw -28(r14),r12
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
+
+		addi r14,r14,-8		% Load Data Member: z
+
+		addi r12,r14,0		% Load the location of the variable z (r14)
+
+		subi r14,r14,-8		% Unload Data Member
+		addi r14,r14,-8		% Load Data Member: z
+
+		addi r11,r14,0		% Load the location of the variable z (r14)
+
+		subi r14,r14,-8		% Unload Data Member
+
+		addi r8,r0,1		% Load the integer value 1 into r8
+		lw r11,0(r11)		% Load the value of r11
+		add r9,r11,r8		% + the values
+		sw 0(r12),r9		% Assign Data Member
 
 
-		addi r14,r14,0		% Load Data Member: arr
-
-		addi r12,r0,6		% Load the integer value 6 into r12
-
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-		muli r12,r12,4		% Multiply the index by the element size
-		sub r11,r11,r12		% Load memory location of the array arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		addi r12,r0,90		% Load the integer value 90 into r12
-		sw 0(r11),r12		% Assign Data Member
-
-
-		subi r14,r14,0
-		addi r14,r14,0		% Load Data Member: arr
-
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		addi r12,r0,7		% Load the integer value 7 into r12
-		addi r14,r14,0
-
-		%----------------- Function Call: main -> printArray -----------------
-		sw -88(r14),r12		% Pass param size
-		sw -84(r14),r11		% Pass param arr reference
-
-		addi r14,r14,-84		% Load the function stack frame
-		jl r15,printArray		% Jump to the function printArray
-		addi r14,r14,84		% Restore the stack frame
-		subi r14,r14,0
-		addi r14,r14,0		% Load Data Member: arr
-
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		addi r12,r0,7		% Load the integer value 7 into r12
-		addi r14,r14,0
-
-		%----------------- Function Call: main -> bubbleSort -----------------
-		sw -88(r14),r12		% Pass param size
-		sw -84(r14),r11		% Pass param arr reference
-
-		addi r14,r14,-84		% Load the function stack frame
-		jl r15,bubbleSort		% Jump to the function bubbleSort
-		addi r14,r14,84		% Restore the stack frame
-		subi r14,r14,0
-		addi r14,r14,0		% Load Data Member: arr
-
-		addi r11,r14,0		% Load the location of the variable arr (r14)
-
-		subi r14,r14,0		% Unload Data Member
-
-		addi r12,r0,7		% Load the integer value 7 into r12
-		addi r14,r14,0
-
-		%----------------- Function Call: main -> printArray -----------------
-		sw -88(r14),r12		% Pass param size
-		sw -84(r14),r11		% Pass param arr reference
-
-		addi r14,r14,-84		% Load the function stack frame
-		jl r15,printArray		% Jump to the function printArray
-		addi r14,r14,84		% Restore the stack frame
+		j gowhile1		% Go to the while loop
+endwhile1		 nop		% End of the while loop
 hlt		% Halt the program
 
 

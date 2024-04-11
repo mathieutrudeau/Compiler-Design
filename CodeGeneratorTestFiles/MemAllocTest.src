@@ -1,0 +1,56 @@
+func main() -> void
+{
+    let a : integer;    
+    let aa: integer[10];
+    let aaa: integer[10][10];
+    
+    let b : float;
+    let bb: float[10];
+    let bbb: float[10][10];
+
+    let c: OBJECT;
+    let cc: OBJECT[10];
+    let ccc: OBJECT[10][10];
+
+
+    // Assign values to integer variables
+    a=1;
+    aa[2]=2;
+    aaa[2][3]=3;
+
+    write(a);
+    write(b);
+    write(aa[2]);
+    write(aaa[2][3]);
+
+    // Assign values to float variables
+    b=1.1;
+    bb[2]=2.2;
+    bbb[2][3]=3.3;
+
+    write(b);
+    write(bb[2]);
+    write(bbb[2][3]);
+
+    // Assign values to OBJECT variables
+    c.A=1;
+    cc[2].A=2;
+    ccc[2][3].A=3;
+
+    write(c.A);
+    write(cc[2].A);
+    write(ccc[2][3].A);
+
+    write(c.A+cc[2].A+ccc[2][3].A);
+}
+
+
+struct OBJECT
+{
+    public let A: integer;
+    public let B: float;
+};
+
+impl OBJECT
+{
+}

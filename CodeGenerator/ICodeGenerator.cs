@@ -1,4 +1,5 @@
 
+using System.Collections.Concurrent;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -32,26 +33,7 @@ public interface IMoonCodeGenerator
     /// </remarks>
     public Stack<string> RegistersInUse { get; set; }
 
-    /// <summary>
-    /// The temporary variables in use.
-    /// </summary>
-    /// <value>The temporary variables.</value>
-    /// <remarks>
-    /// This stack will contain the temporary variables that are currently in use.
-    /// </remarks>
-    public Stack<ISymbolTableEntry> TempVarsInUse { get; set; }
-
-    /// <summary>
-    /// The temporary variables.
-    /// </summary>
-    /// <value>The temporary variables.</value>
-    /// <remarks>
-    /// This stack will contain the temporary variables that are available for use.
-    /// </remarks>
-    public Stack<ISymbolTableEntry> TempVars { get; set; }
-
-
-    public Stack<List<string>> FrameEscapes { get; set; }
+    
 
 
     /// <summary>
@@ -90,82 +72,10 @@ public interface IMoonCodeGenerator
     /// </remarks>
     public StringBuilder Data { get; set; }
 
-    /// <summary>
-    /// Gets the next available temporary variable number.
-    /// </summary>
-    /// <returns>The next available temporary variable number.</returns>
-    /// <remarks>
-    /// This method will return the next available temporary variable number.
-    /// </remarks>
-    public string GetTempVarNumber();
-
-    public void DeclareVariable(ISymbolTableEntry variableEntry);
-
-    public void LoadVariable(string type,ISymbolTableEntry variableEntry, ISymbolTable table);
-
-    public void LoadInteger(string value);
-
-    public void LoadFloat(string value);
-
-    public void NotExpr();
-
-    public void AddExpr(string operation, ISymbolTable currentTable, bool isFloat);
-
-    public void MultExpr(string operation, ISymbolTable currentTable, bool isFloat);
-
-    public void RelExpr(string operation, ISymbolTable currentTable, bool isFloat);
-
-    public void AssignFloat(ISymbolTable currentTable, bool isArray=false);
-    public void AssignInteger(ISymbolTable currentTable, bool isArray=false);
-
-    public void If(ref int ifCount);
-    public void Else(ref int ifCount);
-    public void EndIf(ref int ifCount);
-
-    public void While(ref int whileCount);
-
-    public void WhileCond(ref int whileCount);
-    public void EndWhile(ref int whileCount);
-
-
-    /// <summary>
-    /// Outputs the code to the console.
-    /// </summary>
-    /// <param name="currentTable">The current symbol table.</param>
-    /// <remarks>
-    /// This method will output the code to the console.
-    /// </remarks>
-    public void WriteInteger(ISymbolTable currentTable);
-
-    /// <summary>
-    /// Reads input from the console.
-    /// </summary>
-    /// <param name="currentTable">The current symbol table.</param>
-    /// <remarks>
-    /// This method will read input from the console.
-    /// </remarks>
-    public void ReadInteger(ISymbolTable currentTable, bool isArray=false);
-
-
-    public void WriteFloat(ISymbolTable currentTable);
-
-    public void ReadFloat(ISymbolTable currentTable, bool isArray=false);
-
 
     public void FunctionDeclaration(ISymbolTable currentTable);
 
     public void FunctionDeclarationEnd(ISymbolTable currentTable);
-
-    public void Return(ISymbolTable currentTable);
-    public void CallFunction(ISymbolTable currentTable, ISymbolTable functionTable);
-
-
-
-    public void ClassDeclaration(ISymbolTable currentTable);
-    public void ClassDeclarationEnd(ISymbolTable currentTable);
-
-
-
 
 
 
@@ -175,12 +85,19 @@ public interface IMoonCodeGenerator
     public void AddFramePointer(ISymbolTable currentTable);
     public void RemoveFramePointer(ISymbolTable currentTable);
 
+    /// <summary>
+    /// Declares a variable.
+    /// </summary>
+
     public void VarDeclaration(ISymbolTable currentTable, ISymbolTableEntry entry);
 
-    public void LoadDataMember(ISymbolTable currentTable, ISymbolTableEntry entry);
+    public void LoadDataMember(ISymbolTable currentTable, ISymbolTableEntry entry, ref bool isArray);
+
+    public void LoadClassIndex(ISymbolTable currentTable, ISymbolTableEntry? entry, ref bool isArray);
+
     public void UnloadDataMember(ISymbolTable currentTable, int offset);
 
-    public void LoadVariableFromDataMember(ISymbolTable currentTable, ISymbolTableEntry entry);
+    public void LoadVariableFromDataMember(ISymbolTable currentTable, ISymbolTableEntry entry, ref bool isArray);
 
     public void AssignDataMember(ISymbolTable currentTable, ISymbolTableEntry? entry, string type ,bool isArray=false);
 
@@ -188,7 +105,7 @@ public interface IMoonCodeGenerator
 
     public void LoadFloatValue(string value);
 
-    public void FunctionCall(ISymbolTable currentTable, ISymbolTable functionTable, int? offset=null);
+    public void FunctionCall(ISymbolTable currentTable, ISymbolTable functionTable, ref bool isArray, int? offset=null);
 
     public void Return(ISymbolTable currentTable, string type);
 
@@ -205,4 +122,15 @@ public interface IMoonCodeGenerator
     public void NotExpression(ISymbolTable currentTable, string type);
 
     public void NegExpression(ISymbolTable currentTable, string type);
+
+    public void While(ISymbolTable currentTable,ref int whileCount);
+
+    public void WhileCond(ISymbolTable currentTable,ref int whileCount);
+    public void EndWhile(ISymbolTable currentTable,ref int whileCount);
+
+    public void If(ISymbolTable currentTable,ref int ifCount);
+    public void Else(ISymbolTable currentTable,ref int ifCount);
+    public void EndIf(ISymbolTable currentTable,ref int ifCount);
+
+    public void Subroutines();
 }

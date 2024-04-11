@@ -1406,9 +1406,12 @@ public class ASTNode : IASTNode
         {
             case DotChain:
                 break;
+            case ArraySize:
+                return;
             case DataMember:
 
-                moonCodeGenerator.LoadDataMember(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme) != null ? currentTable.Lookup(LeftMostChild!.Token!.Lexeme)! : chainedTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
+                //moonCodeGenerator.Code.AppendLine($"\t\tLOAD scopeSize: {currentScopeSize}");
+                moonCodeGenerator.LoadDataMember(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme) != null ? currentTable.Lookup(LeftMostChild!.Token!.Lexeme)! : chainedTable.Lookup(LeftMostChild!.Token!.Lexeme)!, ref isArray);
 
                 // Check if the data member is a class, if so set the chained table to the class table
                 if (currentTable.Lookup(LeftMostChild!.Token!.Lexeme)?.Link != null)
@@ -1436,6 +1439,23 @@ public class ASTNode : IASTNode
                 moonCodeGenerator.FunctionDeclaration(currentTable);
                 //WriteLine("Function Declaration: " + currentTable.Name + " Scope Size: " + currentTable.ScopeSize);
                 break;
+            case WhileStat:
+                int whileCount = 0;
+                moonCodeGenerator.WhileCond(currentTable, ref whileCount);
+                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator, ref currentScopeSize, ref chainedTable, ref isArray);
+                moonCodeGenerator.While(currentTable, ref whileCount);
+                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator, ref currentScopeSize, ref chainedTable, ref isArray);
+                moonCodeGenerator.EndWhile(currentTable, ref whileCount);
+                return;
+            case IfStat:
+                LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator, ref currentScopeSize, ref chainedTable, ref isArray);
+                int labelCount = 0;
+                moonCodeGenerator.If(currentTable,ref labelCount);
+                LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator, ref currentScopeSize, ref chainedTable, ref isArray);
+                moonCodeGenerator.Else(currentTable,ref labelCount);
+                LeftMostChild!.RightSibling!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator, ref currentScopeSize, ref chainedTable, ref isArray);
+                moonCodeGenerator.EndIf(currentTable,ref labelCount);
+                return;
 
             default:
                 break;
@@ -1460,13 +1480,15 @@ public class ASTNode : IASTNode
                 break;
             case DataMember:
                 if (Parent!.Parent!.Operation != DotChain && Parent!.Operation == DotChain && RightSibling is null)
-                    moonCodeGenerator.LoadVariableFromDataMember(chainedTable, chainedTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
+                    moonCodeGenerator.LoadVariableFromDataMember(chainedTable, chainedTable.Lookup(LeftMostChild!.Token!.Lexeme)!,ref isArray);
                 else if (Parent!.Operation != DotChain)
                 {
                     // Load the variable location into a register and unload the data member from the stack
-                    moonCodeGenerator.LoadVariableFromDataMember(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
+                    moonCodeGenerator.LoadVariableFromDataMember(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!,ref isArray);
                     moonCodeGenerator.UnloadDataMember(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Offset);
                 }
+
+                moonCodeGenerator.LoadClassIndex(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!, ref isArray);
 
                 break;
             case FuncCall:
@@ -1479,9 +1501,9 @@ public class ASTNode : IASTNode
 
                 // Check if the function is a method or a free function
                 if (Parent!.Operation == DotChain)
-                    moonCodeGenerator.FunctionCall(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme) == null ? chainedTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link! : currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!, currentScopeSize);
+                    moonCodeGenerator.FunctionCall(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme) == null ? chainedTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link! : currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!,ref isArray, currentScopeSize);
                 else
-                    moonCodeGenerator.FunctionCall(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!);
+                    moonCodeGenerator.FunctionCall(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!,ref isArray);
                 break;
             case AParamList:
                 moonCodeGenerator.Code.AppendLine($"\t\taddi r14,r14,{currentScopeSize}");
@@ -1531,299 +1553,11 @@ public class ASTNode : IASTNode
                 break;
 
 
+
             default:
                 break;
         }
     }
-
-    // public void GenerateCode(ISymbolTable currentTable, IMoonCodeGenerator moonCodeGenerator, ref bool isArray)
-    // {
-
-    //     switch (Operation)
-    //     {
-
-
-    //         case WhileStat:
-
-    //             // Run the code generation for the while statement expression
-    //             int whileCount = 0;
-    //             moonCodeGenerator.WhileCond(ref whileCount);
-    //             LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
-
-    //             // Run the code generation for the while statement block
-    //             moonCodeGenerator.While(ref whileCount);
-    //             LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
-
-    //             moonCodeGenerator.EndWhile(ref whileCount);
-
-
-    //             return;
-
-    //         case IfStat:
-
-    //             // Run the code generation for the if statement expression
-    //             LeftMostChild!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
-
-    //             int labelCount = 0;
-
-    //             // Run the code generation for the if statement block
-    //             moonCodeGenerator.If(ref labelCount);
-    //             LeftMostChild!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
-    //             moonCodeGenerator.Else(ref labelCount);
-    //             // Run the code generation for the else statement block
-    //             LeftMostChild!.RightSibling!.RightSibling!.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
-    //             moonCodeGenerator.EndIf(ref labelCount);
-
-
-    //             return;
-
-
-    //         case StatBlock:
-
-    //             break;
-
-    //         case VarDecl:
-    //             /*
-    //                 The following steps are performed for a variable declaration:
-    //                 - Add the variable to the symbol table
-    //                 - Allocate memory for the variable
-    //             */
-
-    //             // Skip the variable declaration if it is a data member
-    //             if (Parent!.Operation == StructMember)
-    //                 return;
-
-    //             moonCodeGenerator.DeclareVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!);
-
-    //             break;
-
-    //         case FuncDef:
-    //             /*
-    //                 The following steps are performed for a function definition:
-    //                 - Set the current function tables
-    //             */
-
-    //             currentTable = currentTable.Lookup(LeftMostChild!.LeftMostChild!.Token!.Lexeme)!.Link!;
-
-    //             // Add the function frame to the symbol table
-    //             moonCodeGenerator.FunctionDeclaration(currentTable);
-
-    //             break;
-
-    //         case IntLit:
-    //             /*
-    //                 The following steps are performed for an integer literal:
-    //                 - Load the the integer into a register
-    //             */
-
-    //             if (Parent!.Operation == ArraySize)
-    //                 return;
-
-    //             moonCodeGenerator.LoadInteger(Token!.Lexeme);
-
-    //             break;
-
-    //         case FloatLit:
-    //             /*
-    //                 The following steps are performed for a float literal:
-    //                 - Load the the float into a register
-    //             */
-
-    //             moonCodeGenerator.LoadFloat(Token!.Lexeme);
-
-    //             break;
-
-
-    //         case StructDecl:
-    //             /*
-    //                 The following steps are performed for a class implementation:
-    //                 - Set the current class table
-    //             */
-
-    //             //currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
-
-    //             //moonCodeGenerator.ClassDeclaration(currentTable);
-
-    //             break;
-
-
-    //         case DotChain:
-
-    //             //if (LeftMostChild!.Operation == DataMember)
-    //            // {
-    //             //    moonCodeGenerator.ClassVariable(currentTable, currentTable.Lookup(LeftMostChild.LeftMostChild!.Token!.Lexeme)!);
-    //             //    WriteLine("Add Class Frame");
-    //             //}
-
-    //             break;
-
-    //         case DataMember:
-
-    //             //moonCodeGenerator.LoadVariable(currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!,currentTable);
-
-    //             break;
-
-    //         case IndexList:
-
-    //             // Skip the index list if no index is present
-    //             if (LeftMostChild is null)
-    //                 return;
-
-    //             break;
-
-    //         default:
-    //             break;
-    //     }
-
-    //     // Loop through the children of the current node in depth-first order
-    //     IASTNode? child = LeftMostChild;
-    //     while (child != null)
-    //     {
-    //         child.GenerateCode(currentTable, moonCodeGenerator,ref isArray);
-    //         child = child.RightSibling;
-    //     }
-
-    //     // Perform the following actions when exiting a node based on its operation
-    //     switch (Operation)
-    //     {
-    //         case FuncDef:
-
-    //             moonCodeGenerator.FunctionDeclarationEnd(currentTable);
-
-    //             break;
-
-    //         case WriteStat:
-
-
-
-    //             // Run the code generation for the write statement
-    //             if(GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()) == "float")
-    //                 moonCodeGenerator.WriteFloat(currentTable);
-    //             else
-    //                 moonCodeGenerator.WriteInteger(currentTable);
-
-    //             break;
-
-    //         case ReadStat:
-
-    //             // Check the type of the variable being read into
-    //             string readType = GetType(LeftMostChild!.LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>());
-
-    //             if (readType == "float")
-    //                 moonCodeGenerator.ReadFloat(currentTable, isArray);
-    //             else
-    //                 moonCodeGenerator.ReadInteger(currentTable, isArray);
-
-    //             isArray = false;
-
-    //             break;
-
-    //         case NotFactor:
-
-    //             moonCodeGenerator.NotExpr();
-
-    //             break;
-
-    //         case AddExpr:
-
-
-    //             moonCodeGenerator.AddExpr(LeftMostChild!.RightSibling!.Token!.Lexeme, currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>())=="float");
-
-    //             break;
-
-    //         case MultExpr:
-
-    //             moonCodeGenerator.MultExpr(LeftMostChild!.RightSibling!.Token!.Lexeme, currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>())=="float");
-
-    //             break;
-
-    //         case RelExpr:
-
-    //             moonCodeGenerator.RelExpr(LeftMostChild!.RightSibling!.Token!.Lexeme, currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>())=="float");
-
-    //             break;
-
-    //         case AssignStat:
-
-    //             // Check the type of the left hand side of the assignment
-    //             string type = GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>());
-
-    //             if (type == "float")
-    //                 moonCodeGenerator.AssignFloat(currentTable, isArray);
-    //             else
-    //                 moonCodeGenerator.AssignInteger(currentTable, isArray);
-
-    //             isArray = false;
-
-    //             break;
-
-
-    //         case DataMember:
-
-    //             if(Parent!.Operation == DotChain 
-    //             && Parent!.LeftMostChild!.LeftMostChild?.Token?.Lexeme == LeftMostChild!.Token?.Lexeme)
-    //             {
-    //                 moonCodeGenerator.Code.AppendLine($"addi r14,r14,{currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Offset}");
-
-    //                 currentTable = currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!;
-    //                 break;
-    //             }
-
-
-    //             moonCodeGenerator.LoadVariable(GetType(this,currentTable,currentTable,new List<ISemanticWarning>(),new List<ISemanticError>()),currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!, currentTable);
-
-    //             if(Parent!.Operation != AssignStat 
-    //             && Parent!.Parent!.Operation != ReadStat && isArray)
-    //             {
-    //                 moonCodeGenerator.FreeRegister(moonCodeGenerator.RegistersInUse.Pop());
-    //                 isArray = false;
-    //             }
-
-    //             break;
-
-    //         case IndexList:
-
-    //             isArray = true;
-
-
-    //             break;
-
-    //         case ReturnStat:
-
-    //             // Run the code generation for the return statement
-    //             moonCodeGenerator.Return(currentTable);
-
-    //             break;
-
-    //         case FuncCall:
-
-    //             if (LeftMostChild!.Operation == FuncCall)
-    //                 return;
-
-    //             // Run the code generation for the function call
-    //             moonCodeGenerator.CallFunction(currentTable, currentTable.Lookup(LeftMostChild!.Token!.Lexeme)!.Link!);
-
-    //             break;
-
-    //         case StructDecl:
-
-    //             //moonCodeGenerator.ClassDeclarationEnd(currentTable);
-
-    //             break;
-
-    //         case DotChain:
-
-    //             if (LeftMostChild!.Operation == DataMember)
-    //             {
-    //                 WriteLine("Remove Class Frame");
-    //             }
-
-    //             break;
-
-    //         default:
-    //             break;
-    //     }
-    // }
 
     #endregion Methods for Code Generation
 

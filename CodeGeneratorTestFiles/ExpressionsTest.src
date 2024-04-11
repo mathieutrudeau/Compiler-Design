@@ -1,0 +1,83 @@
+func main()->void
+{
+    // Test if statement
+
+    let a: integer;
+    let b: integer;
+
+    let addition: integer;
+    let subtraction: integer;
+    let multiplication: integer;
+    let division: integer;
+
+    read(a);
+    read(b);
+
+    while (a<>0) 
+    {
+
+    addition = a + b;
+    subtraction = a - b;
+    multiplication = a * b;
+    division = a / b;
+
+    
+
+    write(addition);
+    write(subtraction);
+    write(multiplication);
+    write(division);
+
+    write(a>b);
+    write(a<b);
+    write(a==b);
+    write(a<>b);
+    write(a>=b);
+    write(a<=b);
+    write(-a);
+    write(! a>b);
+    write(a & b);
+    write(a | b & 0);
+    write(a | b);
+    write(0 | 0);
+
+    // Compute the value of a complex expression (with parentheses)
+    write((a + b) * (a - b) * (a * b) * (a / b));
+
+    // Test an if statement
+    if (a > b)  then
+    {
+        write(a);
+    }
+    else 
+    {
+        write(b);
+    };
+
+
+    read(a);
+    read(b);
+    };
+
+
+// Test an if statement with a very complex condition
+if (a < b) then
+{
+    if (a > b+4) then
+    {
+        write(a);
+    }
+    else 
+    {
+        write(b);
+    };
+
+    write(a);
+}
+else 
+{
+    write(b);
+};
+
+    
+}

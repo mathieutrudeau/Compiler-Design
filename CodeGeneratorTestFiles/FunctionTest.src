@@ -1,0 +1,134 @@
+func main()->void
+{
+    let n:integer;
+    
+    read(n);
+
+    // call the recursive function
+    write(rec(n));
+
+    // call the function that calls the recursive function
+    write(reccall(n));
+
+    // Create a 2D array
+    let arr:integer[2][2];
+    arr[0][0] = 1;
+    arr[0][1] = 2;
+    arr[1][0] = 3;
+    arr[1][1] = 4;
+
+    // Show the array doubled
+    showArrayDoubled(arr, 2, 2);
+
+
+    // Create an object of OB2
+    let obj:OB2;
+
+    // Set the values of the object
+    obj.setCD(4, 4);
+
+    write(obj.getD());
+    write(obj.getC());
+
+    obj.A=4;
+    obj.B=3;
+
+    // Get the sum of the object
+    write(obj.getSum()+10);
+}
+
+struct OB {
+    public let A: integer;
+    public let B: integer;
+
+    public func getA()->integer;
+
+    public func getB()->integer;
+};
+
+struct OB2 inherits OB{
+    private let C: integer;
+    private let D: integer;
+
+    public func getC()->integer;
+
+    public func getD()->integer;
+
+    public func setCD(c:integer, d:integer)->void;
+
+    public func getSum()->integer;
+};
+
+impl OB{
+    func getA()->integer
+    {
+        return (A);
+    }
+
+    func getB()->integer
+    {
+        return (B);
+    }
+}
+
+impl OB2{
+    func getC()->integer
+    {
+        return (C);
+    }
+
+    func getD()->integer
+    {
+        return (D);
+    }
+
+    func setCD(c:integer, d:integer)->void
+    {
+        C = c;
+        D = d;
+    }
+
+    func getSum()->integer
+    {
+        return (A+B+C+D);
+    }
+}
+
+
+
+
+
+func showArrayDoubled(arr:integer[2][2], i:integer, j:integer)->void
+{
+    let counter1:integer;
+    let counter2:integer;
+
+    counter1 = 0;
+    while(counter1<i)
+    {
+        counter2 = 0;
+        while(counter2<j)
+        {
+            write(arr[counter1][counter2]*2);
+            counter2 = counter2 + 1;
+        };
+        counter1 = counter1 + 1;
+    };
+} 
+
+func reccall(n:integer)->integer
+{
+    return (rec(n));
+}
+
+func rec(n:integer)->integer
+{
+    if(n==0) then
+    {
+        return (0);
+    }
+    else
+    {
+        return (n+rec(n-1));
+    };
+}
