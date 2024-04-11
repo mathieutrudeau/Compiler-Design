@@ -197,4 +197,12 @@ public interface IMoonCodeGenerator
     public void Read(ISymbolTable currentTable, string type);
 
     public void AddExpression(ISymbolTable currentTable, string operation, string type);
+
+    public void MultExpression(ISymbolTable currentTable, string operation, string type);
+
+    public void RelExpression(ISymbolTable currentTable, string operation, string type);
+
+    public void NotExpression(ISymbolTable currentTable, string type);
+
+    public void NegExpression(ISymbolTable currentTable, string type);
 }

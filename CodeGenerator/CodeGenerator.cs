@@ -1338,10 +1338,10 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
         else if (type == "float")
         {
-            WriteLine("Assign Data Member: " + type);
-
             string pointReg = RegistersInUse.Pop();
             string valueLocReg = RegistersInUse.Pop();
+
+        
             string locReg = RegistersInUse.Pop();
 
             // Check if the valueLocReg is a value or a memory location
@@ -1673,8 +1673,6 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
         else
         {
-            WriteLine("Read Float");
-
             Code.AppendLine($"\n\t\t%----------------- READ Float -----------------");
 
             // Go to the next stack frame
@@ -1795,6 +1793,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
     }
 
+    #region Expressions
+
     public void AddExpression(ISymbolTable currentTable, string operation, string type)
     {
         WriteLine("Add Expression: " + operation + " Type: " + type);
@@ -1811,8 +1811,9 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         if (type == "integer")
         {
             // Get the registers
-            string reg1 = RegistersInUse.Pop();
             string reg2 = RegistersInUse.Pop();
+            string reg1 = RegistersInUse.Pop();
+            string resultReg = GetRegister();
 
             // Make sure the registers are not memory locations
             if (IsMemLoc(reg1))
@@ -1838,19 +1839,124 @@ public class MoonCodeGenerator : IMoonCodeGenerator
             else
             {
                 // Calculate the result
-                Code.AppendLine($"\t\t{op} {reg1},{reg1},{reg2}\t\t% {operation} the values");
+                Code.AppendLine($"\t\t{op} {resultReg},{reg1},{reg2}\t\t% {operation} the values");
             }
 
             // Free the registers that are not used anymore
+            FreeRegister(reg1);
             FreeRegister(reg2);
 
-            // Push the result back to the available registers
-            RegistersInUse.Push(reg1);
         }
         else if (type == "float")
         {
         }
     }
 
+    public void MultExpression(ISymbolTable currentTable, string operation, string type)
+    {
+        WriteLine("Mult Expression: " + operation + " Type: " + type);
+
+        string op = operation switch
+        {
+            "*" => "mul",
+            "/" => "div",
+            "&" => "and",
+            _ => "muli"
+        };
+
+        if (type == "integer")
+        {
+            // Get the registers
+            string reg2 = RegistersInUse.Pop();
+            string reg1 = RegistersInUse.Pop();
+            string resultReg = GetRegister();
+
+            // Make sure the registers are not memory locations
+            if (IsMemLoc(reg1))
+                Code.AppendLine($"\t\tlw {reg1},0({reg1})\t\t% Load the value of {reg1}");
+            if (IsMemLoc(reg2))
+                Code.AppendLine($"\t\tlw {reg2},0({reg2})\t\t% Load the value of {reg2}");
+
+            // Calculate the result
+            Code.AppendLine($"\t\t{op} {resultReg},{reg1},{reg2}\t\t% {operation} the values");
+
+            // Free the registers that are not used anymore
+            FreeRegister(reg1);
+            FreeRegister(reg2);
+        }
+        else if (type == "float")
+        {
+        }
+    }
+
+    public void RelExpression(ISymbolTable currentTable, string operation, string type)
+    {
+        WriteLine("Rel Expression: " + operation + " Type: " + type);
+
+        string op = operation switch
+        {
+            "<" => "clt",
+            "<=" => "cle",
+            ">" => "cgt",
+            ">=" => "cge",
+            "==" => "ceq",
+            "!=" => "cne",
+            _ => "ceq"
+        };
+
+        if (type == "integer")
+        {
+            // Get the registers
+            string reg2 = RegistersInUse.Pop();
+            string reg1 = RegistersInUse.Pop();
+            string resultReg = GetRegister();
+
+            // Make sure the registers are not memory locations
+            if (IsMemLoc(reg1))
+                Code.AppendLine($"\t\tlw {reg1},0({reg1})\t\t% Load the value of {reg1}");
+            if (IsMemLoc(reg2))
+                Code.AppendLine($"\t\tlw {reg2},0({reg2})\t\t% Load the value of {reg2}");
+
+            // Compare the values
+            Code.AppendLine($"\t\t{op} {resultReg},{reg1},{reg2}\t\t% {operation} the values");
+
+            // Free the registers that are not used anymore
+            FreeRegister(reg1);
+            FreeRegister(reg2);
+        }
+        else if (type == "float")
+        {
+        }
+    }
+
+    public void NotExpression(ISymbolTable currentTable, string type)
+    {
+        WriteLine("Not Expression");
+    }
+
+    public void NegExpression(ISymbolTable currentTable, string type)
+    {
+        if (type == "integer")
+        {
+            // Get the register
+            string reg = RegistersInUse.Pop();
+
+            // Make sure the register is not a memory location
+            if (IsMemLoc(reg))
+                Code.AppendLine($"\t\tlw {reg},0({reg})\t\t% Load the value of {reg}");
+
+            // Negate the value
+            Code.AppendLine($"\t\tmuli {reg},{reg},-1\t\t% Negate the value");
+
+            // Add the register back to the stack
+            RegistersInUse.Push(reg);
+        }
+        else if (type == "float")
+        {
+
+        }
+    }
+
+    #endregion Expressions
 
 }

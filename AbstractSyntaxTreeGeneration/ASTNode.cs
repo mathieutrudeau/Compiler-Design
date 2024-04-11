@@ -303,6 +303,7 @@ public class ASTNode : IASTNode
 
             case AddExpr:
             case MultExpr:
+            case RelExpr:
                 // When the operation is an addition or multiplication expression, the type is determined by the types of the operands
                 // The float type takes precedence over the integer type
                 return GetType(node.LeftMostChild!, currentTable, callScope, warnings, errors) == "float" || GetType(node.LeftMostChild!.RightSibling!.RightSibling!, currentTable, callScope, warnings, errors) == "float" ?
@@ -1512,6 +1513,18 @@ public class ASTNode : IASTNode
                 break;
             case AddExpr:
                 moonCodeGenerator.AddExpression(currentTable, LeftMostChild!.RightSibling!.Token!.Lexeme!, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()));
+                break;
+            case MultExpr:
+                moonCodeGenerator.MultExpression(currentTable, LeftMostChild!.RightSibling!.Token!.Lexeme!, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()));
+                break;
+            case RelExpr:
+                moonCodeGenerator.RelExpression(currentTable, LeftMostChild!.RightSibling!.Token!.Lexeme!, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()));
+                break;
+            case NotFactor:
+                moonCodeGenerator.NotExpression(currentTable, GetType(LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()));
+                break;
+            case SignFactor:
+                moonCodeGenerator.NegExpression(currentTable, GetType(LeftMostChild!.RightSibling!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()));
                 break;
             case ReadStat:
                 moonCodeGenerator.Read(currentTable, GetType(LeftMostChild!.LeftMostChild!, currentTable, currentTable, new List<ISemanticWarning>(), new List<ISemanticError>()));

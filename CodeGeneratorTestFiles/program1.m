@@ -443,20 +443,14 @@ entry		% Start of the program
 
 		subi r14,r14,-4		% Unload Data Member
 
-		%----------------- READ Float -----------------
-		addi r14,r14,-80		% Move to the next stack frame
-		addi r2,r0,entfloat		% Prompt for a float
-		sw -8(r14),r2
-		jl r15,putstr
-		addi r2,r0,buf
-		sw -8(r14),r2
-		jl r15,getfloat		% Call the float read subroutine
-		lw r11,-60(r14)		% Load the integer part of the float value
-		lw r10,-56(r14)		% Load the point position of the float value
+		addi r11,r0,0		% Load the integer value 1023 into r11
+		sl r11,8
 		addi r11,r11,0
-		addi r10,r10,0
-		addi r14,r14,80		% Move back to the current stack frame
-
+		sl r11,8
+		addi r11,r11,3
+		sl r11,8
+		addi r11,r11,255
+		addi r10,r0,2		% Load the point position of the float value 1023 into r10
 		sw 0(r12),r11		% Assign Data Member: Value
 		sw -4(r12),r10		% Assign Data Member: Point Position
 
@@ -474,41 +468,6 @@ entry		% Start of the program
 		addi r14,r14,-80		% Move to the next stack frame
 		sw -28(r14),r12		% Store the float value
 		sw -32(r14),r11		% Store the point position
-		jl r15,floatwrite		% Call the float write subroutine
-		addi r14,r14,80		% Move back to the current stack frame
-
-		addi r14,r14,-4		% Load Data Member: a
-
-		addi r11,r14,0		% Load the location of the variable a 
-
-		subi r14,r14,-4		% Unload Data Member
-
-		%----------------- Function Call: main -> f1 -----------------
-
-		addi r14,r14,-80		% Load the function stack frame
-		jl r15,f1		% Jump to the function f1
-		addi r14,r14,80		% Restore the stack frame
-		lw r12,-92(r14)		% Get the return value
-		lw r10,-96(r14)		% Get the point position
-		addi r12,r12,0
-		addi r10,r10,0
-		sw 0(r11),r12		% Assign Data Member: Value
-		sw -4(r11),r10		% Assign Data Member: Point Position
-
-
-		addi r14,r14,-4		% Load Data Member: a
-
-		addi r11,r14,0		% Load the location of the variable a 
-
-		subi r14,r14,-4		% Unload Data Member
-
-		lw r12,-4(r11)		% Load the point position of the float value to write
-		lw r11,0(r11)		% Load the float value to write
-
-		%----------------- WRITE Float -----------------
-		addi r14,r14,-80		% Move to the next stack frame
-		sw -28(r14),r11		% Store the float value
-		sw -32(r14),r12		% Store the point position
 		jl r15,floatwrite		% Call the float write subroutine
 		addi r14,r14,80		% Move back to the current stack frame
 
@@ -546,11 +505,11 @@ Fe		sw -4(r14),r15			% Tag the function call address
 		jl r15,Fa		% Jump to the function Fa
 		addi r14,r14,72		% Restore the stack frame
 
-		addi r12,r0,4		% Load the integer value 4 into r12
+		addi r11,r0,4		% Load the integer value 4 into r11
 
 		%----------------- WRITE Integer -----------------
 		addi r14,r14,-72		% Move to the next stack frame
-		sw -28(r14),r12
+		sw -28(r14),r11
 		jl r15,intwrite		% Call the integer write subroutine
 		addi r14,r14,72		% Move back to the current stack frame
 
@@ -598,51 +557,51 @@ Fa		sw 0(r14),r15			% Tag the function call address
 		sw -64(r14),r14		% Save buffer register r14
 		sw -68(r14),r15		% Save buffer register r15
 
-		lw r12,-8(r14)		% Load the class reference this
-		addi r12,r12,8		% Load the location of the variable B: <|DATA|>
+		lw r11,-8(r14)		% Load the class reference this
+		addi r11,r11,8		% Load the location of the variable B: <|DATA|>
 
-		addi r11,r0,2		% Load the integer value 2 into r11
-		sw 0(r12),r11		% Assign Data Member
-
-
-
-		lw r12,-8(r14)		% Load the class reference this
-		addi r12,r12,12		% Load the location of the variable A: <|DATA|>
-
-		addi r11,r0,4		% Load the integer value 4 into r11
-		sw 0(r12),r11		% Assign Data Member
+		addi r12,r0,2		% Load the integer value 2 into r12
+		sw 0(r11),r12		% Assign Data Member
 
 
 
-		lw r12,-8(r14)		% Load the class reference this
-		addi r12,r12,12		% Load the location of the variable A: <|DATA|>
+		lw r11,-8(r14)		% Load the class reference this
+		addi r11,r11,12		% Load the location of the variable A: <|DATA|>
+
+		addi r12,r0,4		% Load the integer value 4 into r12
+		sw 0(r11),r12		% Assign Data Member
+
+
+
+		lw r11,-8(r14)		% Load the class reference this
+		addi r11,r11,12		% Load the location of the variable A: <|DATA|>
 
 		%----------------- WRITE Integer -----------------
 		addi r14,r14,-68		% Move to the next stack frame
-		lw r12,0(r12)		% Get the integer value to write
-		sw -28(r14),r12
+		lw r11,0(r11)		% Get the integer value to write
+		sw -28(r14),r11
 		jl r15,intwrite		% Call the integer write subroutine
 		addi r14,r14,68		% Move back to the current stack frame
 
 
-		lw r12,-8(r14)		% Load the class reference this
-		addi r12,r12,8		% Load the location of the variable B: <|DATA|>
+		lw r11,-8(r14)		% Load the class reference this
+		addi r11,r11,8		% Load the location of the variable B: <|DATA|>
 
 		%----------------- WRITE Integer -----------------
 		addi r14,r14,-68		% Move to the next stack frame
-		lw r12,0(r12)		% Get the integer value to write
-		sw -28(r14),r12
+		lw r11,0(r11)		% Get the integer value to write
+		sw -28(r14),r11
 		jl r15,intwrite		% Call the integer write subroutine
 		addi r14,r14,68		% Move back to the current stack frame
 
 
-		lw r12,-8(r14)		% Load the class reference this
-		addi r12,r12,4		% Load the location of the variable AA: <|DATA|>
+		lw r11,-8(r14)		% Load the class reference this
+		addi r11,r11,4		% Load the location of the variable AA: <|DATA|>
 
 		%----------------- WRITE Integer -----------------
 		addi r14,r14,-68		% Move to the next stack frame
-		lw r12,0(r12)		% Get the integer value to write
-		sw -28(r14),r12
+		lw r11,0(r11)		% Get the integer value to write
+		sw -28(r14),r11
 		jl r15,intwrite		% Call the integer write subroutine
 		addi r14,r14,68		% Move back to the current stack frame
 
@@ -692,31 +651,31 @@ f1		sw -8(r14),r15			% Tag the function call address
 		sw 0(r14),r0		% Declare the variable a
 		addi r14,r14,0		% Load Data Member: a
 
-		addi r12,r14,0		% Load the location of the variable a 
+		addi r11,r14,0		% Load the location of the variable a 
 
 		subi r14,r14,0		% Unload Data Member
 
-		addi r11,r0,0		% Load the integer value 2332 into r11
-		sl r11,8
-		addi r11,r11,0
-		sl r11,8
-		addi r11,r11,9
-		sl r11,8
-		addi r11,r11,28
+		addi r12,r0,0		% Load the integer value 2332 into r12
+		sl r12,8
+		addi r12,r12,0
+		sl r12,8
+		addi r12,r12,9
+		sl r12,8
+		addi r12,r12,28
 		addi r10,r0,2		% Load the point position of the float value 2332 into r10
-		sw 0(r12),r11		% Assign Data Member: Value
-		sw -4(r12),r10		% Assign Data Member: Point Position
+		sw 0(r11),r12		% Assign Data Member: Value
+		sw -4(r11),r10		% Assign Data Member: Point Position
 
 
 		addi r14,r14,0		% Load Data Member: a
 
-		addi r12,r14,0		% Load the location of the variable a 
+		addi r11,r14,0		% Load the location of the variable a 
 
 		subi r14,r14,0		% Unload Data Member
-		lw r11,-4(r12)		% Load the point position of the float value
-		lw r12,0(r12)		% Load the value of r12
-		sw -12(r14),r12		% Store the return value
-		sw -16(r14),r11		% Store the point position of the float value
+		lw r12,-4(r11)		% Load the point position of the float value
+		lw r11,0(r11)		% Load the value of r11
+		sw -12(r14),r11		% Store the return value
+		sw -16(r14),r12		% Store the point position of the float value
 
 		%----------------- Restore Buffer -----------------
 		lw r1,-20(r14)		% Save buffer register r1
