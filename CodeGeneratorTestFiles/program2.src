@@ -15,5 +15,5 @@
 
 func main()->void
 {
-    write(-3.03);
+    write(-3.000003);
 }

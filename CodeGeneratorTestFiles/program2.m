@@ -7,6 +7,7 @@ floatwrite		 nop		% Start of the float write subroutine
 		sw -40(r14),r2		% Save contents of r2
 		sw -44(r14),r3		% Save contents of r3
 		sw -48(r14),r4		% Save contents of r4
+		sw -56(r14),r5		% Save contents of r5
 		sw -52(r14),r15		% Save the return address
 		lw r1,-28(r14)		% Load the float value
 		lw r2,-32(r14)		% Load the point position
@@ -42,14 +43,14 @@ showfrac		sw -8(r14),r4		% Store the fractional part of the float value
 		jl r15,intstr		% Call the int -> string subroutine
 		sw -8(r14),r13		% Store the string address
 		jl r15,lenstr		% Call the length of string subroutine
-		addi r1,r13,0		% Load the length of the fractional part
-whileleadingzero		lw r2,-32(r14)		% Load the point position
-		clt r2,r1,r2		% Check if the length of the fractional part is less than the point position
+		lw r2,-32(r14)		% Load the point position
+		sub r5,r2,r13		% Calculate the length of the fractional part
+whileleadingzero		cgti r2,r5,0		% Load the point position
 		bz r2,endwhileleadingzero		% If the length of the fractional part is not less than the point position, exit the loop
 			addi r2,r0,zero		% Load the zero character
 			sw -8(r14),r2		% Store the zero character
 			jl r15,putstr		% Call the print subroutine
-			addi r1,r1,1		% Decrement the length of the fractional part
+			subi r5,r5,1		% Decrement the length of the fractional part
 			j whileleadingzero		% Jump back to the start of the loop
 endwhileleadingzero
 		sw -8(r14),r4		% Store the fractional part of the float value
@@ -66,6 +67,7 @@ endwhileleadingzero
 		lw r2,-40(r14)		% Restore contents of r2
 		lw r3,-44(r14)		% Restore contents of r3
 		lw r4,-48(r14)		% Restore contents of r4
+		lw r5,-56(r14)		% Restore contents of r5
 		lw r15,-52(r14)		% Restore the return address
 		jr r15		% Return from the float write subroutine
 
@@ -456,14 +458,14 @@ cnefloat2		cne r15,r1,r3		% Perform the cne operation on the float values
 entry		% Start of the program
 		addi r14,r0,topaddr		% Set the top of the stack
 
-		addi r12,r0,0		% Load the integer value 303 into r12
+		addi r12,r0,0		% Load the integer value 3000003 into r12
 		sl r12,8
-		addi r12,r12,0
+		addi r12,r12,45
 		sl r12,8
-		addi r12,r12,1
+		addi r12,r12,198
 		sl r12,8
-		addi r12,r12,47
-		addi r11,r0,2		% Load the point position of the float value 303 into r11
+		addi r12,r12,195
+		addi r11,r0,6		% Load the point position of the float value 3000003 into r11
 		muli r12,r12,-1		% Negate the value
 
 		%----------------- WRITE Float -----------------

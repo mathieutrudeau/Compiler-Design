@@ -279,6 +279,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\tsw -40(r14),r2\t\t% Save contents of r2");
         Code.AppendLine($"\t\tsw -44(r14),r3\t\t% Save contents of r3");
         Code.AppendLine($"\t\tsw -48(r14),r4\t\t% Save contents of r4");
+        Code.AppendLine($"\t\tsw -56(r14),r5\t\t% Save contents of r5");
 
         // Save the return address
         Code.AppendLine($"\t\tsw -52(r14),r15\t\t% Save the return address");
@@ -330,16 +331,16 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\tjl r15,intstr\t\t% Call the int -> string subroutine");
         Code.AppendLine($"\t\tsw -8(r14),r13\t\t% Store the string address");
         Code.AppendLine($"\t\tjl r15,lenstr\t\t% Call the length of string subroutine");
-        Code.AppendLine($"\t\taddi r1,r13,0\t\t% Load the length of the fractional part");
+        Code.AppendLine($"\t\tlw r2,-32(r14)\t\t% Load the point position");
+        Code.AppendLine($"\t\tsub r5,r2,r13\t\t% Calculate the length of the fractional part");
 
         // Calculate the number of zeros to add to the fractional part
-        Code.AppendLine($"whileleadingzero\t\tlw r2,-32(r14)\t\t% Load the point position");
-        Code.AppendLine($"\t\tclt r2,r1,r2\t\t% Check if the length of the fractional part is less than the point position");
+        Code.AppendLine($"whileleadingzero\t\tcgti r2,r5,0\t\t% Load the point position");
         Code.AppendLine($"\t\tbz r2,endwhileleadingzero\t\t% If the length of the fractional part is not less than the point position, exit the loop");
         Code.AppendLine($"\t\t\taddi r2,r0,zero\t\t% Load the zero character");
         Code.AppendLine($"\t\t\tsw -8(r14),r2\t\t% Store the zero character");
         Code.AppendLine($"\t\t\tjl r15,putstr\t\t% Call the print subroutine");
-        Code.AppendLine($"\t\t\taddi r1,r1,1\t\t% Decrement the length of the fractional part");
+        Code.AppendLine($"\t\t\tsubi r5,r5,1\t\t% Decrement the length of the fractional part");
         Code.AppendLine($"\t\t\tj whileleadingzero\t\t% Jump back to the start of the loop");
         
         Code.AppendLine($"endwhileleadingzero\n\t\tsw -8(r14),r4\t\t% Store the fractional part of the float value");
@@ -359,6 +360,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\tlw r2,-40(r14)\t\t% Restore contents of r2");
         Code.AppendLine($"\t\tlw r3,-44(r14)\t\t% Restore contents of r3");
         Code.AppendLine($"\t\tlw r4,-48(r14)\t\t% Restore contents of r4");
+        Code.AppendLine($"\t\tlw r5,-56(r14)\t\t% Restore contents of r5");
 
         // Restore the return address
         Code.AppendLine($"\t\tlw r15,-52(r14)\t\t% Restore the return address");
