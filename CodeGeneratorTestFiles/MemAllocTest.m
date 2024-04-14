@@ -7,6 +7,7 @@ floatwrite		 nop		% Start of the float write subroutine
 		sw -40(r14),r2		% Save contents of r2
 		sw -44(r14),r3		% Save contents of r3
 		sw -48(r14),r4		% Save contents of r4
+		sw -56(r14),r5		% Save contents of r5
 		sw -52(r14),r15		% Save the return address
 		lw r1,-28(r14)		% Load the float value
 		lw r2,-32(r14)		% Load the point position
@@ -34,6 +35,24 @@ endwhilemodulus		 nop		% End of the while loop
 		sw -8(r14),r2		% Store the decimal point
 		jl r15,putstr		% Call the print subroutine
 
+		clt r2,r4,r0		% Check if the fractional part is negative
+		bnz r2,negfrac		% If the fractional part is negative, jump to negfrac
+showfrac		sw -8(r14),r4		% Store the fractional part of the float value
+		addi r2,r0,buf		% Load the buffer address
+		sw -12(r14),r2		% Store the buffer address
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13		% Store the string address
+		jl r15,lenstr		% Call the length of string subroutine
+		lw r2,-32(r14)		% Load the point position
+		sub r5,r2,r13		% Calculate the length of the fractional part
+whileleadingzero		cgti r2,r5,0		% Load the point position
+		bz r2,endwhileleadingzero		% If the length of the fractional part is not less than the point position, exit the loop
+			addi r2,r0,zero		% Load the zero character
+			sw -8(r14),r2		% Store the zero character
+			jl r15,putstr		% Call the print subroutine
+			subi r5,r5,1		% Decrement the length of the fractional part
+			j whileleadingzero		% Jump back to the start of the loop
+endwhileleadingzero
 		sw -8(r14),r4		% Store the fractional part of the float value
 		addi r2,r0,buf		% Load the buffer address
 		sw -12(r14),r2		% Store the buffer address
@@ -48,8 +67,12 @@ endwhilemodulus		 nop		% End of the while loop
 		lw r2,-40(r14)		% Restore contents of r2
 		lw r3,-44(r14)		% Restore contents of r3
 		lw r4,-48(r14)		% Restore contents of r4
+		lw r5,-56(r14)		% Restore contents of r5
 		lw r15,-52(r14)		% Restore the return address
 		jr r15		% Return from the float write subroutine
+
+negfrac		muli r4,r4,-1		% Make the fractional part positive
+		j showfrac		% Jump to showfrac
 
 		%----------------- Write integer subroutine -----------------
 
@@ -836,6 +859,7 @@ hlt		% Halt the program
 
 % Data Section
 nl		db 13, 10, 0
+zero		db "0", 0
 dot		db ".", 0
 entint		db "Enter an integer: ", 0
 entfloat		db "Enter a float: ", 0

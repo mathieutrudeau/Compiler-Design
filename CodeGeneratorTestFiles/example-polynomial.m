@@ -7,6 +7,7 @@ floatwrite		 nop		% Start of the float write subroutine
 		sw -40(r14),r2		% Save contents of r2
 		sw -44(r14),r3		% Save contents of r3
 		sw -48(r14),r4		% Save contents of r4
+		sw -56(r14),r5		% Save contents of r5
 		sw -52(r14),r15		% Save the return address
 		lw r1,-28(r14)		% Load the float value
 		lw r2,-32(r14)		% Load the point position
@@ -34,6 +35,24 @@ endwhilemodulus		 nop		% End of the while loop
 		sw -8(r14),r2		% Store the decimal point
 		jl r15,putstr		% Call the print subroutine
 
+		clt r2,r4,r0		% Check if the fractional part is negative
+		bnz r2,negfrac		% If the fractional part is negative, jump to negfrac
+showfrac		sw -8(r14),r4		% Store the fractional part of the float value
+		addi r2,r0,buf		% Load the buffer address
+		sw -12(r14),r2		% Store the buffer address
+		jl r15,intstr		% Call the int -> string subroutine
+		sw -8(r14),r13		% Store the string address
+		jl r15,lenstr		% Call the length of string subroutine
+		lw r2,-32(r14)		% Load the point position
+		sub r5,r2,r13		% Calculate the length of the fractional part
+whileleadingzero		cgti r2,r5,0		% Load the point position
+		bz r2,endwhileleadingzero		% If the length of the fractional part is not less than the point position, exit the loop
+			addi r2,r0,zero		% Load the zero character
+			sw -8(r14),r2		% Store the zero character
+			jl r15,putstr		% Call the print subroutine
+			subi r5,r5,1		% Decrement the length of the fractional part
+			j whileleadingzero		% Jump back to the start of the loop
+endwhileleadingzero
 		sw -8(r14),r4		% Store the fractional part of the float value
 		addi r2,r0,buf		% Load the buffer address
 		sw -12(r14),r2		% Store the buffer address
@@ -48,8 +67,12 @@ endwhilemodulus		 nop		% End of the while loop
 		lw r2,-40(r14)		% Restore contents of r2
 		lw r3,-44(r14)		% Restore contents of r3
 		lw r4,-48(r14)		% Restore contents of r4
+		lw r5,-56(r14)		% Restore contents of r5
 		lw r15,-52(r14)		% Restore the return address
 		jr r15		% Return from the float write subroutine
+
+negfrac		muli r4,r4,-1		% Make the fractional part positive
+		j showfrac		% Jump to showfrac
 
 		%----------------- Write integer subroutine -----------------
 
@@ -499,11 +522,14 @@ evaluate_QUADRATIC		sw -16(r14),r15			% Tag the function call address
 		sw -84(r14),r14		% Save buffer register r14
 		sw -88(r14),r15		% Save buffer register r15
 		sw -8(r14),r0		% Declare the variable result
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
 
+		subi r14,r14,-8		% Unload Data Member
+
 		lw r12,-28(r14)		% Load the class reference this
-		addi r12,r12,24		% Load the location of the variable a: <|DATA|>
+		addi r12,r12,0		% Load the location of the variable a: <|DATA|>
 
 		lw r10,-4(r12)		% Get the point position of the float value
 
@@ -512,12 +538,21 @@ evaluate_QUADRATIC		sw -16(r14),r15			% Tag the function call address
 		sw -4(r11),r10		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
 
+		subi r14,r14,-8		% Unload Data Member
+		addi r14,r14,-8		% Load Data Member: result
+
 		addi r12,r14,0		% Load the location of the variable result (r14)
 
+		subi r14,r14,-8		% Unload Data Member
+		addi r14,r14,0		% Load Data Member: x
+
 		addi r10,r14,0		% Load the location of the variable x (r14)
+
+		subi r14,r14,0		% Unload Data Member
 
 		%----------------- Mult Float Expression: * -----------------
 		lw r9,-4(r10)		% Get the point position of the float value
@@ -538,7 +573,7 @@ evaluate_QUADRATIC		sw -16(r14),r15			% Tag the function call address
 
 
 		lw r9,-28(r14)		% Load the class reference this
-		addi r9,r9,16		% Load the location of the variable b: <|DATA|>
+		addi r9,r9,-8		% Load the location of the variable b: <|DATA|>
 
 		%----------------- Add Float Expression: + -----------------
 		lw r10,-4(r9)		% Get the point position of the float value
@@ -559,12 +594,21 @@ evaluate_QUADRATIC		sw -16(r14),r15			% Tag the function call address
 		sw -4(r11),r8		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
 
+		subi r14,r14,-8		% Unload Data Member
+		addi r14,r14,-8		% Load Data Member: result
+
 		addi r12,r14,0		% Load the location of the variable result (r14)
 
+		subi r14,r14,-8		% Unload Data Member
+		addi r14,r14,0		% Load Data Member: x
+
 		addi r8,r14,0		% Load the location of the variable x (r14)
+
+		subi r14,r14,0		% Unload Data Member
 
 		%----------------- Mult Float Expression: * -----------------
 		lw r10,-4(r8)		% Get the point position of the float value
@@ -585,7 +629,7 @@ evaluate_QUADRATIC		sw -16(r14),r15			% Tag the function call address
 
 
 		lw r10,-28(r14)		% Load the class reference this
-		addi r10,r10,8		% Load the location of the variable c: <|DATA|>
+		addi r10,r10,-16		% Load the location of the variable c: <|DATA|>
 
 		%----------------- Add Float Expression: + -----------------
 		lw r8,-4(r10)		% Get the point position of the float value
@@ -606,8 +650,11 @@ evaluate_QUADRATIC		sw -16(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
+
+		subi r14,r14,-8		% Unload Data Member
 		lw r12,-4(r11)		% Load the point position of the float value
 		lw r11,0(r11)		% Load the value of r11
 		sw -20(r14),r11		% Store the return value
@@ -656,10 +703,16 @@ build_QUADRATIC		sw -48(r14),r15			% Tag the function call address
 		sw -112(r14),r14		% Save buffer register r14
 		sw -116(r14),r15		% Save buffer register r15
 		sw -24(r14),r0		% Declare the variable new_function
+		addi r14,r14,-24		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable a (r14)
 
+		subi r14,r14,-24		% Unload Data Member
+		addi r14,r14,0		% Load Data Member: A
+
 		addi r12,r14,0		% Load the location of the variable A (r14)
+
+		subi r14,r14,0		% Unload Data Member
 
 		lw r9,-4(r12)		% Get the point position of the float value
 
@@ -668,10 +721,16 @@ build_QUADRATIC		sw -48(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-24		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable b (r14)
 
+		subi r14,r14,-32		% Unload Data Member
+		addi r14,r14,-8		% Load Data Member: B
+
 		addi r12,r14,0		% Load the location of the variable B (r14)
+
+		subi r14,r14,-8		% Unload Data Member
 
 		lw r9,-4(r12)		% Get the point position of the float value
 
@@ -680,10 +739,16 @@ build_QUADRATIC		sw -48(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-24		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable c (r14)
 
+		subi r14,r14,-40		% Unload Data Member
+		addi r14,r14,-16		% Load Data Member: C
+
 		addi r12,r14,0		% Load the location of the variable C (r14)
+
+		subi r14,r14,-16		% Unload Data Member
 
 		lw r9,-4(r12)		% Get the point position of the float value
 
@@ -692,8 +757,11 @@ build_QUADRATIC		sw -48(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-24		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable new_function (r14)
+
+		subi r14,r14,-24		% Unload Data Member
 		sw -52(r14),r11		% Store the return value
 
 		%----------------- Restore Buffer -----------------
@@ -739,10 +807,16 @@ build_LINEAR		sw -32(r14),r15			% Tag the function call address
 		sw -96(r14),r14		% Save buffer register r14
 		sw -100(r14),r15		% Save buffer register r15
 		sw -16(r14),r0		% Declare the variable new_function
+		addi r14,r14,-16		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable a (r14)
 
+		subi r14,r14,-16		% Unload Data Member
+		addi r14,r14,0		% Load Data Member: A
+
 		addi r12,r14,0		% Load the location of the variable A (r14)
+
+		subi r14,r14,0		% Unload Data Member
 
 		lw r9,-4(r12)		% Get the point position of the float value
 
@@ -751,10 +825,16 @@ build_LINEAR		sw -32(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-16		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable b (r14)
 
+		subi r14,r14,-24		% Unload Data Member
+		addi r14,r14,-8		% Load Data Member: B
+
 		addi r12,r14,0		% Load the location of the variable B (r14)
+
+		subi r14,r14,-8		% Unload Data Member
 
 		lw r9,-4(r12)		% Get the point position of the float value
 
@@ -763,8 +843,11 @@ build_LINEAR		sw -32(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-16		% Load Data Member: new_function
 
 		addi r11,r14,0		% Load the location of the variable new_function (r14)
+
+		subi r14,r14,-16		% Unload Data Member
 		sw -36(r14),r11		% Store the return value
 
 		%----------------- Restore Buffer -----------------
@@ -810,8 +893,11 @@ evaluate_LINEAR		sw -16(r14),r15			% Tag the function call address
 		sw -84(r14),r14		% Save buffer register r14
 		sw -88(r14),r15		% Save buffer register r15
 		sw -8(r14),r0		% Declare the variable result
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
+
+		subi r14,r14,-8		% Unload Data Member
 
 		addi r12,r0,0		% Load the integer value 00 into r12
 		addi r9,r0,1		% Load the point position of the float value 00 into r9
@@ -819,13 +905,19 @@ evaluate_LINEAR		sw -16(r14),r15			% Tag the function call address
 		sw -4(r11),r9		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
 
+		subi r14,r14,-8		% Unload Data Member
+
 		lw r12,-28(r14)		% Load the class reference this
-		addi r12,r12,16		% Load the location of the variable a: <|DATA|>
+		addi r12,r12,0		% Load the location of the variable a: <|DATA|>
+		addi r14,r14,0		% Load Data Member: x
 
 		addi r9,r14,0		% Load the location of the variable x (r14)
+
+		subi r14,r14,0		% Unload Data Member
 
 		%----------------- Mult Float Expression: * -----------------
 		lw r8,-4(r9)		% Get the point position of the float value
@@ -846,7 +938,7 @@ evaluate_LINEAR		sw -16(r14),r15			% Tag the function call address
 
 
 		lw r8,-28(r14)		% Load the class reference this
-		addi r8,r8,8		% Load the location of the variable b: <|DATA|>
+		addi r8,r8,-8		% Load the location of the variable b: <|DATA|>
 
 		%----------------- Add Float Expression: + -----------------
 		lw r9,-4(r8)		% Get the point position of the float value
@@ -867,8 +959,11 @@ evaluate_LINEAR		sw -16(r14),r15			% Tag the function call address
 		sw -4(r11),r10		% Assign Data Member: Point Position
 
 
+		addi r14,r14,-8		% Load Data Member: result
 
 		addi r11,r14,0		% Load the location of the variable result (r14)
+
+		subi r14,r14,-8		% Unload Data Member
 		lw r12,-4(r11)		% Load the point position of the float value
 		lw r11,0(r11)		% Load the value of r11
 		sw -20(r14),r11		% Store the return value
@@ -938,11 +1033,15 @@ entry		% Start of the program
 		addi r12,r12,0		% Update the location register for the value a
 		lw r10,0(r12)		% Load the value of the data member a
 		sw 0(r11),r10		% Assign Data Member: a
+		lw r10,-4(r12)		% Load the point position of the data member a
+		sw -4(r11),r10		% Assign Data Member: a
 
 		addi r11,r11,-8		% Update the location register for the data member b
 		addi r12,r12,-8		% Update the location register for the value b
 		lw r10,0(r12)		% Load the value of the data member b
 		sw 0(r11),r10		% Assign Data Member: b
+		lw r10,-4(r12)		% Load the point position of the data member b
+		sw -4(r11),r10		% Assign Data Member: b
 
 		addi r14,r14,-16		% Load Data Member: f2
 
@@ -985,16 +1084,22 @@ entry		% Start of the program
 		addi r12,r12,0		% Update the location register for the value a
 		lw r10,0(r12)		% Load the value of the data member a
 		sw 0(r11),r10		% Assign Data Member: a
+		lw r10,-4(r12)		% Load the point position of the data member a
+		sw -4(r11),r10		% Assign Data Member: a
 
 		addi r11,r11,-8		% Update the location register for the data member b
 		addi r12,r12,-8		% Update the location register for the value b
 		lw r10,0(r12)		% Load the value of the data member b
 		sw 0(r11),r10		% Assign Data Member: b
+		lw r10,-4(r12)		% Load the point position of the data member b
+		sw -4(r11),r10		% Assign Data Member: b
 
 		addi r11,r11,-8		% Update the location register for the data member c
 		addi r12,r12,-8		% Update the location register for the value c
 		lw r10,0(r12)		% Load the value of the data member c
 		sw 0(r11),r10		% Assign Data Member: c
+		lw r10,-4(r12)		% Load the point position of the data member c
+		sw -4(r11),r10		% Assign Data Member: c
 
 		addi r14,r14,-40		% Load Data Member: counter
 
@@ -1077,6 +1182,72 @@ gowhile1		 nop		% Go to the while loop
 		jl r15,intwrite		% Call the integer write subroutine
 		addi r14,r14,108		% Move back to the current stack frame
 
+		addi r14,r14,0		% Load Data Member: f1
+		subi r14,r14,0
+		addi r14,r14,-40		% Load Data Member: counter
+
+		addi r10,r14,0		% Load the location of the variable counter (r14)
+
+		subi r14,r14,-40		% Unload Data Member
+		addi r14,r14,0
+
+		%----------------- Function Call: main -> evaluate -----------------
+		lw r11,-4(r10)		% Get the point position of the float value
+		lw r10,0(r10)		% Load param x value
+		sw -108(r14),r10		% Pass param x
+		sw -112(r14),r11		% Pass param x point position
+		sw -136(r14),r14		% Set the pointer to the current class instance
+
+		addi r14,r14,-108		% Load the function stack frame
+		jl r15,evaluate_LINEAR		% Jump to the function evaluate_LINEAR
+		addi r14,r14,108		% Restore the stack frame
+		lw r10,-128(r14)		% Get the return value
+		lw r11,-132(r14)		% Get the point position
+		addi r10,r10,0
+		addi r11,r11,0
+
+		subi r14,r14,0		% Unload Data Member
+
+		%----------------- WRITE Float -----------------
+		addi r14,r14,-108		% Move to the next stack frame
+		sw -28(r14),r10		% Store the float value
+		sw -32(r14),r11		% Store the point position
+		jl r15,floatwrite		% Call the float write subroutine
+		addi r14,r14,108		% Move back to the current stack frame
+
+		addi r14,r14,-16		% Load Data Member: f2
+		subi r14,r14,-16
+		addi r14,r14,-40		% Load Data Member: counter
+
+		addi r11,r14,0		% Load the location of the variable counter (r14)
+
+		subi r14,r14,-40		% Unload Data Member
+		addi r14,r14,-16
+
+		%----------------- Function Call: main -> evaluate -----------------
+		lw r10,-4(r11)		% Get the point position of the float value
+		lw r11,0(r11)		% Load param x value
+		sw -92(r14),r11		% Pass param x
+		sw -96(r14),r10		% Pass param x point position
+		sw -120(r14),r14		% Set the pointer to the current class instance
+
+		addi r14,r14,-92		% Load the function stack frame
+		jl r15,evaluate_QUADRATIC		% Jump to the function evaluate_QUADRATIC
+		addi r14,r14,92		% Restore the stack frame
+		lw r11,-112(r14)		% Get the return value
+		lw r10,-116(r14)		% Get the point position
+		addi r11,r11,0
+		addi r10,r10,0
+
+		subi r14,r14,-16		% Unload Data Member
+
+		%----------------- WRITE Float -----------------
+		addi r14,r14,-108		% Move to the next stack frame
+		sw -28(r14),r11		% Store the float value
+		sw -32(r14),r10		% Store the point position
+		jl r15,floatwrite		% Call the float write subroutine
+		addi r14,r14,108		% Move back to the current stack frame
+
 		addi r14,r14,-40		% Load Data Member: counter
 
 		addi r10,r14,0		% Load the location of the variable counter (r14)
@@ -1104,6 +1275,7 @@ hlt		% Halt the program
 
 % Data Section
 nl		db 13, 10, 0
+zero		db "0", 0
 dot		db ".", 0
 entint		db "Enter an integer: ", 0
 entfloat		db "Enter a float: ", 0

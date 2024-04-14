@@ -1,14 +1,6 @@
 
 
 
-
-
-
-
-
-
-
-
 struct C1
 {
     public let AA:integer;
@@ -17,6 +9,8 @@ struct C1
     public func sum()->integer;
 
     public func print()->void;
+
+    public func reset()->void;
 };
 
 impl C1
@@ -28,8 +22,21 @@ impl C1
 
     func print()->void
     {
+        let nf:C1;
+
         write(AA);
         write(BB);
+
+        nf.AA=AA;
+
+        write(nf.AA);
+        write(300);
+    }
+
+    func reset()->void
+    {
+        AA=2;
+        BB=10;
     }
 }
 
@@ -51,4 +58,9 @@ func main()->void
     s=c.sum();
 
     write(s);
+
+    c.reset();
+
+
+    write(c.sum());
 }

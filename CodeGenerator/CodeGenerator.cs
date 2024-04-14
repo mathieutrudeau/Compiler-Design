@@ -152,7 +152,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
 
 
-        private void FloatOpSubroutines()
+    private void FloatOpSubroutines()
     {
         string[] addOps = new string[] { "add", "mul", "div", "sub", "clt", "cle", "cgt", "cge", "ceq", "cne" };
 
@@ -324,7 +324,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\n\t\tclt r2,r4,r0\t\t% Check if the fractional part is negative");
         Code.AppendLine($"\t\tbnz r2,negfrac\t\t% If the fractional part is negative, jump to negfrac");
         Code.AppendLine($"showfrac\t\tsw -8(r14),r4\t\t% Store the fractional part of the float value");
-        
+
         // Get the length of the fractional part
         Code.AppendLine($"\t\taddi r2,r0,buf\t\t% Load the buffer address");
         Code.AppendLine($"\t\tsw -12(r14),r2\t\t% Store the buffer address");
@@ -342,7 +342,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         Code.AppendLine($"\t\t\tjl r15,putstr\t\t% Call the print subroutine");
         Code.AppendLine($"\t\t\tsubi r5,r5,1\t\t% Decrement the length of the fractional part");
         Code.AppendLine($"\t\t\tj whileleadingzero\t\t% Jump back to the start of the loop");
-        
+
         Code.AppendLine($"endwhileleadingzero\n\t\tsw -8(r14),r4\t\t% Store the fractional part of the float value");
         Code.AppendLine($"\t\taddi r2,r0,buf\t\t% Load the buffer address");
         Code.AppendLine($"\t\tsw -12(r14),r2\t\t% Store the buffer address");
@@ -424,7 +424,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Return from the subroutine
         Code.AppendLine($"\t\tjr r15\t\t% Return from the float read subroutine");
     }
-    
+
 
 
 
@@ -451,7 +451,11 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Check if the current table contains a class reference
         if (currentTable.Entries.Any(e => e.Kind == SymbolEntryKind.ClassAddress))
         {
-            return;
+            if (entry.Kind == SymbolEntryKind.ClassAddress || entry.Kind == SymbolEntryKind.Data)
+                return;
+            //Code.AppendLine("% Load Data Member: " + entry.Name+ " with offset: " + offset);
+            //WriteLine("Load Data Member: " + entry.Name + " with offset: " + offset);
+            //return;
         }
 
         if (isArray)
@@ -472,7 +476,12 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         // Check if the current table contains a class reference
         if (currentTable.Entries.Any(e => e.Kind == SymbolEntryKind.ClassAddress))
         {
-            return;
+            if(Code.ToString().Split('\n').Where(c => c!="").Last().Contains("DATA"))
+                return;
+            //if(currentTable.Entries.Any(e => e.Kind == SymbolEntryKind.Variable && e.Offset == offset))
+            //Code.AppendLine("% Unload Data Member : offset: " + offset);
+            //WriteLine("Unload Data Member: offset: " + offset);
+            //   return;
         }
 
         //WriteLine("Unload Data Member");
@@ -623,11 +632,28 @@ public class MoonCodeGenerator : IMoonCodeGenerator
                 Code.AppendLine($"\n\t\taddi {locReg},{locReg},{offset}\t\t% Update the location register for the data member {dataMember.Name}");
                 Code.AppendLine($"\t\taddi {valueLocReg},{valueLocReg},{offset}\t\t% Update the location register for the value {dataMember.Name}");
 
-                // Load the value from the data member
-                Code.AppendLine($"\t\tlw {valueReg},0({valueLocReg})\t\t% Load the value of the data member {dataMember.Name}");
+                if (dataMember.Type == "float")
+                {
+                    // Load the value from the data member
+                    Code.AppendLine($"\t\tlw {valueReg},0({valueLocReg})\t\t% Load the value of the data member {dataMember.Name}");
 
-                // Store the value
-                Code.AppendLine($"\t\tsw 0({locReg}),{valueReg}\t\t% Assign Data Member: {dataMember.Name}");
+                    // Store the value
+                    Code.AppendLine($"\t\tsw 0({locReg}),{valueReg}\t\t% Assign Data Member: {dataMember.Name}");
+                
+                    // Load the point position from the data member
+                    Code.AppendLine($"\t\tlw {valueReg},-4({valueLocReg})\t\t% Load the point position of the data member {dataMember.Name}");
+
+                    // Store the point position
+                    Code.AppendLine($"\t\tsw -4({locReg}),{valueReg}\t\t% Assign Data Member: {dataMember.Name}");
+                }
+                else
+                {
+                    // Load the value from the data member
+                    Code.AppendLine($"\t\tlw {valueReg},0({valueLocReg})\t\t% Load the value of the data member {dataMember.Name}");
+
+                    // Store the value
+                    Code.AppendLine($"\t\tsw 0({locReg}),{valueReg}\t\t% Assign Data Member: {dataMember.Name}");
+                }
 
                 offset = -dataMember.Size;
 
@@ -761,6 +787,9 @@ public class MoonCodeGenerator : IMoonCodeGenerator
         }
         else
         {
+            // Get the offset of the variable
+            int offset = entry.Offset;
+
             Code.AppendLine($"\n\t\taddi {locReg},r14,0\t\t% Load the location of the variable {entry.Name} (r14)");
             if (entry.Kind == SymbolEntryKind.Parameter && entry.Type.Contains('['))
             {
@@ -783,7 +812,7 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
             //WriteLine("Element Size: " + elementSize);
 
-            if (elementSize<4)
+            if (elementSize < 4)
                 elementSize = 4;
 
             // Get the dimensions of the array
