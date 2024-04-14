@@ -11,7 +11,7 @@ public static class CompilerDriver
     public static void GenerateCode(string sourceFolder)
     {
         // Get all the test files
-        string[] testFiles = Directory.GetFiles(sourceFolder, "program2.src");
+        string[] testFiles = Directory.GetFiles(sourceFolder, "*.src");
 
         // Run the Code Generator on each file
         foreach (string testFile in testFiles)
