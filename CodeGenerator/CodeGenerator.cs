@@ -736,7 +736,8 @@ public class MoonCodeGenerator : IMoonCodeGenerator
 
             // Get the offset of the data member
             int offset = classTable.Entries.Where(e => e.Name == entry.Name).First().Offset;
-            offset += classTable.ScopeSize;
+            //offset += classTable.ScopeSize;
+            //offset = -offset;
 
             // Add the offset to the class reference
             Code.AppendLine($"\t\taddi {locReg},{locReg},{offset}\t\t% Load the location of the variable {entry.Name}: <|DATA|>");

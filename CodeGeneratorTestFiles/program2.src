@@ -9,11 +9,46 @@
 
 
 
+struct C1
+{
+    public let AA:integer;
+    public let BB:integer;
 
+    public func sum()->integer;
+
+    public func print()->void;
+};
+
+impl C1
+{
+    func sum() -> integer
+    {
+        return (AA+BB);
+    }
+
+    func print()->void
+    {
+        write(AA);
+        write(BB);
+    }
+}
 
 
 
 func main()->void
 {
-    write(-3.000003);
+    let c:C1;
+    let s:integer;
+
+    c.AA=3;
+    c.BB=2;
+
+    write(c.AA);
+    write(c.BB);
+
+    c.print();
+
+    s=c.sum();
+
+    write(s);
 }

@@ -453,27 +453,222 @@ cnefloat2		cne r15,r1,r3		% Perform the cne operation on the float values
 
 		%----------------- Div Float Subroutine -----------------
 
+		%==================== Function/Method: sum ====================
+
+sum_C1		sw 0(r14),r15			% Tag the function call address
+
+		%----------------- Save Buffer -----------------
+		sw -12(r14),r1		% Save buffer register r1
+		sw -16(r14),r2		% Save buffer register r2
+		sw -20(r14),r3		% Save buffer register r3
+		sw -24(r14),r4		% Save buffer register r4
+		sw -28(r14),r5		% Save buffer register r5
+		sw -32(r14),r6		% Save buffer register r6
+		sw -36(r14),r7		% Save buffer register r7
+		sw -40(r14),r8		% Save buffer register r8
+		sw -44(r14),r9		% Save buffer register r9
+		sw -48(r14),r10		% Save buffer register r10
+		sw -52(r14),r11		% Save buffer register r11
+		sw -56(r14),r12		% Save buffer register r12
+		sw -60(r14),r13		% Save buffer register r13
+		sw -64(r14),r14		% Save buffer register r14
+		sw -68(r14),r15		% Save buffer register r15
+
+		lw r12,-8(r14)		% Load the class reference this
+		addi r12,r12,0		% Load the location of the variable AA: <|DATA|>
+
+		lw r11,-8(r14)		% Load the class reference this
+		addi r11,r11,-4		% Load the location of the variable BB: <|DATA|>
+		lw r12,0(r12)		% Load the value of r12
+		lw r11,0(r11)		% Load the value of r11
+		add r10,r12,r11		% + the values
+		sw -4(r14),r10		% Store the return value
+
+		%----------------- Restore Buffer -----------------
+		lw r1,-12(r14)		% Save buffer register r1
+		lw r2,-16(r14)		% Save buffer register r2
+		lw r3,-20(r14)		% Save buffer register r3
+		lw r4,-24(r14)		% Save buffer register r4
+		lw r5,-28(r14)		% Save buffer register r5
+		lw r6,-32(r14)		% Save buffer register r6
+		lw r7,-36(r14)		% Save buffer register r7
+		lw r8,-40(r14)		% Save buffer register r8
+		lw r9,-44(r14)		% Save buffer register r9
+		lw r10,-48(r14)		% Save buffer register r10
+		lw r11,-52(r14)		% Save buffer register r11
+		lw r12,-56(r14)		% Save buffer register r12
+		lw r13,-60(r14)		% Save buffer register r13
+		lw r14,-64(r14)		% Save buffer register r14
+		lw r15,-68(r14)		% Save buffer register r15
+		lw r15,0(r14)			% Jump back to the return address
+		jr r15
+
+		%==================== End of sum ====================
+
+
+		%==================== Function/Method: print ====================
+
+print_C1		sw 0(r14),r15			% Tag the function call address
+
+		%----------------- Save Buffer -----------------
+		sw -12(r14),r1		% Save buffer register r1
+		sw -16(r14),r2		% Save buffer register r2
+		sw -20(r14),r3		% Save buffer register r3
+		sw -24(r14),r4		% Save buffer register r4
+		sw -28(r14),r5		% Save buffer register r5
+		sw -32(r14),r6		% Save buffer register r6
+		sw -36(r14),r7		% Save buffer register r7
+		sw -40(r14),r8		% Save buffer register r8
+		sw -44(r14),r9		% Save buffer register r9
+		sw -48(r14),r10		% Save buffer register r10
+		sw -52(r14),r11		% Save buffer register r11
+		sw -56(r14),r12		% Save buffer register r12
+		sw -60(r14),r13		% Save buffer register r13
+		sw -64(r14),r14		% Save buffer register r14
+		sw -68(r14),r15		% Save buffer register r15
+
+		lw r10,-8(r14)		% Load the class reference this
+		addi r10,r10,0		% Load the location of the variable AA: <|DATA|>
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		lw r10,0(r10)		% Get the integer value to write
+		sw -28(r14),r10
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
+
+
+		lw r10,-8(r14)		% Load the class reference this
+		addi r10,r10,-4		% Load the location of the variable BB: <|DATA|>
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		lw r10,0(r10)		% Get the integer value to write
+		sw -28(r14),r10
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
+
+
+		%----------------- Restore Buffer -----------------
+		lw r1,-12(r14)		% Save buffer register r1
+		lw r2,-16(r14)		% Save buffer register r2
+		lw r3,-20(r14)		% Save buffer register r3
+		lw r4,-24(r14)		% Save buffer register r4
+		lw r5,-28(r14)		% Save buffer register r5
+		lw r6,-32(r14)		% Save buffer register r6
+		lw r7,-36(r14)		% Save buffer register r7
+		lw r8,-40(r14)		% Save buffer register r8
+		lw r9,-44(r14)		% Save buffer register r9
+		lw r10,-48(r14)		% Save buffer register r10
+		lw r11,-52(r14)		% Save buffer register r11
+		lw r12,-56(r14)		% Save buffer register r12
+		lw r13,-60(r14)		% Save buffer register r13
+		lw r14,-64(r14)		% Save buffer register r14
+		lw r15,-68(r14)		% Save buffer register r15
+		lw r15,0(r14)			% Jump back to the return address
+		jr r15
+
+		%==================== End of print ====================
+
+
 		%==================== Function/Method: main ====================
 
 entry		% Start of the program
 		addi r14,r0,topaddr		% Set the top of the stack
+		sw 0(r14),r0		% Declare the variable c
+		sw -8(r14),r0		% Declare the variable s
+		addi r14,r14,0		% Load Data Member: c
+		addi r14,r14,0		% Load Data Member: AA
 
-		addi r12,r0,0		% Load the integer value 3000003 into r12
-		sl r12,8
-		addi r12,r12,45
-		sl r12,8
-		addi r12,r12,198
-		sl r12,8
-		addi r12,r12,195
-		addi r11,r0,6		% Load the point position of the float value 3000003 into r11
-		muli r12,r12,-1		% Negate the value
+		addi r10,r14,0		% Load the location of the variable AA (r14)
 
-		%----------------- WRITE Float -----------------
-		addi r14,r14,-56		% Move to the next stack frame
-		sw -28(r14),r12		% Store the float value
-		sw -32(r14),r11		% Store the point position
-		jl r15,floatwrite		% Call the float write subroutine
-		addi r14,r14,56		% Move back to the current stack frame
+		subi r14,r14,0		% Unload Data Member
+
+		addi r11,r0,3		% Load the integer value 3 into r11
+		sw 0(r10),r11		% Assign Data Member
+
+
+		addi r14,r14,0		% Load Data Member: c
+		addi r14,r14,-4		% Load Data Member: BB
+
+		addi r10,r14,0		% Load the location of the variable BB (r14)
+
+		subi r14,r14,-4		% Unload Data Member
+
+		addi r11,r0,2		% Load the integer value 2 into r11
+		sw 0(r10),r11		% Assign Data Member
+
+
+		addi r14,r14,0		% Load Data Member: c
+		addi r14,r14,0		% Load Data Member: AA
+
+		addi r10,r14,0		% Load the location of the variable AA (r14)
+
+		subi r14,r14,0		% Unload Data Member
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		lw r10,0(r10)		% Get the integer value to write
+		sw -28(r14),r10
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
+
+		addi r14,r14,0		% Load Data Member: c
+		addi r14,r14,-4		% Load Data Member: BB
+
+		addi r10,r14,0		% Load the location of the variable BB (r14)
+
+		subi r14,r14,-4		% Unload Data Member
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		lw r10,0(r10)		% Get the integer value to write
+		sw -28(r14),r10
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
+
+		addi r14,r14,0		% Load Data Member: c
+
+		%----------------- Function Call: main -> print -----------------
+		sw -76(r14),r14		% Set the pointer to the current class instance
+
+		addi r14,r14,-68		% Load the function stack frame
+		jl r15,print_C1		% Jump to the function print_C1
+		addi r14,r14,68		% Restore the stack frame
+
+		subi r14,r14,0		% Unload Data Member
+		addi r14,r14,-8		% Load Data Member: s
+
+		addi r10,r14,0		% Load the location of the variable s (r14)
+
+		subi r14,r14,-8		% Unload Data Member
+		addi r14,r14,0		% Load Data Member: c
+
+		%----------------- Function Call: main -> sum -----------------
+		sw -76(r14),r14		% Set the pointer to the current class instance
+
+		addi r14,r14,-68		% Load the function stack frame
+		jl r15,sum_C1		% Jump to the function sum_C1
+		addi r14,r14,68		% Restore the stack frame
+		lw r11,-72(r14)		% Get the return value
+		addi r11,r11,0
+
+		subi r14,r14,0		% Unload Data Member
+		sw 0(r10),r11		% Assign Data Member
+
+
+		addi r14,r14,-8		% Load Data Member: s
+
+		addi r10,r14,0		% Load the location of the variable s (r14)
+
+		subi r14,r14,-8		% Unload Data Member
+
+		%----------------- WRITE Integer -----------------
+		addi r14,r14,-68		% Move to the next stack frame
+		lw r10,0(r10)		% Get the integer value to write
+		sw -28(r14),r10
+		jl r15,intwrite		% Call the integer write subroutine
+		addi r14,r14,68		% Move back to the current stack frame
 
 hlt		% Halt the program
 
