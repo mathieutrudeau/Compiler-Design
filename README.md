@@ -1,6 +1,8 @@
 # Compiler-Design
 Compiler Design and Implementation for COMP 442 (Winter 2024) at Concordia University.
 
+Note that this Compiler was made to be simple (proof of concept) and as such is not optimized.
+Furthermore, the compilation process turns the source code into Moon assembly code, which is then itself compiled using a C program.
 
 ## Tokenizer (Also called Scanner or Lexer)
 A tokenizer, also known as a lexer (lexical analyzer), is the first phase of a compiler. Its main role is to take raw source code as input and convert it into a stream of tokens.
@@ -8,6 +10,8 @@ A tokenizer, also known as a lexer (lexical analyzer), is the first phase of a c
 Each token represents a logically cohesive sequence of characters, such as an identifier, keyword, separator, operator, or literal. For example, in the code int x = 10;, the tokenizer would produce the tokens int, x, =, 10, and ;.
 
 ### Tokenizer Implementation Details
+
+Each token can be represented by a Deterministic Finite Automaton (DFA) and as such can also be represented by its Regular Expression (RegEx) equivalent. The implementation defines a RegEx in order to identify any valid token. 
 
 
 
