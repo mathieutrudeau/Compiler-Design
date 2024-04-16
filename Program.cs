@@ -14,12 +14,12 @@ class Program
 {
     static void Main(string[] args)
     {
-        foreach (string arg in args)
-        {
-            CompileSourceFile(arg);
-        }
+        // foreach (string arg in args)
+        // {
+        //     CompileSourceFile(arg);
+        // }
 
-        //GenerateTokens("ScannerTestFiles");
+        GenerateTokens("ScannerTestFiles");
         //ParseFile("ParserTestFiles");
         //GenerateSymbolTable("SymbolTableTestFiles");
 

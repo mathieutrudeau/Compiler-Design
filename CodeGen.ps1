@@ -63,10 +63,12 @@ function Extract-Name {
         [string]$symbol
     )
 
+    # Remove the angle brackets and make the first letter uppercase
     if (Is-NonTerminal -symbol $symbol) {
         $prodName = $symbol.Replace("<", "").Replace(">", "").Trim()
         $prodName = ($prodName.Substring(0, 1).ToUpper() + $prodName.Substring(1)).Trim()
 
+        # Replace any dashes with underscores
         $prodName = $prodName.Replace("-", "_")
 
         if ($prodName -eq "START") {
@@ -162,6 +164,17 @@ function Get-Enum-Value {
 }
 
 
+<#
+.SYNOPSIS
+    Processes a production
+.DESCRIPTION
+    This function processes a production. It splits the production into the left and right side.
+    If the non-terminal is not in the dictionary, it adds it. If it is in the dictionary, it appends the production to the list of productions.
+.PARAMETER production
+    The production to process
+.EXAMPLE
+    Process-Production -production "<START> ::= <expr>"
+#>
 function Process-Production {
     param(
         [string]$production
@@ -181,14 +194,29 @@ function Process-Production {
     }   
 }
 
+<#
+.SYNOPSIS
+    Displays the grammar
+.DESCRIPTION
+    This function displays the grammar. It loops through each production in the grammar dictionary and displays it.
+.PARAMETER grammarDict
+    The grammar dictionary
+.EXAMPLE
+    Show-Grammar -grammarDict $languageDict
+#>
 function Show-Grammar {
     param(
         $grammarDict
     )
 
+    # Loop through each production in the grammar dictionary and display it
     foreach ($key in $grammarDict.Keys) {
         $rightSide = ""
+        
+        # Loop through each production in the list of productions
         foreach ($value in $grammarDict[$key]) {
+
+            # If the right side is empty, set it to the value, otherwise append the value to the right side
             if ($rightSide -eq "") {
                 $rightSide = $value
             }
@@ -200,11 +228,29 @@ function Show-Grammar {
     }
 }
 
+<#
+.SYNOPSIS
+    Generates a production method
+.DESCRIPTION
+    This function generates a production method. It loops through each production in the list of productions and generates the code for the method.
+    It checks if the production is epsilon, if it is, it adds it to the method.
+    If the production is a terminal, it translates the terminal to an enum value.
+    If the production is a non-terminal, it generates the first set of the non-terminal and checks if the first set contains epsilon.
+    If the first set contains epsilon, it adds the follow set of the non-terminal to the first set of the current production.
+    It generates the code for the method and returns it.
+.PARAMETER productionName
+    The name of the production rule
+.PARAMETER productions
+    The list of productions for the production rule
+.EXAMPLE
+    Generate-Production-Method -productionName "<START>" -productions $languageDict["<START>"]
+#>
 function Generate-Production-Method {
     param(
         [string]$productionName,
         [System.Collections.ArrayList]$productions
     )
+
 
     Write-Host "Generating production method for $productionName"
 
@@ -230,6 +276,7 @@ function Generate-Production-Method {
     $hasEpsilon = $false
     $useIfElse = $false
 
+    # Loop through each production in the list of productions
     foreach ($prod in $productions) {
         $prod = $prod.Trim()
 
@@ -239,11 +286,14 @@ function Generate-Production-Method {
 
         #Write-Host "Start: $start"
         
+        # Check if the production is epsilon
         if ($prod -eq "EPSILON") {
             $hasEpsilon = $true
             continue
         }
-        
+
+
+        # Check if the start symbol is a terminal
         if (Is-Terminal -symbol $start) {
             $translatedTerm = Get-Enum-Value -terminal $start
 
@@ -254,7 +304,7 @@ function Generate-Production-Method {
             $start = Extract-Name -symbol $start
             $startAlt = "FIRST_$start.Contains(LookAhead.Type)"
 
-            if($firstSet.Contains("EPSILON")) {
+            if ($firstSet.Contains("EPSILON")) {
                 $startAlt = "$startAlt || FOLLOW_$start.Contains(LookAhead.Type)"
             }
 
@@ -263,12 +313,13 @@ function Generate-Production-Method {
 
 
         
-
+        
         $elements = $prod.Split(' ', [System.StringSplitOptions]::RemoveEmptyEntries)
 
         $recMatch = ""
         $recOutput = "$productionName ->"
         
+        # Loop through each element in the production
         foreach ($symbol in $elements) {
             if (Is-Terminal -symbol $symbol) {
                 if ($recMatch -ne "") {
@@ -286,7 +337,7 @@ function Generate-Production-Method {
             }
         }
 
-
+        
         if ($useIfElse -eq $false) {
             $useIfElse = $true
             $methodCode += @"
@@ -318,7 +369,6 @@ function Generate-Production-Method {
 
 
     # Add the epsilon production to the method if it exists
-
     if ($hasEpsilon -eq $true) {
         if ($useIfElse -eq $true) {
             $methodCode += @"
@@ -352,6 +402,21 @@ function Generate-Production-Method {
     return $methodCode
 }
 
+<#
+.SYNOPSIS
+    Generates a set code
+.DESCRIPTION
+    This function generates a set code. It loops through each element in the set and translates the terminal to an enum value.
+    It generates the code for the set and returns it.
+.PARAMETER productionName
+    The name of the production rule
+.PARAMETER set  
+    The set to generate the code for
+.PARAMETER isFollow 
+    A flag to indicate if the set is a follow set
+.EXAMPLE
+    Generate-Set-Code -productionName "<START>" -set $firstSet
+#>
 function Generate-Set-Code {
     param(
         [string]$productionName,
@@ -472,6 +537,29 @@ function Generate-First-Set {
     return $firstSet
 }
 
+<#
+.SYNOPSIS
+    Generates the follow set for a production rule
+.DESCRIPTION
+    This function generates the follow set for a production rule.
+    It does so by iterating through each production in the grammar dictionary and checking if the production contains the production name.
+    If the production contains the production name, the next element in the production is a candidate for the follow set.
+    If the next element is a terminal symbol that is not already in the follow set, it is added to the follow set.
+    If the next element is a non-terminal symbol, the first set of the non-terminal is added to the follow set.
+    If the first set of the non-terminal contains epsilon, the follow set of the non-terminal is added to the follow set.
+.PARAMETER productionName
+    The name of the production rule
+.PARAMETER grammarDict
+    The grammar dictionary
+.PARAMETER followSet
+    The follow set
+.PARAMETER visited
+    The visited productions
+.EXAMPLE
+    Generate-Follow-Set-Rec -productionName "<START>" -grammarDict $languageDict -followSet $followSet -visited $visited
+.NOTES
+    This function is called recursively to generate the follow set for a production rule.
+#>
 function Generate-Follow-Set-Rec {
     param(
         [string]$productionName,
@@ -599,21 +687,39 @@ function Generate-Follow-Set-Rec {
     return $followSet
 }
 
+<#
+.SYNOPSIS
+    Generates the follow set for a production rule
+.DESCRIPTION
+    This function generates the follow set for a production rule.
+    It does so by iterating through each production in the grammar dictionary and checking if the production contains the production name.
+    If the production contains the production name, the next element in the production is a candidate for the follow set.
+    If the next element is a terminal symbol that is not already in the follow set, it is added to the follow set.
+    If the next element is a non-terminal symbol, the first set of the non-terminal is added to the follow set.
+    If the first set of the non-terminal contains epsilon, the follow set of the non-terminal is added to the follow set.
+.PARAMETER productionName
+    The name of the production rule
+.PARAMETER grammarDict
+    The grammar dictionary
+.EXAMPLE
+    Generate-Follow-Set -productionName "<START>" -grammarDict $languageDict
+.NOTES
+    This function is called recursively to generate the follow set for a production rule.
+#>
 function Generate-Follow-Set {
     param(
         [string]$productionName,
         [System.Collections.Hashtable]$grammarDict
     )
 
-    if ($productionName -eq "<factor>") {
-        Write-Host "Generating follow set for $productionName"
-    }
-
+    # Create an array list to store the follow set
+    # Create an array list to store the visited productions
     $followSet = New-Object System.Collections.ArrayList
     $visited = New-Object System.Collections.ArrayList
 
     Write-Host "Generating follow set for $productionName"
-
+    
+    # If the production name is the start symbol, add the end of file symbol to the follow set
     if ($productionName -eq "<START>") {
         $followSet.Add("$") | Out-Null
     }
@@ -626,6 +732,7 @@ function Generate-Follow-Set {
     $firstSet = (Generate-First-Set -productionName $productionName -grammarDict $grammarDict)
     $elementCount = $grammarDict[$productionName].Count
 
+    # Check if the first set contains epsilon and the follow set contains the end of file symbol
     if ($elementCount -gt 1 -and $firstSet.Contains("EPSILON")) {
         $firstSet | ForEach-Object {
             if ($followSet.Contains($_) ) {
@@ -637,6 +744,17 @@ function Generate-Follow-Set {
     return $followSet
 }
 
+<#
+.SYNOPSIS
+    Generates the C# parser code
+.DESCRIPTION
+    This function generates the C# parser code. It creates the parser class and adds the necessary properties and methods.
+    It generates the first sets, follow sets, and production methods for each production in the grammar dictionary.
+.PARAMETER grammarDict
+    The grammar dictionary
+.EXAMPLE
+    Generate-CSharp-Parser-Code -grammarDict $languageDict
+#>
 function Generate-CSharp-Parser-Code {
     param(
         [System.Collections.Hashtable]$grammarDict
@@ -866,8 +984,6 @@ public class Parser : IParser
     
 }
 
-
-
 $grammar = Get-Content -Path "fixedgrammar.grm"
 
 # Loop through each line in the grammar file and process the production
@@ -882,7 +998,6 @@ foreach ($line in $grammar) {
     
     Process-Production -production $line
 }
-
 
 # Create the parser code
 Generate-CSharp-Parser-Code -grammarDict $languageDict | Out-File -FilePath "SyntacticAnalyzer/Parser.cs" -Encoding utf8
