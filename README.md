@@ -1,5 +1,5 @@
 # Compiler-Design
-Compiler Design and Implementation for COMP 442 (Winter 2024) at Concordia University.
+Compiler Design and Implementation.
 
 Note that this Compiler was made to be simple (proof of concept) and as such is not optimized.
 Furthermore, the compilation process turns the source code into Moon assembly code, which is then itself compiled using a C program.
