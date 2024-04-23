@@ -23,7 +23,7 @@ The parser uses the grammar of the programming language to recognize and organiz
 
 For example, in an expression like a = b + c;, the parser would group b + c as one unit because the '+' operator has higher precedence than the '=' operator.
 
-There are different types of parsers, such as top-down parsers (which start from the root of the parse tree and work their way down) and bottom-up parsers (which start from the leaves and work their way up). The choice of parser type depends on the specific requirements of the programming language.
+The parser used here is a predictive recursive descent parser which defines a method for each rule.
 
 After the parsing phase, the parse tree is passed to the next stage of the compiler, typically the semantic analyzer, which checks the parse tree for semantic errors and annotates it with additional information needed for code generation.
 
@@ -43,7 +43,7 @@ The semantic analyzer also enriches the AST with additional information that is 
 
 For example, in a statement like int x = y + z;, the semantic analyzer would check that y and z are declared and that they are of a type that can be added together and assigned to an int.
 
-The output of the semantic analyzer is an annotated AST that is used in the code generation phase to produce the final machine code.
+The output of the semantic analyzer is an annotated AST that is used in the code generation phase to produce the final machine code, as well as a symbol table used to generate frames to be added/removed from the runtime stack.
 
 ## Code Generation
 
@@ -53,4 +53,4 @@ The code generator must take into account the specific architecture of the targe
 
 The output of the code generation phase is a sequence of machine instructions that perform the operations specified by the source program. This output is typically written to an object file, which can then be linked with other object files to produce an executable program.
 
-In some cases, the code generator may also perform optimizations to improve the efficiency of the generated code, such as eliminating redundant computations, reordering instructions to improve pipeline efficiency, or replacing slow operations with faster equivalents.
+In this case, the output code is moon code which targets the moon virtual processor (Interpreter).
